@@ -1,0 +1,3 @@
+-- database/dump.sql
+-- This file is intended to hold a full database dump for backup or migration purposes.
+-- It will be generated as needed.
