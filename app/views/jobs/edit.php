@@ -3,7 +3,7 @@
         <h3 class="card-title"><?= htmlspecialchars($title) ?></h3>
     </div>
     <div class="card-body">
-        <form action="/jobs/<?= htmlspecialchars($job['id']) ?>/update" method="POST">
+        <form action="/jobs/<?= htmlspecialchars($job['id']) ?>/update" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
             <div class="mb-3">
                 <label class="form-label">Título da Tarefa</label>
@@ -69,6 +69,33 @@
                     <?php endforeach; ?>
                 </select>
             </div>
+
+            <div class="mb-3">
+                <label class="form-label">Adicionar Anexos</label>
+                <input type="file" name="attachments[]" class="form-control" multiple>
+                <small class="form-text text-muted">Max 5MB per file. Allowed types: PNG, JPG, JPEG, WEBP.</small>
+            </div>
+
+            <?php if (!empty($attachments)): ?>
+                <div class="mb-3">
+                    <label class="form-label">Anexos Existentes:</label>
+                    <div class="list-group">
+                        <?php foreach ($attachments as $attachment): ?>
+                            <div class="list-group-item d-flex align-items-center">
+                                <a href="<?= BASE_URL ?>/<?= htmlspecialchars($attachment['filepath']) ?>" target="_blank" class="text-reset"><?= htmlspecialchars($attachment['filename']) ?></a>
+                                <small class="ms-2 text-muted">(<?= round($attachment['file_size'] / 1024 / 1024, 2) ?> MB)</small>
+                                <div class="ms-auto">
+                                    <form action="/jobs/attachments/<?= htmlspecialchars($attachment['id']) ?>/delete" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este anexo?');">
+                                        <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger">Remover</button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <div class="form-footer">
                 <button type="submit" class="btn btn-primary">Atualizar Tarefa</button>
                 <a href="/jobs/<?= htmlspecialchars($job['id']) ?>" class="btn btn-secondary">Cancelar</a>
@@ -76,3 +103,4 @@
         </form>
     </div>
 </div>
+

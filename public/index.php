@@ -14,8 +14,8 @@ if (session_status() === PHP_SESSION_NONE) {
 // Define base path
 define('BASE_PATH', dirname(__DIR__));
 
-// Autoload Composer dependencies (if any)
-// require BASE_PATH . '/vendor/autoload.php';
+// Autoload Composer dependencies
+require BASE_PATH . '/vendor/autoload.php';
 
 // Include configuration
 require BASE_PATH . '/app/config.php';

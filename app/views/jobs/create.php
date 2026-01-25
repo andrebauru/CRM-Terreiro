@@ -3,7 +3,7 @@
         <h3 class="card-title"><?= htmlspecialchars($title) ?></h3>
     </div>
     <div class="card-body">
-        <form action="/jobs" method="POST">
+        <form action="/jobs" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
             <div class="mb-3">
                 <label class="form-label">Título da Tarefa</label>
@@ -68,6 +68,11 @@
                         <option value="<?= htmlspecialchars($user['id']) ?>"><?= htmlspecialchars($user['name']) ?> (<?= htmlspecialchars($user['email']) ?>)</option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Anexos</label>
+                <input type="file" name="attachments[]" class="form-control" multiple>
+                <small class="form-text text-muted">Max 5MB per file. Allowed types: PNG, JPG, JPEG, WEBP.</small>
             </div>
             <div class="form-footer">
                 <button type="submit" class="btn btn-primary">Salvar Tarefa</button>

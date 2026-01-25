@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Session;
+use App\Helpers\Upload; // Adicionado para lidar com uploads
 use App\Models\Job;
 use App\Models\Client;
 use App\Models\Service;
 use App\Models\User; // To fetch users for assignment
+use App\Models\JobAttachment; // Adicionado para gerenciar anexos
 
 class JobController
 {
@@ -16,6 +18,11 @@ class JobController
     private Client $clientModel;
     private Service $serviceModel;
     private User $userModel;
+    private JobAttachment $jobAttachmentModel; // Instância do modelo JobAttachment
+
+    // Constantes para upload de arquivos
+    private const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    private const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
     public function __construct()
     {
@@ -28,6 +35,7 @@ class JobController
         $this->clientModel = new Client();
         $this->serviceModel = new Service();
         $this->userModel = new User();
+        $this->jobAttachmentModel = new JobAttachment(); // Instancia o modelo JobAttachment
     }
 
     /**
@@ -106,6 +114,34 @@ class JobController
         $jobId = $this->jobModel->create($data);
 
         if ($jobId) {
+            // Handle file uploads
+            if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
+                foreach ($_FILES['attachments']['name'] as $key => $name) {
+                    if ($_FILES['attachments']['error'][$key] === UPLOAD_ERR_OK) {
+                        $uploadedFile = [
+                            'name' => $_FILES['attachments']['name'][$key],
+                            'type' => $_FILES['attachments']['type'][$key],
+                            'tmp_name' => $_FILES['attachments']['tmp_name'][$key],
+                            'error' => $_FILES['attachments']['error'][$key],
+                            'size' => $_FILES['attachments']['size'][$key],
+                        ];
+
+                        $uploadResult = Upload::handleUpload($uploadedFile, UPLOAD_PATH, self::ALLOWED_MIME_TYPES, self::MAX_FILE_SIZE);
+
+                        if ($uploadResult) {
+                            $this->jobAttachmentModel->create([
+                                'job_id' => $jobId,
+                                'user_id' => $createdBy,
+                                'filename' => $uploadResult['filename'],
+                                'filepath' => $uploadResult['filepath'],
+                                'file_type' => $uploadResult['file_type'],
+                                'file_size' => $uploadResult['file_size'],
+                            ]);
+                        }
+                    }
+                }
+            }
+
             Session::flash('success', 'Tarefa criada com sucesso!');
             header('Location: /jobs/' . $jobId);
             exit();
@@ -130,6 +166,8 @@ class JobController
             header('Location: /jobs');
             exit();
         }
+
+        $attachments = $this->jobAttachmentModel->getByJobId($id); // Fetch attachments
 
         $title = "Detalhes da Tarefa: " . $job['title'];
         ob_start();
@@ -156,6 +194,7 @@ class JobController
         $clients = $this->clientModel->all();
         $services = $this->serviceModel->all();
         $users = $this->userModel->all(); // Assuming a method `all()` exists in User model
+        $attachments = $this->jobAttachmentModel->getByJobId($id); // Fetch existing attachments
 
         $title = "Editar Tarefa: " . $job['title'];
         $csrfToken = Session::generateCsrfToken();
@@ -214,6 +253,35 @@ class JobController
         ];
 
         if ($this->jobModel->update($id, $data)) {
+            // Handle file uploads
+            if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
+                $createdBy = Session::get('user_id'); // User who is updating/uploading
+                foreach ($_FILES['attachments']['name'] as $key => $name) {
+                    if ($_FILES['attachments']['error'][$key] === UPLOAD_ERR_OK) {
+                        $uploadedFile = [
+                            'name' => $_FILES['attachments']['name'][$key],
+                            'type' => $_FILES['attachments']['type'][$key],
+                            'tmp_name' => $_FILES['attachments']['tmp_name'][$key],
+                            'error' => $_FILES['attachments']['error'][$key],
+                            'size' => $_FILES['attachments']['size'][$key],
+                        ];
+
+                        $uploadResult = Upload::handleUpload($uploadedFile, UPLOAD_PATH, self::ALLOWED_MIME_TYPES, self::MAX_FILE_SIZE);
+
+                        if ($uploadResult) {
+                            $this->jobAttachmentModel->create([
+                                'job_id' => $id, // Use current job ID
+                                'user_id' => $createdBy,
+                                'filename' => $uploadResult['filename'],
+                                'filepath' => $uploadResult['filepath'],
+                                'file_type' => $uploadResult['file_type'],
+                                'file_size' => $uploadResult['file_size'],
+                            ]);
+                        }
+                    }
+                }
+            }
+
             Session::flash('success', 'Tarefa atualizada com sucesso!');
             header('Location: /jobs/' . $id);
             exit();
@@ -235,6 +303,16 @@ class JobController
             Session::flash('error', 'Token CSRF inválido.');
             header('Location: /jobs');
             exit();
+        }
+
+        // Before deleting job, delete associated attachments from filesystem
+        $attachments = $this->jobAttachmentModel->getByJobId($id);
+        foreach ($attachments as $attachment) {
+            $fullPath = BASE_PATH . '/' . $attachment['filepath'];
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+            // Database records will be cascade deleted by FK on job_id
         }
 
         if ($this->jobModel->delete($id)) {

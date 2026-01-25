@@ -6,19 +6,18 @@ namespace App\Models;
 
 use PDO;
 use PDOException;
+use App\Models\BaseModel;
 
 // Ensure database connection function is available
 if (!function_exists('getPDOConnection')) {
     require_once BASE_PATH . '/app/database.php';
 }
 
-class Job
+class Job extends BaseModel
 {
-    private PDO $db;
-
     public function __construct()
     {
-        $this->db = getPDOConnection();
+        parent::__construct('jobs');
     }
 
     /**
@@ -35,7 +34,7 @@ class Job
                 s.name as service_name,
                 u_created.name as created_by_name,
                 u_assigned.name as assigned_to_name
-            FROM jobs j
+            FROM {$this->table} j
             JOIN clients c ON j.client_id = c.id
             JOIN services s ON j.service_id = s.id
             JOIN users u_created ON j.created_by = u_created.id
@@ -60,7 +59,7 @@ class Job
                 s.name as service_name,
                 u_created.name as created_by_name,
                 u_assigned.name as assigned_to_name
-            FROM jobs j
+            FROM {$this->table} j
             JOIN clients c ON j.client_id = c.id
             JOIN services s ON j.service_id = s.id
             JOIN users u_created ON j.created_by = u_created.id
@@ -73,6 +72,20 @@ class Job
     }
 
     /**
+     * Counts the number of jobs with a specific status.
+     *
+     * @param string $status The status to count (pending, in_progress, completed, cancelled).
+     * @return int The number of jobs with the specified status.
+     */
+    public function countByStatus(string $status): int
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM {$this->table} WHERE status = :status");
+        $stmt->bindParam(':status', $status, PDO::PARAM_STR);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
      * Create a new job.
      *
      * @param array $data Job data (client_id, service_id, title, description, status, priority, channel, start_date, due_date, created_by, assigned_to).
@@ -81,7 +94,7 @@ class Job
     public function create(array $data): int
     {
         $stmt = $this->db->prepare("
-            INSERT INTO jobs (client_id, service_id, title, description, status, priority, channel, start_date, due_date, created_by, assigned_to)
+            INSERT INTO {$this->table} (client_id, service_id, title, description, status, priority, channel, start_date, due_date, created_by, assigned_to)
             VALUES (:client_id, :service_id, :title, :description, :status, :priority, :channel, :start_date, :due_date, :created_by, :assigned_to)
         ");
         $stmt->bindParam(':client_id', $data['client_id'], PDO::PARAM_INT);
@@ -109,7 +122,7 @@ class Job
     public function update(int $id, array $data): bool
     {
         $stmt = $this->db->prepare("
-            UPDATE jobs SET
+            UPDATE {$this->table} SET
                 client_id = :client_id,
                 service_id = :service_id,
                 title = :title,
@@ -147,7 +160,7 @@ class Job
      */
     public function delete(int $id): bool
     {
-        $stmt = $this->db->prepare("DELETE FROM jobs WHERE id = :id");
+        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }

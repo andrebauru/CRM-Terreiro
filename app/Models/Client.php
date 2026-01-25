@@ -6,19 +6,18 @@ namespace App\Models;
 
 use PDO;
 use PDOException;
+use App\Models\BaseModel;
 
 // Ensure database connection function is available
 if (!function_exists('getPDOConnection')) {
     require_once BASE_PATH . '/app/database.php';
 }
 
-class Client
+class Client extends BaseModel
 {
-    private PDO $db;
-
     public function __construct()
     {
-        $this->db = getPDOConnection();
+        parent::__construct('clients');
     }
 
     /**
@@ -28,7 +27,7 @@ class Client
      */
     public function all(): array
     {
-        $stmt = $this->db->query("SELECT * FROM clients ORDER BY name ASC");
+        $stmt = $this->db->query("SELECT * FROM {$this->table} ORDER BY name ASC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -40,7 +39,7 @@ class Client
      */
     public function find(int $id): array|false
     {
-        $stmt = $this->db->prepare("SELECT * FROM clients WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -54,7 +53,7 @@ class Client
      */
     public function create(array $data): int
     {
-        $stmt = $this->db->prepare("INSERT INTO clients (name, email, phone, address) VALUES (:name, :email, :phone, :address)");
+        $stmt = $this->db->prepare("INSERT INTO {$this->table} (name, email, phone, address) VALUES (:name, :email, :phone, :address)");
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':email', $data['email']);
         $stmt->bindParam(':phone', $data['phone']);
@@ -72,7 +71,7 @@ class Client
      */
     public function update(int $id, array $data): bool
     {
-        $stmt = $this->db->prepare("UPDATE clients SET name = :name, email = :email, phone = :phone, address = :address, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET name = :name, email = :email, phone = :phone, address = :address, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':email', $data['email']);
         $stmt->bindParam(':phone', $data['phone']);
@@ -89,7 +88,7 @@ class Client
      */
     public function delete(int $id): bool
     {
-        $stmt = $this->db->prepare("DELETE FROM clients WHERE id = :id");
+        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }

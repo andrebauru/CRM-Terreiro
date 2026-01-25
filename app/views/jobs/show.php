@@ -74,5 +74,19 @@
             <dt class="col-3">Última atualização:</dt>
             <dd class="col-9"><?= htmlspecialchars($job['updated_at']) ?></dd>
         </dl>
+
+        <?php if (!empty($attachments)): ?>
+            <h4 class="mt-4">Anexos:</h4>
+            <div class="list-group">
+                <?php foreach ($attachments as $attachment): ?>
+                    <a href="<?= BASE_URL ?>/<?= htmlspecialchars($attachment['filepath']) ?>" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <?= htmlspecialchars($attachment['filename']) ?>
+                        <small class="text-muted"><?= round($attachment['file_size'] / 1024 / 1024, 2) ?> MB</small>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p class="text-muted mt-4">Nenhum anexo para esta tarefa.</p>
+        <?php endif; ?>
     </div>
 </div>
