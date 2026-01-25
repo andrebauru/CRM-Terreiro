@@ -1,0 +1,21 @@
+# Ignorar arquivos de ambiente
+.env
+.env.local
+.env.*.local
+
+# Ignorar diretórios específicos
+/vendor/
+/node_modules/
+/storage/uploads/
+/storage/logs/
+
+# Ignorar arquivos de log de forge
+.forge/history.json
+
+# Ignorar IDE e arquivos temporários
+.idea/
+.vscode/
+*.iml
+*.log
+.DS_Store
+Thumbs.db
