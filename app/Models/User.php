@@ -60,4 +60,15 @@ class User
     {
         return password_verify($password, $hashedPassword);
     }
+
+    /**
+     * Get all active users (excluding password).
+     *
+     * @return array An array of user data.
+     */
+    public function all(): array
+    {
+        $stmt = $this->db->query("SELECT id, name, email, role FROM users WHERE is_active = TRUE ORDER BY name ASC");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
