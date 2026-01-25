@@ -6,11 +6,13 @@ namespace App\Controllers;
 
 use App\Helpers\Session;
 use App\Helpers\Upload; // Adicionado para lidar com uploads
+use App\Helpers\ForgeLogger; // Adicionado para logging
 use App\Models\Job;
 use App\Models\Client;
 use App\Models\Service;
 use App\Models\User; // To fetch users for assignment
 use App\Models\JobAttachment; // Adicionado para gerenciar anexos
+use App\Models\JobNote; // Adicionado para gerenciar notas
 
 class JobController
 {
@@ -19,6 +21,7 @@ class JobController
     private Service $serviceModel;
     private User $userModel;
     private JobAttachment $jobAttachmentModel; // Instância do modelo JobAttachment
+    private JobNote $jobNoteModel; // Instância do modelo JobNote
 
     // Constantes para upload de arquivos
     private const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
@@ -36,6 +39,7 @@ class JobController
         $this->serviceModel = new Service();
         $this->userModel = new User();
         $this->jobAttachmentModel = new JobAttachment(); // Instancia o modelo JobAttachment
+        $this->jobNoteModel = new JobNote(); // Instancia o modelo JobNote
     }
 
     /**
@@ -114,6 +118,7 @@ class JobController
         $jobId = $this->jobModel->create($data);
 
         if ($jobId) {
+            ForgeLogger::logAction('Tarefa "' . $title . '" (ID: ' . $jobId . ') criada pelo usuário ' . Session::get('user_name') . '.'); // Log action
             // Handle file uploads
             if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
                 foreach ($_FILES['attachments']['name'] as $key => $name) {
@@ -168,6 +173,7 @@ class JobController
         }
 
         $attachments = $this->jobAttachmentModel->getByJobId($id); // Fetch attachments
+        $notes = $this->jobNoteModel->getByJobId($id); // Fetch notes
 
         $title = "Detalhes da Tarefa: " . $job['title'];
         ob_start();
@@ -253,6 +259,7 @@ class JobController
         ];
 
         if ($this->jobModel->update($id, $data)) {
+            ForgeLogger::logAction('Tarefa "' . $title . '" (ID: ' . $id . ') atualizada pelo usuário ' . Session::get('user_name') . '.'); // Log action
             // Handle file uploads
             if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
                 $createdBy = Session::get('user_id'); // User who is updating/uploading
@@ -316,11 +323,161 @@ class JobController
         }
 
         if ($this->jobModel->delete($id)) {
+            ForgeLogger::logAction('Tarefa (ID: ' . $id . ') excluída pelo usuário ' . Session::get('user_name') . '.'); // Log action
             Session::flash('success', 'Tarefa excluída com sucesso!');
         } else {
             Session::flash('error', 'Erro ao excluir tarefa.');
         }
         header('Location: /jobs');
+        exit();
+    }
+
+    /**
+     * Adds a new note to a job.
+     *
+     * @param int $jobId The ID of the job to add the note to.
+     */
+    public function addNote(int $jobId): void
+    {
+        if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
+            Session::flash('error', 'Token CSRF inválido.');
+            header('Location: /jobs/' . $jobId);
+            exit();
+        }
+
+        $noteContent = trim($_POST['note'] ?? '');
+        $userId = Session::get('user_id');
+
+        if (empty($noteContent)) {
+            Session::flash('error', 'A nota não pode estar vazia.');
+            header('Location: /jobs/' . $jobId);
+            exit();
+        }
+
+        if ($userId === null) {
+            Session::flash('error', 'Usuário não autenticado.');
+            header('Location: /login');
+            exit();
+        }
+
+        $data = [
+            'job_id' => $jobId,
+            'user_id' => $userId,
+            'note' => $noteContent,
+        ];
+
+        if ($this->jobNoteModel->create($data)) {
+            ForgeLogger::logAction('Nota adicionada à Tarefa (ID: ' . $jobId . ') pelo usuário ' . Session::get('user_name') . '.'); // Log action
+            Session::flash('success', 'Nota adicionada com sucesso!');
+        } else {
+            Session::flash('error', 'Erro ao adicionar nota.');
+        }
+
+        header('Location: /jobs/' . $jobId);
+        exit();
+    }
+
+    /**
+     * Deletes a job note.
+     *
+     * @param int $noteId The ID of the note to delete.
+     */
+    public function deleteNote(int $noteId): void
+    {
+        // Get job_id from POST or wherever it's passed for redirection
+        $jobId = (int)($_POST['job_id'] ?? 0); // Assuming job_id will be passed via POST for redirection
+
+        if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
+            Session::flash('error', 'Token CSRF inválido.');
+            if ($jobId) {
+                header('Location: /jobs/' . $jobId);
+            } else {
+                header('Location: /jobs'); // Fallback if jobId is not available
+            }
+            exit();
+        }
+
+        $note = $this->jobNoteModel->find($noteId);
+
+        if (!$note) {
+            Session::flash('error', 'Nota não encontrada.');
+            if ($jobId) {
+                header('Location: /jobs/' . $jobId);
+            } else {
+                header('Location: /jobs');
+            }
+            exit();
+        }
+
+        // Optional: Check if the current user is authorized to delete this note
+        // e.g., if (Session::get('user_id') !== $note['user_id'] && Session::get('user_role') !== 'admin') { ... }
+
+        if ($this->jobNoteModel->delete($noteId)) {
+            ForgeLogger::logAction('Nota (ID: ' . $noteId . ') da Tarefa (ID: ' . ($note['job_id'] ?? 'N/A') . ') excluída pelo usuário ' . Session::get('user_name') . '.'); // Log action
+            Session::flash('success', 'Nota excluída com sucesso!');
+        } else {
+            Session::flash('error', 'Erro ao excluir nota.');
+        }
+
+        if ($jobId) {
+            header('Location: /jobs/' . $jobId);
+        } else {
+            header('Location: /jobs');
+        }
+        exit();
+    }
+
+    /**
+     * Deletes a job attachment.
+     *
+     * @param int $attachmentId The ID of the attachment to delete.
+     */
+    public function deleteAttachment(int $attachmentId): void
+    {
+        // Get job_id from POST or wherever it's passed for redirection
+        $jobId = (int)($_POST['job_id'] ?? 0); // Assuming job_id will be passed via POST for redirection
+
+        if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
+            Session::flash('error', 'Token CSRF inválido.');
+            if ($jobId) {
+                header('Location: /jobs/' . $jobId . '/edit'); // Redirect back to edit page
+            } else {
+                header('Location: /jobs'); // Fallback if jobId is not available
+            }
+            exit();
+        }
+
+        $attachment = $this->jobAttachmentModel->find($attachmentId);
+
+        if (!$attachment) {
+            Session::flash('error', 'Anexo não encontrado.');
+            if ($jobId) {
+                header('Location: /jobs/' . $jobId . '/edit');
+            } else {
+                header('Location: /jobs');
+            }
+            exit();
+        }
+
+        // Delete file from filesystem
+        $fullPath = BASE_PATH . '/' . $attachment['filepath'];
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+
+        // Delete record from database
+        if ($this->jobAttachmentModel->delete($attachmentId)) {
+            ForgeLogger::logAction('Anexo (ID: ' . $attachmentId . ') da Tarefa (ID: ' . ($attachment['job_id'] ?? 'N/A') . ') excluído pelo usuário ' . Session::get('user_name') . '.'); // Log action
+            Session::flash('success', 'Anexo excluído com sucesso!');
+        } else {
+            Session::flash('error', 'Erro ao excluir anexo.');
+        }
+
+        if ($jobId) {
+            header('Location: /jobs/' . $jobId . '/edit'); // Redirect back to edit page
+        } else {
+            header('Location: /jobs');
+        }
         exit();
     }
 }

@@ -88,5 +88,54 @@
         <?php else: ?>
             <p class="text-muted mt-4">Nenhum anexo para esta tarefa.</p>
         <?php endif; ?>
+
+        <h4 class="mt-4">Notas:</h4>
+        <div class="card mb-3">
+            <div class="card-body">
+                <form action="/jobs/<?= htmlspecialchars($job['id']) ?>/notes" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
+                    <div class="mb-3">
+                        <label class="form-label">Adicionar Nova Nota</label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Digite sua nota aqui..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Adicionar Nota</button>
+                </form>
+            </div>
+        </div>
+
+        <?php if (!empty($notes)): ?>
+            <div class="divide-y">
+                <?php foreach ($notes as $note): ?>
+                    <div>
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="avatar avatar-sm" style="background-image: url(<?= BASE_URL ?>/static/000m.jpg)"></div>
+                            </div>
+                            <div class="col">
+                                <div class="text-truncate">
+                                    <strong><?= htmlspecialchars($note['user_name']) ?></strong>
+                                    <span class="text-muted text-truncate ms-2"><?= nl2br(htmlspecialchars($note['note'])) ?></span>
+                                </div>
+                                <div class="text-muted"><?= htmlspecialchars((new DateTime($note['created_at']))->format('d/m/Y H:i')) ?></div>
+                            </div>
+                            <?php if (App\Helpers\Session::get('user_id') == $note['user_id'] || App\Helpers\Session::get('user_role') == 'admin'): ?>
+                                <div class="col-auto">
+                                    <form action="/jobs/notes/<?= htmlspecialchars($note['id']) ?>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta nota?');">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
+                                        <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
+                                        <button type="submit" class="btn btn-sm btn-icon btn-danger" title="Excluir Nota">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p class="text-muted">Nenhuma nota para esta tarefa.</p>
+        <?php endif; ?>
     </div>
 </div>

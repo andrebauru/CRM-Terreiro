@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Session;
+use App\Helpers\ForgeLogger; // Adicionado para logging
 use App\Models\Client;
 
 class ClientController
@@ -86,6 +87,7 @@ class ClientController
         $clientId = $this->clientModel->create($data);
 
         if ($clientId) {
+            ForgeLogger::logAction('Cliente ' . $name . ' (ID: ' . $clientId . ') criado pelo usuário ' . Session::get('user_name') . '.'); // Log action
             Session::flash('success', 'Cliente criado com sucesso!');
             header('Location: /clients/' . $clientId);
             exit();
@@ -179,6 +181,7 @@ class ClientController
         ];
 
         if ($this->clientModel->update($id, $data)) {
+            ForgeLogger::logAction('Cliente ' . $name . ' (ID: ' . $id . ') atualizado pelo usuário ' . Session::get('user_name') . '.'); // Log action
             Session::flash('success', 'Cliente atualizado com sucesso!');
             header('Location: /clients/' . $id);
             exit();
@@ -203,6 +206,7 @@ class ClientController
         }
 
         if ($this->clientModel->delete($id)) {
+            ForgeLogger::logAction('Cliente (ID: ' . $id . ') excluído pelo usuário ' . Session::get('user_name') . '.'); // Log action
             Session::flash('success', 'Cliente excluído com sucesso!');
         } else {
             Session::flash('error', 'Erro ao excluir cliente.');

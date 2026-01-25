@@ -70,4 +70,62 @@ class User extends BaseModel
     {
         return password_verify($password, $hashedPassword);
     }
+
+    /**
+     * Create a new user.
+     *
+     * @param array $data User data (name, email, password, role). Password will be hashed.
+     * @return int The ID of the newly created user.
+     */
+    public function create(array $data): int
+    {
+        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("INSERT INTO {$this->table} (name, email, password, role) VALUES (:name, :email, :password, :role)");
+        $stmt->bindParam(':name', $data['name']);
+        $stmt->bindParam(':email', $data['email']);
+        $stmt->bindParam(':password', $hashedPassword);
+        $stmt->bindParam(':role', $data['role']);
+        $stmt->execute();
+        return (int)$this->db->lastInsertId();
+    }
+
+    /**
+     * Update an existing user.
+     *
+     * @param int $id The user ID.
+     * @param array $data User data (name, email, role, password (optional)).
+     * @return bool True on success, false on failure.
+     */
+    public function update(int $id, array $data): bool
+    {
+        $sql = "UPDATE {$this->table} SET name = :name, email = :email, role = :role, updated_at = CURRENT_TIMESTAMP";
+        if (isset($data['password']) && !empty($data['password'])) {
+            $sql .= ", password = :password";
+        }
+        $sql .= " WHERE id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':name', $data['name']);
+        $stmt->bindParam(':email', $data['email']);
+        $stmt->bindParam(':role', $data['role']);
+        if (isset($data['password']) && !empty($data['password'])) {
+            $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+            $stmt->bindParam(':password', $hashedPassword);
+        }
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    /**
+     * Delete a user.
+     *
+     * @param int $id The user ID.
+     * @return bool True on success, false on failure.
+     */
+    public function delete(int $id): bool
+    {
+        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }

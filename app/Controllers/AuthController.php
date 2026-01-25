@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\User;
 use App\Helpers\Session;
+use App\Helpers\ForgeLogger; // Adicionado para logging
 
 class AuthController
 {
@@ -57,6 +58,7 @@ class AuthController
             Session::set('user_id', $user['id']);
             Session::set('user_name', $user['name']);
             Session::set('user_role', $user['role']);
+            ForgeLogger::logAction('Usuário ' . $user['email'] . ' fez login.'); // Log login
             Session::flash('success', 'Login realizado com sucesso!');
             header('Location: /dashboard'); // Redirect to dashboard or intended page
             exit();
@@ -73,7 +75,9 @@ class AuthController
      */
     public function logout(): void
     {
+        $userName = Session::get('user_name'); // Get user name before destroying session
         Session::destroy();
+        ForgeLogger::logAction('Usuário ' . ($userName ?? 'Desconhecido') . ' fez logout.'); // Log logout
         Session::flash('success', 'Você foi desconectado com sucesso.');
         header('Location: /login');
         exit();

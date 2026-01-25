@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Session;
+use App\Helpers\ForgeLogger; // Adicionado para logging
 use App\Models\Service;
 
 class ServiceController
@@ -84,6 +85,7 @@ class ServiceController
         $serviceId = $this->serviceModel->create($data);
 
         if ($serviceId) {
+            ForgeLogger::logAction('Serviço ' . $name . ' (ID: ' . $serviceId . ') criado pelo usuário ' . Session::get('user_name') . '.'); // Log action
             Session::flash('success', 'Serviço criado com sucesso!');
             header('Location: /services/' . $serviceId);
             exit();
@@ -176,6 +178,7 @@ class ServiceController
         ];
 
         if ($this->serviceModel->update($id, $data)) {
+            ForgeLogger::logAction('Serviço ' . $name . ' (ID: ' . $id . ') atualizado pelo usuário ' . Session::get('user_name') . '.'); // Log action
             Session::flash('success', 'Serviço atualizado com sucesso!');
             header('Location: /services/' . $id);
             exit();
@@ -200,6 +203,7 @@ class ServiceController
         }
 
         if ($this->serviceModel->delete($id)) {
+            ForgeLogger::logAction('Serviço (ID: ' . $id . ') excluído pelo usuário ' . Session::get('user_name') . '.'); // Log action
             Session::flash('success', 'Serviço excluído com sucesso!');
         } else {
             Session::flash('error', 'Erro ao excluir serviço.');

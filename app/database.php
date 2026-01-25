@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Helpers\Logger; // Adicionado para logging
+
 // Ensure config.php is loaded for database credentials
 if (!defined('DB_HOST')) {
     require_once __DIR__ . '/config.php';
@@ -25,8 +27,8 @@ function getPDOConnection(): PDO
     try {
         return new PDO($dsn, DB_USER, DB_PASS, $options);
     } catch (PDOException $e) {
-        // Log error (to be implemented later)
-        error_log("Database connection failed: " . $e->getMessage());
+        // Log error using the Logger helper
+        Logger::error("Database connection failed: " . $e->getMessage());
         // For development, re-throw or show a user-friendly error page
         throw new PDOException("Database connection failed: " . $e->getMessage(), (int)$e->getCode());
     }
