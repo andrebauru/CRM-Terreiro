@@ -9,9 +9,6 @@
 /storage/uploads/
 /storage/logs/
 
-# Ignorar arquivos de log de forge
-.forge/history.json
-
 # Ignorar IDE e arquivos temporários
 .idea/
 .vscode/
@@ -19,4 +16,3 @@
 *.log
 .DS_Store
 Thumbs.db
-.forge/

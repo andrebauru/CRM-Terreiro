@@ -22,8 +22,7 @@ Este é um projeto de CRM (Customer Relationship Management) construído com PHP
 -   `public/`: Ponto de entrada da aplicação (`index.php`) e assets públicos.
 -   `app/`: Contém a lógica principal da aplicação (Controllers, Models, Views, configurações).
 -   `database/`: Scripts SQL para schema, seed e dump do banco de dados.
--   `storage/`: Armazenamento de uploads (`uploads/`), logs (`logs/`) e outros arquivos gerados.
--   `.forge/`: Ferramentas e históricos de automação (ex: `history.json`).
+    `storage/`: Armazenamento de uploads (`uploads/`), logs (`logs/`) e outros arquivos gerados.
 
 ## Instalação e Configuração
 
@@ -36,8 +35,11 @@ Este é um projeto de CRM (Customer Relationship Management) construído com PHP
     `cp .env.example .env`
 
 3.  **Configuração do Banco de Dados:**
-    No arquivo `.env` que você criou, configure as credenciais do seu banco de dados:
-    `DB_HOST=seu_host_do_banco` (geralmente `localhost` ou o IP do servidor)
+    Para configurar a conexão com o banco de dados, você precisará editar o arquivo `.env` na raiz do projeto. Este arquivo não é versionado no Git e contém informações sensíveis.
+
+    No `.env`, defina as seguintes variáveis para o seu ambiente local ou de produção:
+
+    `DB_HOST=seu_host_do_banco` (ex: `localhost`, `127.0.0.1` ou o endereço do servidor de banco de dados)
     `DB_NAME=nome_do_seu_banco_de_dados` (ex: `crm_terreiro`)
     `DB_USER=seu_usuario_do_banco` (ex: `root`)
     `DB_PASS=sua_senha_do_banco`
@@ -45,12 +47,19 @@ Este é um projeto de CRM (Customer Relationship Management) construído com PHP
     Crie um banco de dados MySQL com o `nome_do_seu_banco_de_dados` (ex: `crm_terreiro`).
     Importe `database/schema.sql` e `database/seed.sql` para popular o banco de dados.
 
-4.  **Servidor Web:**
+4.  **Configuração para Hospedagem Online (Exemplo com index.php na raiz):**
+    Se você estiver hospedando a aplicação em um ambiente que exige que o ponto de entrada principal (`index.php`) esteja na raiz do projeto (como alguns hosts compartilhados), você pode usar o `index.php` fornecido na raiz.
+
+    Certifique-se de que a variável `BASE_URL` no seu arquivo `.env` esteja configurada corretamente para a URL de produção da sua aplicação.
+
+    `BASE_URL="https://seusite.com"`
+
+5.  **Servidor Web:**
     Configure seu servidor web (Apache/Nginx) para apontar a raiz do documento para a pasta `public/`.
     Alternativamente, você pode usar o servidor web embutido do PHP:
     `php -S localhost:8000 -t public`
 
-5.  **Acesse a Aplicação:**
+6.  **Acesse a Aplicação:**
     Abra seu navegador e acesse `http://localhost:8000` (ou o endereço configurado).
 
 ## Direitos Autorais

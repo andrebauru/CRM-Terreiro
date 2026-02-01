@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+// Define base path
+define('BASE_PATH', dirname(__DIR__));
+
+// Autoload Composer dependencies
+require BASE_PATH . '/vendor/autoload.php';
+
+// Include configuration
+require BASE_PATH . '/app/config.php';
+
+// Report errors based on environment
+$displayErrors = (defined('APP_ENV') && APP_ENV === 'development');
+error_reporting(E_ALL);
+ini_set('display_errors', $displayErrors ? '1' : '0');
+
+// Session hardening
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+$isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((string)($_SERVER['SERVER_PORT'] ?? '') === '443');
+$cookieParams = session_get_cookie_params();
+session_name(SESSION_COOKIE_NAME);
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => $cookieParams['path'] ?? '/',
+    'domain' => $cookieParams['domain'] ?? '',
+    'secure' => $isSecure,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
+// Start session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Include the router
+require BASE_PATH . '/app/router.php';

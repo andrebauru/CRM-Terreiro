@@ -1,3 +1,4 @@
+- **2026-02-01**: Commit e push das atualizações do `README.md` e `.gitignore`.
 - **2026-02-01**: Atualização de documentação e configuração de ignorados.
   - `README.md`: Adicionadas instruções detalhadas para configuração de `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` no arquivo `.env`.
   - `.gitignore`: Adicionada a entrada `.forge/` para ignorar o diretório completo.
