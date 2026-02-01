@@ -50,6 +50,19 @@ class SettingsController
 
         $clientName = trim($_POST['client_name'] ?? '');
         $companyName = trim($_POST['company_name'] ?? '');
+        $currencyCode = strtoupper(trim($_POST['currency_code'] ?? 'JPY'));
+        $currencySymbol = trim($_POST['currency_symbol'] ?? '¥');
+        $timezone = trim($_POST['timezone'] ?? APP_TIMEZONE);
+
+        if (strlen($currencyCode) !== 3) {
+            $currencyCode = 'JPY';
+        }
+        if ($currencySymbol === '') {
+            $currencySymbol = '¥';
+        }
+        if (!in_array($timezone, timezone_identifiers_list(), true)) {
+            $timezone = APP_TIMEZONE;
+        }
 
         if (empty($clientName) || empty($companyName)) {
             Session::flash('error', 'Preencha o nome do cliente e da empresa.');
@@ -88,6 +101,9 @@ class SettingsController
             'client_name' => $clientName,
             'company_name' => $companyName,
             'logo_path' => $logoPath,
+            'currency_code' => $currencyCode,
+            'currency_symbol' => $currencySymbol,
+            'timezone' => $timezone,
         ])) {
             Session::flash('success', 'Configurações atualizadas com sucesso!');
         } else {

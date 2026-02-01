@@ -2,6 +2,7 @@
 
 -- Drop tables if they exist to allow for clean re-creation
 DROP TABLE IF EXISTS job_attachments;
+DROP TABLE IF EXISTS job_installments;
 DROP TABLE IF EXISTS job_notes;
 DROP TABLE IF EXISTS jobs;
 DROP TABLE IF EXISTS services;
@@ -27,6 +28,9 @@ CREATE TABLE settings (
     client_name VARCHAR(255),
     company_name VARCHAR(255),
     logo_path VARCHAR(512),
+    currency_code VARCHAR(3) NOT NULL DEFAULT 'JPY',
+    currency_symbol VARCHAR(8) NOT NULL DEFAULT '¥',
+    timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Tokyo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -65,6 +69,8 @@ CREATE TABLE jobs (
     channel VARCHAR(100), -- e.g., 'email', 'phone', 'whatsapp', 'in_person'
     start_date DATE,
     due_date DATE,
+    installments INT NOT NULL DEFAULT 1,
+    installment_value DECIMAL(10, 2) DEFAULT NULL,
     completed_at TIMESTAMP NULL DEFAULT NULL,
     created_by INT NOT NULL,
     assigned_to INT,
@@ -102,6 +108,23 @@ CREATE TABLE job_attachments (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Table for job installments (payments)
+CREATE TABLE job_installments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    installment_number INT NOT NULL,
+    amount DECIMAL(10, 2) DEFAULT NULL,
+    due_date DATE DEFAULT NULL,
+    status ENUM('pending', 'paid') NOT NULL DEFAULT 'pending',
+    paid_at DATETIME DEFAULT NULL,
+    paid_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_job_installment (job_id, installment_number),
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (paid_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Indexes for performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_clients_email ON clients(email);
@@ -113,3 +136,4 @@ CREATE INDEX idx_job_notes_job_id ON job_notes(job_id);
 CREATE INDEX idx_job_notes_user_id ON job_notes(user_id);
 CREATE INDEX idx_job_attachments_job_id ON job_attachments(job_id);
 CREATE INDEX idx_job_attachments_user_id ON job_attachments(user_id);
+CREATE INDEX idx_job_installments_job_id ON job_installments(job_id);

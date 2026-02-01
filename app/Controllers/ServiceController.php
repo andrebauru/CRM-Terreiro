@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Helpers\Session;
 use App\Helpers\ForgeLogger; // Adicionado para logging
 use App\Models\Service;
+use App\Models\Setting;
 
 class ServiceController
 {
@@ -28,6 +29,7 @@ class ServiceController
     public function index(): void
     {
         $services = $this->serviceModel->all();
+        $settings = (new Setting())->get();
         $title = "Serviços";
         ob_start();
         require_once BASE_PATH . '/app/views/services/index.php';
@@ -111,6 +113,7 @@ class ServiceController
             exit();
         }
 
+        $settings = (new Setting())->get();
         $title = "Detalhes do Serviço: " . $service['name'];
         ob_start();
         require_once BASE_PATH . '/app/views/services/show.php';

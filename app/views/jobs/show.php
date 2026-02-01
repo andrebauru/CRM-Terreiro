@@ -1,3 +1,9 @@
+<?php
+use App\Helpers\Format;
+use App\Models\Setting;
+
+$settings = $settings ?? (new Setting())->get();
+?>
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Detalhes da Tarefa: <?= htmlspecialchars($job['title']) ?></h3>
@@ -60,6 +66,18 @@
             <dt class="col-3">Data de Vencimento:</dt>
             <dd class="col-9"><?= htmlspecialchars($job['due_date']) ?></dd>
 
+            <dt class="col-3">Parcelas:</dt>
+            <dd class="col-9"><?= htmlspecialchars($job['installments'] ?? 1) ?></dd>
+
+            <dt class="col-3">Valor da Parcela:</dt>
+            <dd class="col-9">
+                <?php if (!empty($job['installment_value'])): ?>
+                    <?= htmlspecialchars(Format::currency((float)$job['installment_value'], $settings)) ?>
+                <?php else: ?>
+                    N/A
+                <?php endif; ?>
+            </dd>
+
             <dt class="col-3">Criado por:</dt>
             <dd class="col-9"><?= htmlspecialchars($job['created_by_name']) ?></dd>
 
@@ -88,6 +106,61 @@
             </div>
         <?php else: ?>
             <p class="text-muted mt-4">Nenhum anexo para esta tarefa.</p>
+        <?php endif; ?>
+
+        <h4 class="mt-4">Parcelas:</h4>
+        <?php if (!empty($installments)): ?>
+            <div class="table-responsive">
+                <table class="table table-vcenter">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th>Pago em</th>
+                        <th>Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($installments as $inst): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($inst['installment_number']) ?></td>
+                            <td>
+                                <?php if ($inst['amount'] !== null): ?>
+                                    <?= htmlspecialchars(Format::currency((float)$inst['amount'], $settings)) ?>
+                                <?php else: ?>
+                                    N/A
+                                <?php endif; ?>
+                            </td>
+                            <td><?= htmlspecialchars($inst['due_date'] ?? 'N/A') ?></td>
+                            <td>
+                                <?php if (($inst['status'] ?? 'pending') === 'paid'): ?>
+                                    <span class="badge bg-success">Pago</span>
+                                <?php else: ?>
+                                    <span class="badge bg-warning">Pendente</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= htmlspecialchars($inst['paid_at'] ?? 'N/A') ?></td>
+                            <td>
+                                <?php if (($inst['status'] ?? 'pending') !== 'paid'): ?>
+                                    <form action="/jobs/installments/<?= htmlspecialchars($inst['id']) ?>/pay" method="POST" class="d-flex gap-2 align-items-center">
+                                        <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
+                                        <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
+                                        <input type="number" name="amount" class="form-control form-control-sm" step="0.01" min="0" placeholder="Valor (opcional)">
+                                        <button type="submit" class="btn btn-sm btn-success">Dar baixa</button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <p class="text-muted">Nenhuma parcela registrada.</p>
         <?php endif; ?>
 
         <h4 class="mt-4">Notas:</h4>

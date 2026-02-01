@@ -13,6 +13,7 @@ use App\Models\Service;
 use App\Models\User; // To fetch users for assignment
 use App\Models\JobAttachment; // Adicionado para gerenciar anexos
 use App\Models\JobNote; // Adicionado para gerenciar notas
+use App\Models\JobInstallment; // Gerenciar parcelas
 
 class JobController
 {
@@ -22,6 +23,7 @@ class JobController
     private User $userModel;
     private JobAttachment $jobAttachmentModel; // Instância do modelo JobAttachment
     private JobNote $jobNoteModel; // Instância do modelo JobNote
+    private JobInstallment $jobInstallmentModel;
 
     // Constantes para upload de arquivos
 
@@ -39,6 +41,7 @@ class JobController
         $this->userModel = new User();
         $this->jobAttachmentModel = new JobAttachment(); // Instancia o modelo JobAttachment
         $this->jobNoteModel = new JobNote(); // Instancia o modelo JobNote
+        $this->jobInstallmentModel = new JobInstallment();
     }
 
     /**
@@ -92,10 +95,18 @@ class JobController
         $startDate = $_POST['start_date'] ?? null;
         $dueDate = $_POST['due_date'] ?? null;
         $assignedTo = (int)($_POST['assigned_to'] ?? 0);
+        $installments = max(1, (int)($_POST['installments'] ?? 1));
+        $installmentValue = trim((string)($_POST['installment_value'] ?? ''));
+        $installmentValue = $installmentValue === '' ? null : (float)$installmentValue;
         $createdBy = Session::get('user_id');
 
         if (empty($title) || $clientId === 0 || $serviceId === 0 || $createdBy === null) {
             Session::flash('error', 'Por favor, preencha todos os campos obrigatórios (Título, Cliente, Serviço).');
+            header('Location: /jobs/create');
+            exit();
+        }
+        if ($installmentValue !== null && $installmentValue < 0) {
+            Session::flash('error', 'O valor da parcela não pode ser negativo.');
             header('Location: /jobs/create');
             exit();
         }
@@ -125,11 +136,19 @@ class JobController
             'due_date' => $dueDate,
             'created_by' => $createdBy,
             'assigned_to' => ($assignedTo === 0) ? null : $assignedTo, // Store null if not assigned
+            'installments' => $installments,
+            'installment_value' => $installmentValue,
         ];
 
         $jobId = $this->jobModel->create($data);
 
         if ($jobId) {
+            $this->jobInstallmentModel->ensureForJob(
+                $jobId,
+                $installments,
+                $installmentValue,
+                $startDate ?: null
+            );
             ForgeLogger::logAction('Tarefa "' . $title . '" (ID: ' . $jobId . ') criada pelo usuário ' . Session::get('user_name') . '.'); // Log action
             // Handle file uploads
             if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
@@ -199,6 +218,13 @@ class JobController
 
         $attachments = $this->jobAttachmentModel->getByJobId($id); // Fetch attachments
         $notes = $this->jobNoteModel->getByJobId($id); // Fetch notes
+        $this->jobInstallmentModel->ensureForJob(
+            $id,
+            (int)($job['installments'] ?? 1),
+            isset($job['installment_value']) ? (float)$job['installment_value'] : null,
+            $job['start_date'] ?: null
+        );
+        $installments = $this->jobInstallmentModel->getByJobId($id);
 
         $title = "Detalhes da Tarefa: " . $job['title'];
         ob_start();
@@ -258,6 +284,9 @@ class JobController
         $startDate = $_POST['start_date'] ?? null;
         $dueDate = $_POST['due_date'] ?? null;
         $assignedTo = (int)($_POST['assigned_to'] ?? 0);
+        $installments = max(1, (int)($_POST['installments'] ?? 1));
+        $installmentValue = trim((string)($_POST['installment_value'] ?? ''));
+        $installmentValue = $installmentValue === '' ? null : (float)$installmentValue;
         $completedAt = null;
         if ($status === 'completed') {
             $completedAt = date('Y-m-d H:i:s');
@@ -265,6 +294,11 @@ class JobController
 
         if (empty($title) || $clientId === 0 || $serviceId === 0) {
             Session::flash('error', 'Por favor, preencha todos os campos obrigatórios (Título, Cliente, Serviço).');
+            header('Location: /jobs/' . $id . '/edit');
+            exit();
+        }
+        if ($installmentValue !== null && $installmentValue < 0) {
+            Session::flash('error', 'O valor da parcela não pode ser negativo.');
             header('Location: /jobs/' . $id . '/edit');
             exit();
         }
@@ -293,10 +327,18 @@ class JobController
             'start_date' => $startDate,
             'due_date' => $dueDate,
             'assigned_to' => ($assignedTo === 0) ? null : $assignedTo,
+            'installments' => $installments,
+            'installment_value' => $installmentValue,
             'completed_at' => $completedAt,
         ];
 
         if ($this->jobModel->update($id, $data)) {
+            $this->jobInstallmentModel->ensureForJob(
+                $id,
+                $installments,
+                $installmentValue,
+                $startDate ?: null
+            );
             ForgeLogger::logAction('Tarefa "' . $title . '" (ID: ' . $id . ') atualizada pelo usuário ' . Session::get('user_name') . '.'); // Log action
             // Handle file uploads
             if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
@@ -542,6 +584,47 @@ class JobController
         } else {
             header('Location: /jobs');
         }
+        exit();
+    }
+
+    /**
+     * Mark an installment as paid (manual baixa).
+     *
+     * @param int $installmentId
+     */
+    public function payInstallment(int $installmentId): void
+    {
+        $jobId = (int)($_POST['job_id'] ?? 0);
+
+        if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
+            Session::flash('error', 'Token CSRF inválido.');
+            if ($jobId) {
+                header('Location: /jobs/' . $jobId);
+            } else {
+                header('Location: /jobs');
+            }
+            exit();
+        }
+
+        $installment = $this->jobInstallmentModel->find($installmentId);
+        if (!$installment) {
+            Session::flash('error', 'Parcela não encontrada.');
+            header('Location: /jobs/' . $jobId);
+            exit();
+        }
+
+        $amount = trim((string)($_POST['amount'] ?? ''));
+        $amount = $amount === '' ? null : (float)$amount;
+        $userId = (int)Session::get('user_id');
+
+        if ($this->jobInstallmentModel->markPaid($installmentId, $userId, $amount)) {
+            ForgeLogger::logAction('Parcela (ID: ' . $installmentId . ') da Tarefa (ID: ' . ($installment['job_id'] ?? 'N/A') . ') baixada pelo usuário ' . Session::get('user_name') . '.');
+            Session::flash('success', 'Parcela baixada com sucesso!');
+        } else {
+            Session::flash('error', 'Erro ao baixar parcela.');
+        }
+
+        header('Location: /jobs/' . $jobId);
         exit();
     }
 }

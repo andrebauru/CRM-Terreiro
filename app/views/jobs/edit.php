@@ -61,6 +61,16 @@
                 <label class="form-label">Data de Vencimento</label>
                 <input type="date" name="due_date" class="form-control" value="<?= htmlspecialchars($job['due_date']) ?>">
             </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Parcelas</label>
+                    <input type="number" name="installments" class="form-control" min="1" value="<?= htmlspecialchars($job['installments'] ?? 1) ?>">
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label class="form-label">Valor da Parcela</label>
+                    <input type="number" name="installment_value" class="form-control" step="0.01" min="0" value="<?= htmlspecialchars($job['installment_value'] ?? '') ?>" placeholder="Opcional">
+                </div>
+            </div>
             <div class="mb-3">
                 <label class="form-label">Atribuído a</label>
                 <select name="assigned_to" class="form-select">

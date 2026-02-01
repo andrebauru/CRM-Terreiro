@@ -1,3 +1,6 @@
+<?php
+use App\Helpers\Format;
+?>
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Detalhes do Serviço: <?= htmlspecialchars($service['name']) ?></h3>
@@ -29,7 +32,7 @@
             <dd class="col-9"><?= nl2br(htmlspecialchars($service['description'])) ?></dd>
 
             <dt class="col-3">Preço:</dt>
-            <dd class="col-9"><?= 'R$ ' . number_format($service['price'], 2, ',', '.') ?></dd>
+            <dd class="col-9"><?= htmlspecialchars(Format::currency((float)$service['price'], $settings ?? null)) ?></dd>
 
             <dt class="col-3">Ativo:</dt>
             <dd class="col-9">

@@ -53,6 +53,7 @@ $routes = [
         'services' => 'ServiceController@store',
         'jobs' => 'JobController@store',
         'jobs/(\d+)/notes' => 'JobController@addNote', // New route for adding notes
+        'jobs/installments/(\d+)/pay' => 'JobController@payInstallment',
         'users' => 'UserController@store', // New route for creating users
     ],
     'PUT' => [

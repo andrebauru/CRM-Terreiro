@@ -40,6 +40,9 @@ define('DB_CHARSET', $_ENV['DB_CHARSET'] ?? 'utf8mb4');
 define('APP_NAME', $_ENV['APP_NAME'] ?? 'CRM Terreiro');
 define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
 define('BASE_URL', $_ENV['BASE_URL'] ?? 'http://localhost:8000');
+define('APP_TIMEZONE', $_ENV['APP_TIMEZONE'] ?? 'Asia/Tokyo');
+
+date_default_timezone_set(APP_TIMEZONE);
 
 // Security settings
 define('CSRF_TOKEN_SECRET', $_ENV['CSRF_TOKEN_SECRET'] ?? 'your_very_strong_random_secret_key_here'); // CHANGE THIS IN .env!

@@ -16,6 +16,24 @@
                 <input type="text" name="company_name" class="form-control" value="<?= htmlspecialchars($settings['company_name'] ?? '') ?>" required>
             </div>
 
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Moeda (código)</label>
+                    <input type="text" name="currency_code" class="form-control" value="<?= htmlspecialchars($settings['currency_code'] ?? 'JPY') ?>" maxlength="3" required>
+                    <small class="form-text text-muted">Ex: JPY, BRL, USD</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Símbolo da Moeda</label>
+                    <input type="text" name="currency_symbol" class="form-control" value="<?= htmlspecialchars($settings['currency_symbol'] ?? '¥') ?>" maxlength="8" required>
+                    <small class="form-text text-muted">Ex: ¥, R$, $</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Fuso Horário</label>
+                    <input type="text" name="timezone" class="form-control" value="<?= htmlspecialchars($settings['timezone'] ?? APP_TIMEZONE) ?>" required>
+                    <small class="form-text text-muted">Ex: Asia/Tokyo</small>
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label">Logo</label>
                 <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp">

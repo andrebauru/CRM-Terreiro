@@ -88,14 +88,14 @@ class Job extends BaseModel
     /**
      * Create a new job.
      *
-     * @param array $data Job data (client_id, service_id, title, description, status, priority, channel, start_date, due_date, created_by, assigned_to).
+    * @param array $data Job data (client_id, service_id, title, description, status, priority, channel, start_date, due_date, installments, installment_value, created_by, assigned_to).
      * @return int The ID of the newly created job.
      */
     public function create(array $data): int
     {
         $stmt = $this->db->prepare("
-            INSERT INTO {$this->table} (client_id, service_id, title, description, status, priority, channel, start_date, due_date, created_by, assigned_to)
-            VALUES (:client_id, :service_id, :title, :description, :status, :priority, :channel, :start_date, :due_date, :created_by, :assigned_to)
+            INSERT INTO {$this->table} (client_id, service_id, title, description, status, priority, channel, start_date, due_date, installments, installment_value, created_by, assigned_to)
+            VALUES (:client_id, :service_id, :title, :description, :status, :priority, :channel, :start_date, :due_date, :installments, :installment_value, :created_by, :assigned_to)
         ");
         $stmt->bindParam(':client_id', $data['client_id'], PDO::PARAM_INT);
         $stmt->bindParam(':service_id', $data['service_id'], PDO::PARAM_INT);
@@ -106,6 +106,8 @@ class Job extends BaseModel
         $stmt->bindParam(':channel', $data['channel']);
         $stmt->bindParam(':start_date', $data['start_date']);
         $stmt->bindParam(':due_date', $data['due_date']);
+        $stmt->bindParam(':installments', $data['installments'], PDO::PARAM_INT);
+        $stmt->bindParam(':installment_value', $data['installment_value']);
         $stmt->bindParam(':created_by', $data['created_by'], PDO::PARAM_INT);
         $stmt->bindParam(':assigned_to', $data['assigned_to'], PDO::PARAM_INT);
         $stmt->execute();
@@ -132,6 +134,8 @@ class Job extends BaseModel
                 channel = :channel,
                 start_date = :start_date,
                 due_date = :due_date,
+                installments = :installments,
+                installment_value = :installment_value,
                 assigned_to = :assigned_to,
                 completed_at = :completed_at,
                 updated_at = CURRENT_TIMESTAMP
@@ -146,6 +150,8 @@ class Job extends BaseModel
         $stmt->bindParam(':channel', $data['channel']);
         $stmt->bindParam(':start_date', $data['start_date']);
         $stmt->bindParam(':due_date', $data['due_date']);
+        $stmt->bindParam(':installments', $data['installments'], PDO::PARAM_INT);
+        $stmt->bindParam(':installment_value', $data['installment_value']);
         $stmt->bindParam(':assigned_to', $data['assigned_to'], PDO::PARAM_INT);
         $stmt->bindParam(':completed_at', $data['completed_at']);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);

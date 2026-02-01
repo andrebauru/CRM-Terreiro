@@ -1,3 +1,6 @@
+<?php
+use App\Helpers\Format;
+?>
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Listagem de Serviços</h3>
@@ -29,7 +32,7 @@
                     <tr>
                         <td><?= htmlspecialchars($service['id']) ?></td>
                         <td><a href="/services/<?= htmlspecialchars($service['id']) ?>"><?= htmlspecialchars($service['name']) ?></a></td>
-                        <td><?= 'R$ ' . number_format($service['price'], 2, ',', '.') ?></td>
+                        <td><?= htmlspecialchars(Format::currency((float)$service['price'], $settings ?? null)) ?></td>
                         <td>
                             <?php if ($service['is_active']): ?>
                                 <span class="badge bg-success me-1">Ativo</span>
