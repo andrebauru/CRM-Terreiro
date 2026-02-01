@@ -1,19 +1,16 @@
-# Ignorar arquivos de ambiente
+# Composer dependencies
+/vendor/
+
+# Environment variables
 .env
 .env.local
 .env.*.local
 
-# Ignorar diretórios específicos
-/vendor/
-/node_modules/
+# Storage files
 /storage/uploads/
 /storage/logs/
-.forge/
 
-# Ignorar arquivos de log de forge
-.forge/history.json
-
-# Ignorar IDE e arquivos temporários
+# IDE specific files
 .idea/
 .vscode/
 *.iml

@@ -20,8 +20,11 @@ $routes = [
     'GET' => [
         '' => 'HomeController@index', // Default route, e.g., /
         'dashboard' => 'HomeController@dashboard', // Corrected controller
+        'dashboard/export/pdf' => 'ReportController@dashboardPdf',
+        'dashboard/export/xls' => 'ReportController@dashboardXls',
         'login' => 'AuthController@showLoginForm',
         'logout' => 'AuthController@logout',
+        'settings' => 'SettingsController@index',
         // Clients CRUD
         'clients' => 'ClientController@index',
         'clients/create' => 'ClientController@create',
@@ -45,6 +48,7 @@ $routes = [
     ],
     'POST' => [
         'login' => 'AuthController@login',
+        'settings' => 'SettingsController@update',
         'clients' => 'ClientController@store',
         'services' => 'ServiceController@store',
         'jobs' => 'JobController@store',
@@ -88,8 +92,12 @@ function dispatch(string $controllerAction, array $params = []): void
 
     // Fallback for 404 or other errors
     http_response_code(404);
+    $notFoundView = BASE_PATH . '/app/views/errors/404.php';
+    if (file_exists($notFoundView)) {
+        require $notFoundView;
+        return;
+    }
     echo "404 Not Found - Controller or method not found.";
-    // A proper view for 404 should be rendered here
 }
 
 $routeFound = false;
@@ -121,6 +129,10 @@ if (!$routeFound && isset($routes[$requestMethod])) {
 
 if (!$routeFound) {
     http_response_code(404);
-    echo "404 Not Found - No route matched.";
-    // A proper view for 404 should be rendered here
+    $notFoundView = BASE_PATH . '/app/views/errors/404.php';
+    if (file_exists($notFoundView)) {
+        require $notFoundView;
+    } else {
+        echo "404 Not Found - No route matched.";
+    }
 }

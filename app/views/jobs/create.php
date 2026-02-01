@@ -72,7 +72,7 @@
             <div class="mb-3">
                 <label class="form-label">Anexos</label>
                 <input type="file" name="attachments[]" class="form-control" multiple>
-                <small class="form-text text-muted">Max 5MB per file. Allowed types: PNG, JPG, JPEG, WEBP.</small>
+                <small class="form-text text-muted">Max 6MB per file. Allowed types: PNG, JPG, JPEG, WEBP.</small>
             </div>
             <div class="form-footer">
                 <button type="submit" class="btn btn-primary">Salvar Tarefa</button>

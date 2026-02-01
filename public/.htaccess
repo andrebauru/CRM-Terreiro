@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Redireciona a barra final se não for um diretório
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+# Lida com o Front Controller
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]

@@ -95,6 +95,9 @@ class Session
             self::delete($flashKey);
             return (string) $message;
         }
+        if ($default === null) {
+            return null;
+        }
         return (string) $default;
     }
 

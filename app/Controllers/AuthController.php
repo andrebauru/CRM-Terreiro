@@ -55,6 +55,7 @@ class AuthController
 
         if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
             // Authentication successful
+            session_regenerate_id(true);
             Session::set('user_id', $user['id']);
             Session::set('user_name', $user['name']);
             Session::set('user_role', $user['role']);

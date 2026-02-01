@@ -1,5 +1,6 @@
 <?php
 use App\Helpers\Session;
+use App\Models\Setting;
 
 // Redirect to login if not authenticated
 if (!Session::exists('user_id')) {
@@ -7,6 +8,10 @@ if (!Session::exists('user_id')) {
     exit();
 }
 
+$settings = (new Setting())->get();
+$companyName = $settings['company_name'] ?? APP_NAME;
+$clientName = $settings['client_name'] ?? '';
+$logoPath = $settings['logo_path'] ?? null;
 $title = $title ?? APP_NAME;
 ?>
 <!doctype html>
@@ -22,6 +27,13 @@ $title = $title ?? APP_NAME;
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            <a class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3" href="/dashboard">
+                <?php if (!empty($logoPath)): ?>
+                    <img src="<?= BASE_URL ?>/<?= htmlspecialchars($logoPath) ?>" height="36" alt="Logo" class="navbar-brand-image" style="max-height:36px; width:auto;">
+                <?php else: ?>
+                    <?= htmlspecialchars($companyName) ?>
+                <?php endif; ?>
+            </a>
             <div class="navbar-nav flex-row order-md-last">
                 <div class="nav-item d-none d-md-flex me-3">
                     <div class="btn-list">
@@ -58,7 +70,7 @@ $title = $title ?? APP_NAME;
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <a href="/profile" class="dropdown-item">Profile</a>
+                        <a href="/users/<?= urlencode((string) Session::get('user_id')) ?>/edit" class="dropdown-item">Perfil</a>
                         <div class="dropdown-divider"></div>
                         <a href="/logout" class="dropdown-item">Logout</a>
                     </div>
@@ -142,6 +154,16 @@ $title = $title ?? APP_NAME;
                                     </span>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/settings">
+                                    <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/settings -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37a1.724 1.724 0 0 0 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                                    </span>
+                                    <span class="nav-link-title">
+                                        Configurações
+                                    </span>
+                                </a>
+                            </li>
                         <?php endif; ?>
                     </ul>
                 </div>
@@ -165,21 +187,24 @@ $title = $title ?? APP_NAME;
         <!-- Page body -->
         <div class="page-body">
             <div class="container-xl d-flex flex-column justify-content-center">
-                <?php if (Session::exists('flash_success')): ?>
+                <?php $flashSuccess = Session::getFlash('success'); ?>
+                <?php if (!empty($flashSuccess)): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?= Session::getFlash('flash_success') ?>
+                        <?= htmlspecialchars($flashSuccess) ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
-                <?php if (Session::exists('flash_error')): ?>
+                <?php $flashError = Session::getFlash('error'); ?>
+                <?php if (!empty($flashError)): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?= Session::getFlash('flash_error') ?>
+                        <?= htmlspecialchars($flashError) ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
-                <?php if (Session::exists('flash_warning')): ?>
+                <?php $flashWarning = Session::getFlash('warning'); ?>
+                <?php if (!empty($flashWarning)): ?>
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        <?= Session::getFlash('flash_warning') ?>
+                        <?= htmlspecialchars($flashWarning) ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>

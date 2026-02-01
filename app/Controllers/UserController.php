@@ -18,11 +18,30 @@ class UserController
             header('Location: /login');
             exit();
         }
-        // Only admin can access user management
+        // Only admin can access user management (non-admin can only edit/update own profile)
         if (Session::get('user_role') !== 'admin') {
-            Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            header('Location: /dashboard');
-            exit();
+            $requestPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+            $requestMethod = $_SERVER['REQUEST_METHOD'];
+            if (isset($_POST['_method'])) {
+                $requestMethod = strtoupper($_POST['_method']);
+            }
+
+            $sessionUserId = (int) Session::get('user_id');
+            $isSelfEdit = false;
+            $isSelfUpdate = false;
+
+            if ($requestMethod === 'GET' && preg_match('#^users/(\d+)/edit$#', $requestPath, $matches)) {
+                $isSelfEdit = ((int) $matches[1] === $sessionUserId);
+            }
+            if ($requestMethod === 'PUT' && preg_match('#^users/(\d+)$#', $requestPath, $matches)) {
+                $isSelfUpdate = ((int) $matches[1] === $sessionUserId);
+            }
+
+            if (!$isSelfEdit && !$isSelfUpdate) {
+                Session::flash('error', 'Você não tem permissão para acessar esta área.');
+                header('Location: /dashboard');
+                exit();
+            }
         }
         $this->userModel = new User();
     }
@@ -118,15 +137,22 @@ class UserController
      */
     public function edit(int $id): void
     {
+        $isAdmin = Session::get('user_role') === 'admin';
+        if (!$isAdmin && $id !== (int) Session::get('user_id')) {
+            Session::flash('error', 'Você não tem permissão para acessar esta área.');
+            header('Location: /dashboard');
+            exit();
+        }
+
         $user = $this->userModel->findById($id);
 
         if (!$user) {
             Session::flash('error', 'Usuário não encontrado.');
-            header('Location: /users');
+            header('Location: ' . ($isAdmin ? '/users' : '/dashboard'));
             exit();
         }
 
-        $title = "Editar Usuário: " . $user['name'];
+        $title = $isAdmin ? "Editar Usuário: " . $user['name'] : "Editar Perfil";
         $csrfToken = Session::generateCsrfToken();
         ob_start();
         require_once BASE_PATH . '/app/views/users/edit.php';
@@ -141,16 +167,23 @@ class UserController
      */
     public function update(int $id): void
     {
+        $isAdmin = Session::get('user_role') === 'admin';
+        if (!$isAdmin && $id !== (int) Session::get('user_id')) {
+            Session::flash('error', 'Você não tem permissão para acessar esta área.');
+            header('Location: /dashboard');
+            exit();
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            header('Location: /users/' . $id . '/edit');
+            header('Location: ' . ($isAdmin ? '/users/' . $id . '/edit' : '/users/' . $id . '/edit'));
             exit();
         }
 
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
-        $role = $_POST['role'] ?? 'staff';
+        $role = $isAdmin ? ($_POST['role'] ?? 'staff') : (string) Session::get('user_role');
 
         if (empty($name) || empty($email)) {
             Session::flash('error', 'Por favor, preencha todos os campos obrigatórios (Nome, E-mail).');
@@ -178,12 +211,12 @@ class UserController
         }
 
         if ($this->userModel->update($id, $data)) {
-            Session::flash('success', 'Usuário atualizado com sucesso!');
-            header('Location: /users');
+            Session::flash('success', $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!');
+            header('Location: ' . ($isAdmin ? '/users' : '/dashboard'));
             exit();
         } else {
-            Session::flash('error', 'Erro ao atualizar usuário.');
-            header('Location: /users/' . $id . '/edit');
+            Session::flash('error', $isAdmin ? 'Erro ao atualizar usuário.' : 'Erro ao atualizar perfil.');
+            header('Location: ' . ($isAdmin ? '/users/' . $id . '/edit' : '/users/' . $id . '/edit'));
             exit();
         }
     }

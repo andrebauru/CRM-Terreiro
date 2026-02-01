@@ -3,7 +3,8 @@
         <h3 class="card-title"><?= htmlspecialchars($title) ?></h3>
     </div>
     <div class="card-body">
-        <form action="/services/<?= htmlspecialchars($service['id']) ?>/update" method="POST">
+        <form action="/services/<?= htmlspecialchars($service['id']) ?>" method="POST">
+            <input type="hidden" name="_method" value="PUT">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
             <div class="mb-3">
                 <label class="form-label">Nome do Serviço</label>

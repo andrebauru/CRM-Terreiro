@@ -12,6 +12,14 @@ $title = "Dashboard"; // Define title for layout
 ?>
 
 <div class="row row-cards">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body d-flex gap-2">
+                <a href="/dashboard/export/pdf" class="btn btn-outline-primary">Exportar PDF</a>
+                <a href="/dashboard/export/xls" class="btn btn-outline-success">Exportar XLS</a>
+            </div>
+        </div>
+    </div>
     <div class="col-sm-6 col-lg-3">
         <div class="card card-sm">
             <div class="card-body">

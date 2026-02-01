@@ -24,8 +24,7 @@ class JobController
     private JobNote $jobNoteModel; // Instância do modelo JobNote
 
     // Constantes para upload de arquivos
-    private const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-    private const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 
     public function __construct()
     {
@@ -101,6 +100,19 @@ class JobController
             exit();
         }
 
+        $allowedStatus = ['pending', 'in_progress', 'completed', 'cancelled'];
+        $allowedPriority = ['low', 'medium', 'high'];
+        if (!in_array($status, $allowedStatus, true)) {
+            Session::flash('error', 'Status inválido.');
+            header('Location: /jobs/create');
+            exit();
+        }
+        if (!in_array($priority, $allowedPriority, true)) {
+            Session::flash('error', 'Prioridade inválida.');
+            header('Location: /jobs/create');
+            exit();
+        }
+
         $data = [
             'client_id' => $clientId,
             'service_id' => $serviceId,
@@ -121,6 +133,7 @@ class JobController
             ForgeLogger::logAction('Tarefa "' . $title . '" (ID: ' . $jobId . ') criada pelo usuário ' . Session::get('user_name') . '.'); // Log action
             // Handle file uploads
             if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
+                $sequence = 0;
                 foreach ($_FILES['attachments']['name'] as $key => $name) {
                     if ($_FILES['attachments']['error'][$key] === UPLOAD_ERR_OK) {
                         $uploadedFile = [
@@ -131,7 +144,10 @@ class JobController
                             'size' => $_FILES['attachments']['size'][$key],
                         ];
 
-                        $uploadResult = Upload::handleUpload($uploadedFile, UPLOAD_PATH, self::ALLOWED_MIME_TYPES, self::MAX_FILE_SIZE);
+                        $uploadResult = Upload::handleCompressedImageUpload(
+                            $uploadedFile,
+                            UPLOAD_PATH
+                        );
 
                         if ($uploadResult) {
                             $this->jobAttachmentModel->create([
@@ -142,6 +158,7 @@ class JobController
                                 'file_type' => $uploadResult['file_type'],
                                 'file_size' => $uploadResult['file_size'],
                             ]);
+                            $sequence++;
                         }
                     }
                 }
@@ -168,6 +185,14 @@ class JobController
 
         if (!$job) {
             Session::flash('error', 'Tarefa não encontrada.');
+            header('Location: /jobs');
+            exit();
+        }
+
+        $currentUserId = Session::get('user_id');
+        $currentUserRole = Session::get('user_role');
+        if ($currentUserRole !== 'admin' && (int)$job['created_by'] !== (int)$currentUserId) {
+            Session::flash('error', 'Você não tem permissão para excluir esta tarefa.');
             header('Location: /jobs');
             exit();
         }
@@ -244,6 +269,19 @@ class JobController
             exit();
         }
 
+        $allowedStatus = ['pending', 'in_progress', 'completed', 'cancelled'];
+        $allowedPriority = ['low', 'medium', 'high'];
+        if (!in_array($status, $allowedStatus, true)) {
+            Session::flash('error', 'Status inválido.');
+            header('Location: /jobs/' . $id . '/edit');
+            exit();
+        }
+        if (!in_array($priority, $allowedPriority, true)) {
+            Session::flash('error', 'Prioridade inválida.');
+            header('Location: /jobs/' . $id . '/edit');
+            exit();
+        }
+
         $data = [
             'client_id' => $clientId,
             'service_id' => $serviceId,
@@ -263,6 +301,7 @@ class JobController
             // Handle file uploads
             if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
                 $createdBy = Session::get('user_id'); // User who is updating/uploading
+                $sequence = 0;
                 foreach ($_FILES['attachments']['name'] as $key => $name) {
                     if ($_FILES['attachments']['error'][$key] === UPLOAD_ERR_OK) {
                         $uploadedFile = [
@@ -273,7 +312,10 @@ class JobController
                             'size' => $_FILES['attachments']['size'][$key],
                         ];
 
-                        $uploadResult = Upload::handleUpload($uploadedFile, UPLOAD_PATH, self::ALLOWED_MIME_TYPES, self::MAX_FILE_SIZE);
+                        $uploadResult = Upload::handleCompressedImageUpload(
+                            $uploadedFile,
+                            UPLOAD_PATH
+                        );
 
                         if ($uploadResult) {
                             $this->jobAttachmentModel->create([
@@ -284,6 +326,7 @@ class JobController
                                 'file_type' => $uploadResult['file_type'],
                                 'file_size' => $uploadResult['file_size'],
                             ]);
+                            $sequence++;
                         }
                     }
                 }
@@ -409,8 +452,17 @@ class JobController
             exit();
         }
 
-        // Optional: Check if the current user is authorized to delete this note
-        // e.g., if (Session::get('user_id') !== $note['user_id'] && Session::get('user_role') !== 'admin') { ... }
+        $currentUserId = Session::get('user_id');
+        $currentUserRole = Session::get('user_role');
+        if ($currentUserRole !== 'admin' && $currentUserId !== ($note['user_id'] ?? null)) {
+            Session::flash('error', 'Você não tem permissão para excluir esta nota.');
+            if ($jobId) {
+                header('Location: /jobs/' . $jobId);
+            } else {
+                header('Location: /jobs');
+            }
+            exit();
+        }
 
         if ($this->jobNoteModel->delete($noteId)) {
             ForgeLogger::logAction('Nota (ID: ' . $noteId . ') da Tarefa (ID: ' . ($note['job_id'] ?? 'N/A') . ') excluída pelo usuário ' . Session::get('user_name') . '.'); // Log action
@@ -451,6 +503,18 @@ class JobController
 
         if (!$attachment) {
             Session::flash('error', 'Anexo não encontrado.');
+            if ($jobId) {
+                header('Location: /jobs/' . $jobId . '/edit');
+            } else {
+                header('Location: /jobs');
+            }
+            exit();
+        }
+
+        $currentUserId = Session::get('user_id');
+        $currentUserRole = Session::get('user_role');
+        if ($currentUserRole !== 'admin' && $currentUserId !== ($attachment['user_id'] ?? null)) {
+            Session::flash('error', 'Você não tem permissão para excluir este anexo.');
             if ($jobId) {
                 header('Location: /jobs/' . $jobId . '/edit');
             } else {

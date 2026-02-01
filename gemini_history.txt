@@ -1,3 +1,8 @@
+- **2026-02-01**: Correção: Revertida remoção indevida de `.forge/` do `.gitignore`.
+- **2026-02-01**: Commit e push das atualizações do `README.md`, `.gitignore` e criação de `index.php` na raiz.
+  - `README.md`: Explicação aprimorada da configuração de banco de dados e adicionada seção de hospedagem online, removida referência a `.forge/`.
+  - `.gitignore`: Removidas referências a `.forge/`.
+  - `index.php`: Criado arquivo `index.php` na raiz do projeto (cópia de `public/index.php` com caminhos relativos ajustados).
 - **2026-02-01**: Commit e push das atualizações do `README.md` e `.gitignore`.
 - **2026-02-01**: Atualização de documentação e configuração de ignorados.
   - `README.md`: Adicionadas instruções detalhadas para configuração de `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` no arquivo `.env`.

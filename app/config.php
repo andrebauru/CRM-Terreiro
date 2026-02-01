@@ -5,17 +5,27 @@ declare(strict_types=1);
 // Basic configuration for the application
 // This file will load environment variables and define global constants.
 
-// Load environment variables (simple .env file parsing)
+// Load environment variables
 $envFile = BASE_PATH . '/.env';
 if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (str_starts_with($line, '#')) {
-            continue;
+    if (class_exists(\Dotenv\Dotenv::class)) {
+        $dotenv = \Dotenv\Dotenv::createImmutable(BASE_PATH);
+        $dotenv->safeLoad();
+    } else {
+        // Fallback: simple .env file parsing
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            if (str_starts_with($line, '#')) {
+                continue;
+            }
+            $parts = explode('=', $line, 2);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            [$key, $value] = $parts;
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[$key] = $value;
-        $_SERVER[$key] = $value;
     }
 }
 

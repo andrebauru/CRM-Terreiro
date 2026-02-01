@@ -34,16 +34,18 @@ $csrfToken = Session::generateCsrfToken(); // Ensure CSRF token is available
 <div class="page page-center">
     <div class="container container-tight py-4">
         <div class="text-center mb-4">
-            <a href="." class="navbar-brand navbar-brand-autodark"><img src="<?= BASE_URL ?>/static/logo.svg" height="36" alt=""></a>
+            <a href="." class="navbar-brand navbar-brand-autodark"><img src="<?= BASE_URL ?>/static/logo-quimbanda.png" height="64" alt="Logo"></a>
         </div>
         <div class="card card-md">
             <div class="card-body">
                 <h2 class="h2 text-center mb-4">Login to your account</h2>
-                <?php if (Session::exists('flash_success')): ?>
-                    <div class="alert alert-success" role="alert"><?= Session::getFlash('flash_success') ?></div>
+                <?php $flashSuccess = Session::getFlash('success'); ?>
+                <?php if (!empty($flashSuccess)): ?>
+                    <div class="alert alert-success" role="alert"><?= htmlspecialchars($flashSuccess) ?></div>
                 <?php endif; ?>
-                <?php if (Session::exists('flash_error')): ?>
-                    <div class="alert alert-danger" role="alert"><?= Session::getFlash('flash_error') ?></div>
+                <?php $flashError = Session::getFlash('error'); ?>
+                <?php if (!empty($flashError)): ?>
+                    <div class="alert alert-danger" role="alert"><?= htmlspecialchars($flashError) ?></div>
                 <?php endif; ?>
                 <form action="/login" method="POST" autocomplete="off" novalidate>
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">

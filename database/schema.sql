@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS jobs;
 DROP TABLE IF EXISTS services;
 DROP TABLE IF EXISTS clients;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS settings;
 
 -- Table for users
 CREATE TABLE users (
@@ -16,6 +17,16 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'staff') NOT NULL DEFAULT 'staff',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table for application settings (single row)
+CREATE TABLE settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_name VARCHAR(255),
+    company_name VARCHAR(255),
+    logo_path VARCHAR(512),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

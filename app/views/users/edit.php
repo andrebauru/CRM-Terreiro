@@ -3,6 +3,7 @@
         <h3 class="card-title"><?= htmlspecialchars($title) ?></h3>
     </div>
     <div class="card-body">
+        <?php $isAdmin = \App\Helpers\Session::get('user_role') === 'admin'; ?>
         <form action="/users/<?= htmlspecialchars($user['id']) ?>" method="POST">
             <input type="hidden" name="_method" value="PUT">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
@@ -18,16 +19,18 @@
                 <label class="form-label">Senha (deixe em branco para não alterar)</label>
                 <input type="password" name="password" class="form-control" placeholder="Nova Senha">
             </div>
-            <div class="mb-3">
-                <label class="form-label">Função</label>
-                <select name="role" class="form-select" required>
-                    <option value="staff" <?= $user['role'] == 'staff' ? 'selected' : '' ?>>Staff</option>
-                    <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
-                </select>
-            </div>
+            <?php if ($isAdmin): ?>
+                <div class="mb-3">
+                    <label class="form-label">Função</label>
+                    <select name="role" class="form-select" required>
+                        <option value="staff" <?= $user['role'] == 'staff' ? 'selected' : '' ?>>Staff</option>
+                        <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
+                    </select>
+                </div>
+            <?php endif; ?>
             <div class="form-footer">
-                <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
-                <a href="/users" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary"><?= $isAdmin ? 'Atualizar Usuário' : 'Atualizar Perfil' ?></button>
+                <a href="<?= $isAdmin ? '/users' : '/dashboard' ?>" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
