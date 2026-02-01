@@ -8,6 +8,10 @@
 /node_modules/
 /storage/uploads/
 /storage/logs/
+.forge/
+
+# Ignorar arquivos de log de forge
+.forge/history.json
 
 # Ignorar IDE e arquivos temporários
 .idea/
