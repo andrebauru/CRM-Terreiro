@@ -1,0 +1,13 @@
+- **2026-02-01**: Atualização de documentação e configuração de ignorados.
+  - `README.md`: Adicionadas instruções detalhadas para configuração de `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` no arquivo `.env`.
+  - `.gitignore`: Adicionada a entrada `.forge/` para ignorar o diretório completo.
+- **2026-02-01**: Atualização do `README.md` e criação de repositório privado no GitHub.
+  - Atualizado `README.md` com placeholder para URL do repositório e padronização de direitos autorais.
+  - Criado repositório privado `CRM-Terreiro` no GitHub e push inicial do projeto.
+- **2026-02-01**: Análise e correção de vulnerabilidades de upload de arquivos.
+  - Ajustadas permissões de diretório de `0777` para `0755` em `app/Helpers/Upload.php`.
+  - Removida constante `MAX_IMAGE_BYTES` de `app/Controllers/JobController.php`.
+  - Adicionada e utilizada constante `MAX_UPLOAD_IMAGE_SIZE` (6MB) em `app/Helpers/Upload.php`.
+  - Modificado `handleCompressedImageUpload` em `app/Helpers/Upload.php` para usar UUIDs nos nomes dos arquivos.
+  - Adicionada validação de tipo MIME seguro em `handleCompressedImageUpload` em `app/Helpers/Upload.php`.
+  - Atualizadas as chamadas de `handleCompressedImageUpload` em `app/Controllers/JobController.php` e `app/Controllers/SettingsController.php` para a nova assinatura.

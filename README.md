@@ -15,7 +15,7 @@ Este é um projeto de CRM (Customer Relationship Management) construído com PHP
 -   **Gestão de Serviços:** CRUD de serviços oferecidos.
 -   **Gestão de Tarefas (Jobs):** CRUD de tarefas com status, prioridade e canal, incluindo notas e anexos.
 -   **Dashboard:** Visão geral com estatísticas básicas.
--   **Uploads Seguros:** Anexos de tarefas com validação de tipo, tamanho, renomeação UUID e armazenamento organizado.
+-   **Uploads Seguros:** Anexos de tarefas com validação robusta de tipo MIME, uso de UUIDs para nomes de arquivos, compressão otimizada de imagens, permissões de diretório restritas (`0755`) e limite de tamanho de até 6MB.
 
 ## Estrutura do Projeto
 
@@ -28,7 +28,7 @@ Este é um projeto de CRM (Customer Relationship Management) construído com PHP
 ## Instalação e Configuração
 
 1.  **Clone o repositório:**
-    `git clone [URL_DO_REPOSITORIO]`
+    `git clone SEU_REPOSITORIO_AQUI`
     `cd CRM-Terreiro`
 
 2.  **Configuração do Ambiente:**
@@ -36,7 +36,13 @@ Este é um projeto de CRM (Customer Relationship Management) construído com PHP
     `cp .env.example .env`
 
 3.  **Configuração do Banco de Dados:**
-    Crie um banco de dados MySQL (`crm_terreiro` ou o nome que preferir).
+    No arquivo `.env` que você criou, configure as credenciais do seu banco de dados:
+    `DB_HOST=seu_host_do_banco` (geralmente `localhost` ou o IP do servidor)
+    `DB_NAME=nome_do_seu_banco_de_dados` (ex: `crm_terreiro`)
+    `DB_USER=seu_usuario_do_banco` (ex: `root`)
+    `DB_PASS=sua_senha_do_banco`
+
+    Crie um banco de dados MySQL com o `nome_do_seu_banco_de_dados` (ex: `crm_terreiro`).
     Importe `database/schema.sql` e `database/seed.sql` para popular o banco de dados.
 
 4.  **Servidor Web:**
@@ -50,3 +56,4 @@ Este é um projeto de CRM (Customer Relationship Management) construído com PHP
 ## Direitos Autorais
 
 Direitos Autorais: Andre Silva
+
