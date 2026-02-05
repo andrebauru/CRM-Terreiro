@@ -39,7 +39,33 @@ define('DB_CHARSET', $_ENV['DB_CHARSET'] ?? 'utf8mb4');
 // Application settings
 define('APP_NAME', $_ENV['APP_NAME'] ?? 'CRM Terreiro');
 define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
-define('BASE_URL', $_ENV['BASE_URL'] ?? 'http://localhost:8000');
+
+// Dynamic BASE_URL - detecta corretamente o caminho base
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+// Calcula o caminho base removendo /public/index.php ou /index.php
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+$basePath = '';
+
+if (strpos($scriptName, '/public/index.php') !== false) {
+    $basePath = str_replace('/public/index.php', '', $scriptName);
+} elseif (strpos($scriptName, '/index.php') !== false) {
+    $basePath = dirname(dirname($scriptName));
+    if ($basePath === '\\' || $basePath === '/') {
+        $basePath = '';
+    }
+}
+
+// Remove barra final se existir
+$basePath = rtrim($basePath, '/');
+
+// BASE_URL aponta para a pasta public (para CSS, JS, imagens)
+define('BASE_URL', $protocol . $host . $basePath . '/public');
+
+// ROUTE_BASE é o caminho base para links/rotas (sem /public pois .htaccess redireciona)
+define('ROUTE_BASE', $basePath);
+
 define('APP_TIMEZONE', $_ENV['APP_TIMEZONE'] ?? 'Asia/Tokyo');
 
 date_default_timezone_set(APP_TIMEZONE);

@@ -3,7 +3,7 @@
 use App\Helpers\Session;
 
 $title = "Login - " . APP_NAME;
-$csrfToken = Session::generateCsrfToken(); // Ensure CSRF token is available
+$csrfToken = Session::generateCsrfToken();
 ?>
 
 <!doctype html>
@@ -13,64 +13,503 @@ $csrfToken = Session::generateCsrfToken(); // Ensure CSRF token is available
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
     <title><?= htmlspecialchars($title) ?></title>
-    <!-- Tabler Core -->
-    <link href="<?= BASE_URL ?>/static/tabler/dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="<?= BASE_URL ?>/static/tabler/dist/css/tabler-flags.min.css" rel="stylesheet"/>
-    <link href="<?= BASE_URL ?>/static/tabler/dist/css/tabler-payments.min.css" rel="stylesheet"/>
-    <link href="<?= BASE_URL ?>/static/tabler/dist/css/tabler-vendors.min.css" rel="stylesheet"/>
-    <link href="<?= BASE_URL ?>/static/css/demo.min.css" rel="stylesheet"/>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://rsms.me/inter/inter.css');
         :root {
-            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: rgba(99, 102, 241, 0.1);
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #334155;
+            --input-bg: #0f172a;
+            --success-color: #10b981;
+            --error-color: #ef4444;
         }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-feature-settings: "cv03", "cv04", "cv11";
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Floating Shapes */
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            left: -50px;
+            animation-delay: -5s;
+        }
+
+        .shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            right: 10%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow:
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-container img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 20px rgba(99, 102, 241, 0.3));
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container img:hover {
+            transform: scale(1.05);
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .login-title h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .login-title p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .alert {
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .alert i {
+            font-size: 1.25rem;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            transition: color 0.2s ease;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--text-primary);
+            background: var(--input-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .form-control:focus + i,
+        .input-wrapper:focus-within i {
+            color: var(--primary-color);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+            transition: color 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--text-secondary);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            color: white;
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-login:hover::before {
+            left: 100%;
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login i {
+            font-size: 1.2rem;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-text p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer-text .brand {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .form-group:nth-child(1) { animation: fadeInUp 0.6s ease-out 0.1s both; }
+        .form-group:nth-child(2) { animation: fadeInUp 0.6s ease-out 0.2s both; }
+        .btn-login { animation: fadeInUp 0.6s ease-out 0.3s both; }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 36px 24px;
+                border-radius: 20px;
+            }
+
+            .logo-container img {
+                width: 100px;
+                height: 100px;
+            }
+
+            .login-title h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Loading state */
+        .btn-login.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn-login.loading .btn-text {
+            visibility: hidden;
+        }
+
+        .btn-login.loading::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class=" d-flex flex-column">
-<script src="<?= BASE_URL ?>/static/tabler/dist/js/demo-theme.min.js"></script>
-<div class="page page-center">
-    <div class="container container-tight py-4">
-        <div class="text-center mb-4">
-            <a href="." class="navbar-brand navbar-brand-autodark"><img src="<?= BASE_URL ?>/static/logo-quimbanda.png" height="64" alt="Logo"></a>
-        </div>
-        <div class="card card-md">
-            <div class="card-body">
-                <h2 class="h2 text-center mb-4">Login to your account</h2>
-                <?php $flashSuccess = Session::getFlash('success'); ?>
-                <?php if (!empty($flashSuccess)): ?>
-                    <div class="alert alert-success" role="alert"><?= htmlspecialchars($flashSuccess) ?></div>
-                <?php endif; ?>
-                <?php $flashError = Session::getFlash('error'); ?>
-                <?php if (!empty($flashError)): ?>
-                    <div class="alert alert-danger" role="alert"><?= htmlspecialchars($flashError) ?></div>
-                <?php endif; ?>
-                <form action="/login" method="POST" autocomplete="off" novalidate>
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                    <div class="mb-3">
-                        <label class="form-label">Email address</label>
-                        <input type="email" name="email" class="form-control" placeholder="your@email.com" autocomplete="off">
+<body>
+    <!-- Floating Background Shapes -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Logo -->
+            <div class="logo-container">
+                <img src="<?= BASE_URL ?>/static/logo-quimbanda.png" alt="<?= htmlspecialchars(APP_NAME) ?>">
+            </div>
+
+            <!-- Title -->
+            <div class="login-title">
+                <h1>Bem-vindo de volta</h1>
+                <p>Entre com suas credenciais para acessar o sistema</p>
+            </div>
+
+            <!-- Flash Messages -->
+            <?php $flashSuccess = Session::getFlash('success'); ?>
+            <?php if (!empty($flashSuccess)): ?>
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span><?= htmlspecialchars($flashSuccess) ?></span>
+                </div>
+            <?php endif; ?>
+
+            <?php $flashError = Session::getFlash('error'); ?>
+            <?php if (!empty($flashError)): ?>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span><?= htmlspecialchars($flashError) ?></span>
+                </div>
+            <?php endif; ?>
+
+            <!-- Login Form -->
+            <form action="<?= ROUTE_BASE ?>/login" method="POST" autocomplete="off" id="loginForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                            placeholder="seu@email.com"
+                            autocomplete="email"
+                            required
+                        >
+                        <i class="bi bi-envelope"></i>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">
-                            Password
-                        </label>
-                        <div class="input-group input-group-flat">
-                            <input type="password" name="password" class="form-control" placeholder="Your password" autocomplete="off">
-                        </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="password"
+                            name="password"
+                            class="form-control"
+                            placeholder="Digite sua senha"
+                            autocomplete="current-password"
+                            id="passwordInput"
+                            required
+                        >
+                        <i class="bi bi-lock"></i>
+                        <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Mostrar senha">
+                            <i class="bi bi-eye" id="toggleIcon"></i>
+                        </button>
                     </div>
-                    <div class="form-footer">
-                        <button type="submit" class="btn btn-primary w-100">Sign in</button>
-                    </div>
-                </form>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    <span class="btn-text">Entrar no Sistema</span>
+                    <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="footer-text">
+                <p><span class="brand"><?= htmlspecialchars(APP_NAME) ?></span> &mdash; Sistema de Gestão</p>
             </div>
         </div>
     </div>
-</div>
-<!-- Tabler Core -->
-<script src="<?= BASE_URL ?>/static/tabler/dist/js/tabler.min.js" defer></script>
-<script src="<?= BASE_URL ?>/static/js/demo.min.js" defer></script>
+
+    <script>
+        // Password toggle
+        function togglePassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleIcon = document.getElementById('toggleIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            }
+        }
+
+        // Form submission with loading state
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const btn = this.querySelector('.btn-login');
+            btn.classList.add('loading');
+        });
+
+        // Focus first input on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.querySelector('input[name="email"]');
+            if (emailInput && !emailInput.value) {
+                emailInput.focus();
+            }
+        });
+    </script>
 </body>
 </html>

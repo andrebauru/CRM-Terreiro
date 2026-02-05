@@ -15,7 +15,7 @@ class UserController
     {
         // Redirect to login if not authenticated
         if (!Session::exists('user_id')) {
-            header('Location: /login');
+            header('Location: ' . ROUTE_BASE . '/login');
             exit();
         }
         // Only admin can access user management (non-admin can only edit/update own profile)
@@ -39,7 +39,7 @@ class UserController
 
             if (!$isSelfEdit && !$isSelfUpdate) {
                 Session::flash('error', 'Você não tem permissão para acessar esta área.');
-                header('Location: /dashboard');
+                header('Location: ' . ROUTE_BASE . '/dashboard');
                 exit();
             }
         }
@@ -66,6 +66,14 @@ class UserController
     {
         $title = "Novo Usuário";
         $csrfToken = Session::generateCsrfToken();
+
+        if ($this->isAjax()) {
+            ob_start();
+            require_once BASE_PATH . '/app/views/users/create.php';
+            echo ob_get_clean();
+            return;
+        }
+
         ob_start();
         require_once BASE_PATH . '/app/views/users/create.php';
         $content = ob_get_clean();
@@ -78,55 +86,28 @@ class UserController
     public function store(): void
     {
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
-            Session::flash('error', 'Token CSRF inválido.');
-            header('Location: /users/create');
-            exit();
+            $this->handleError('Token CSRF inválido.');
         }
 
-        $name = trim($_POST['name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $role = $_POST['role'] ?? 'staff';
-
-        if (empty($name) || empty($email) || empty($password)) {
-            Session::flash('error', 'Por favor, preencha todos os campos obrigatórios (Nome, E-mail, Senha).');
-            header('Location: /users/create');
-            exit();
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            Session::flash('error', 'O e-mail fornecido não é válido.');
-            header('Location: /users/create');
-            exit();
-        }
-        if (strlen($password) < 6) {
-            Session::flash('error', 'A senha deve ter no mínimo 6 caracteres.');
-            header('Location: /users/create');
-            exit();
-        }
-        // Check if email already exists
-        if ($this->userModel->findByEmail($email)) {
-            Session::flash('error', 'Este e-mail já está em uso.');
-            header('Location: /users/create');
-            exit();
+        $errors = $this->validateUserData($_POST);
+        if (!empty($errors)) {
+            $this->handleError(implode('<br>', $errors));
         }
 
-        $data = [
-            'name' => $name,
-            'email' => $email,
-            'password' => $password,
-            'role' => $role,
-        ];
-
+        $data = $this->prepareUserData($_POST);
         $userId = $this->userModel->create($data);
 
         if ($userId) {
+            if ($this->isAjax()) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Usuário criado com sucesso!']);
+                exit();
+            }
             Session::flash('success', 'Usuário criado com sucesso!');
-            header('Location: /users');
+            header('Location: ' . ROUTE_BASE . '/users');
             exit();
         } else {
-            Session::flash('error', 'Erro ao criar usuário.');
-            header('Location: /users/create');
-            exit();
+            $this->handleError('Erro ao criar usuário.');
         }
     }
 
@@ -140,7 +121,7 @@ class UserController
         $isAdmin = Session::get('user_role') === 'admin';
         if (!$isAdmin && $id !== (int) Session::get('user_id')) {
             Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            header('Location: /dashboard');
+            header('Location: ' . ROUTE_BASE . '/dashboard');
             exit();
         }
 
@@ -148,12 +129,20 @@ class UserController
 
         if (!$user) {
             Session::flash('error', 'Usuário não encontrado.');
-            header('Location: ' . ($isAdmin ? '/users' : '/dashboard'));
+            header('Location: ' . ROUTE_BASE . ($isAdmin ? '/users' : '/dashboard'));
             exit();
         }
 
-        $title = $isAdmin ? "Editar Usuário: " . $user['name'] : "Editar Perfil";
+        $title = $isAdmin ? "Editar Usuário: " . htmlspecialchars($user['name']) : "Editar Perfil";
         $csrfToken = Session::generateCsrfToken();
+
+        if ($this->isAjax()) {
+            ob_start();
+            require_once BASE_PATH . '/app/views/users/edit.php';
+            echo ob_get_clean();
+            return;
+        }
+
         ob_start();
         require_once BASE_PATH . '/app/views/users/edit.php';
         $content = ob_get_clean();
@@ -169,55 +158,36 @@ class UserController
     {
         $isAdmin = Session::get('user_role') === 'admin';
         if (!$isAdmin && $id !== (int) Session::get('user_id')) {
-            Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            header('Location: /dashboard');
-            exit();
+            $this->handleError('Você não tem permissão para acessar esta área.', $id, $isAdmin);
         }
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
-            Session::flash('error', 'Token CSRF inválido.');
-            header('Location: ' . ($isAdmin ? '/users/' . $id . '/edit' : '/users/' . $id . '/edit'));
-            exit();
+            $this->handleError('Token CSRF inválido.', $id, $isAdmin);
         }
 
-        $name = trim($_POST['name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $role = $isAdmin ? ($_POST['role'] ?? 'staff') : (string) Session::get('user_role');
-
-        if (empty($name) || empty($email)) {
-            Session::flash('error', 'Por favor, preencha todos os campos obrigatórios (Nome, E-mail).');
-            header('Location: /users/' . $id . '/edit');
-            exit();
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            Session::flash('error', 'O e-mail fornecido não é válido.');
-            header('Location: /users/' . $id . '/edit');
-            exit();
-        }
-        if (!empty($password) && strlen($password) < 6) {
-            Session::flash('error', 'A senha deve ter no mínimo 6 caracteres.');
-            header('Location: /users/' . $id . '/edit');
-            exit();
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            $this->handleError('Usuário não encontrado.', $id, $isAdmin);
         }
 
-        $data = [
-            'name' => $name,
-            'email' => $email,
-            'role' => $role,
-        ];
-        if (!empty($password)) {
-            $data['password'] = $password;
+        $errors = $this->validateUserData($_POST, $id);
+        if (!empty($errors)) {
+            $this->handleError(implode('<br>', $errors), $id, $isAdmin);
         }
+
+        $data = $this->prepareUserData($_POST, $isAdmin);
 
         if ($this->userModel->update($id, $data)) {
+            if ($this->isAjax()) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!']);
+                exit();
+            }
             Session::flash('success', $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!');
-            header('Location: ' . ($isAdmin ? '/users' : '/dashboard'));
+            header('Location: ' . ROUTE_BASE . ($isAdmin ? '/users' : '/dashboard'));
             exit();
         } else {
-            Session::flash('error', $isAdmin ? 'Erro ao atualizar usuário.' : 'Erro ao atualizar perfil.');
-            header('Location: ' . ($isAdmin ? '/users/' . $id . '/edit' : '/users/' . $id . '/edit'));
-            exit();
+            $this->handleError($isAdmin ? 'Erro ao atualizar usuário.' : 'Erro ao atualizar perfil.', $id, $isAdmin);
         }
     }
 
@@ -230,14 +200,14 @@ class UserController
     {
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            header('Location: /users');
+            header('Location: ' . ROUTE_BASE . '/users');
             exit();
         }
 
         // Prevent admin from deleting themselves
         if ($id === Session::get('user_id')) {
             Session::flash('error', 'Você não pode excluir seu próprio usuário.');
-            header('Location: /users');
+            header('Location: ' . ROUTE_BASE . '/users');
             exit();
         }
 
@@ -246,7 +216,79 @@ class UserController
         } else {
             Session::flash('error', 'Erro ao excluir usuário.');
         }
-        header('Location: /users');
+        header('Location: ' . ROUTE_BASE . '/users');
+        exit();
+    }
+
+    private function isAjax(): bool
+    {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+
+    private function validateUserData(array $post, ?int $userId = null): array
+    {
+        $errors = [];
+        $name = trim($post['name'] ?? '');
+        $email = trim($post['email'] ?? '');
+        $password = $post['password'] ?? '';
+
+        if (empty($name)) {
+            $errors[] = 'O nome é obrigatório.';
+        }
+        if (empty($email)) {
+            $errors[] = 'O e-mail é obrigatório.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'O e-mail fornecido não é válido.';
+        } else {
+            $existingUser = $this->userModel->findByEmail($email);
+            if ($existingUser && $existingUser['id'] !== $userId) {
+                $errors[] = 'Este e-mail já está em uso.';
+            }
+        }
+
+        if ($userId === null) { // Create mode
+            if (empty($password)) {
+                $errors[] = 'A senha é obrigatória.';
+            } elseif (strlen($password) < 6) {
+                $errors[] = 'A senha deve ter no mínimo 6 caracteres.';
+            }
+        } else { // Edit mode
+            if (!empty($password) && strlen($password) < 6) {
+                $errors[] = 'A nova senha deve ter no mínimo 6 caracteres.';
+            }
+        }
+
+        return $errors;
+    }
+
+    private function prepareUserData(array $post, bool $isAdmin = false): array
+    {
+        $data = [
+            'name' => trim($post['name'] ?? ''),
+            'email' => trim($post['email'] ?? ''),
+            'role' => $isAdmin ? ($post['role'] ?? 'staff') : (string) Session::get('user_role'),
+        ];
+        if (!empty($post['password'])) {
+            $data['password'] = $post['password'];
+        }
+        return $data;
+    }
+
+    private function handleError(string $message, ?int $userId = null, bool $isAdmin = false): void
+    {
+        if ($this->isAjax()) {
+            header('Content-Type: application/json');
+            http_response_code(422);
+            echo json_encode(['success' => false, 'errors' => [$message]]);
+            exit();
+        }
+        Session::flash('error', $message);
+        if ($userId) {
+            $location = ROUTE_BASE . '/users/' . $userId . '/edit';
+        } else {
+            $location = ROUTE_BASE . '/users/create';
+        }
+        header('Location: ' . $location);
         exit();
     }
 }

@@ -4,7 +4,7 @@ use App\Models\Setting;
 
 // Redirect to login if not authenticated
 if (!Session::exists('user_id')) {
-    header('Location: /login');
+    header('Location: ' . ROUTE_BASE . '/login');
     exit();
 }
 
@@ -13,210 +13,320 @@ $companyName = $settings['company_name'] ?? APP_NAME;
 $clientName = $settings['client_name'] ?? '';
 $logoPath = $settings['logo_path'] ?? null;
 $title = $title ?? APP_NAME;
+
+// Theme switcher logic
+$currentTheme = 'theme-light';
+if (isset($_GET['theme']) && ($_GET['theme'] === 'dark' || $_GET['theme'] === 'light')) {
+    $currentTheme = 'theme-' . $_GET['theme'];
+    setcookie('theme_preference', $currentTheme, [
+        'expires' => time() + (86400 * 30),
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    ]);
+} elseif (isset($_COOKIE['theme_preference']) && ($_COOKIE['theme_preference'] === 'theme-dark' || $_COOKIE['theme_preference'] === 'theme-light')) {
+    $currentTheme = $_COOKIE['theme_preference'];
+}
+
+// Get current page for active menu
+$currentUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+if (str_starts_with($currentUri, 'public/')) {
+    $currentUri = substr($currentUri, 7);
+}
+$currentPage = explode('/', $currentUri)[0] ?? '';
+
+// Helper function to check if menu item is active
+function isActive($page, $currentPage) {
+    return $page === $currentPage ? 'active' : '';
+}
 ?>
 <!doctype html>
 <html lang="pt-BR">
 <head>
     <?php require_once BASE_PATH . '/app/views/partials/header.php'; ?>
 </head>
-<body class="layout-fluid">
+<body class="layout-fluid <?= $currentTheme ?>">
 <div class="page">
-    <!-- Navbar -->
-    <header class="navbar navbar-expand-md d-print-none">
-        <div class="container-xl">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+    <!-- Sidebar -->
+    <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3" href="/dashboard">
-                <?php if (!empty($logoPath)): ?>
-                    <img src="<?= BASE_URL ?>/<?= htmlspecialchars($logoPath) ?>" height="36" alt="Logo" class="navbar-brand-image" style="max-height:36px; width:auto;">
-                <?php else: ?>
-                    <?= htmlspecialchars($companyName) ?>
-                <?php endif; ?>
-            </a>
+
+            <!-- Logo / Brand -->
+            <h1 class="navbar-brand navbar-brand-autodark">
+                <a href="<?= ROUTE_BASE ?>/dashboard" class="d-flex align-items-center">
+                    <?php if (!empty($logoPath)): ?>
+                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($logoPath) ?>" height="36" alt="Logo" class="navbar-brand-image">
+                    <?php else: ?>
+                        <span class="fs-4 fw-bold"><?= htmlspecialchars($companyName) ?></span>
+                    <?php endif; ?>
+                </a>
+            </h1>
+
+            <!-- User Menu (Mobile) -->
             <div class="navbar-nav flex-row order-md-last">
+                <!-- Theme Toggle -->
                 <div class="nav-item d-none d-md-flex me-3">
                     <div class="btn-list">
-                        <a href="https://github.com/Andre-Silva-dev" class="btn" target="_blank" rel="noreferrer">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/brand-github -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg>
-                            Source code
+                        <a href="?theme=dark" class="btn btn-ghost-light btn-icon <?= ($currentTheme === 'theme-dark') ? 'd-none' : '' ?>" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modo Escuro">
+                            <i class="bi bi-moon-stars"></i>
                         </a>
-                        <a href="#" class="btn" target="_blank" rel="noreferrer">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/heart -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon text-pink" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /></svg>
-                            Sponsor
+                        <a href="?theme=light" class="btn btn-ghost-light btn-icon <?= ($currentTheme === 'theme-light') ? 'd-none' : '' ?>" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modo Claro">
+                            <i class="bi bi-sun"></i>
                         </a>
                     </div>
                 </div>
-                <div class="d-none d-md-flex">
-                    <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip"
-                       data-bs-placement="bottom">
-                        <!-- Download SVG icon from http://tabler-icons.io/i/moon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
-                    </a>
-                    <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip"
-                       data-bs-placement="bottom">
-                        <!-- Download SVG icon from http://tabler-icons.io/i/sun -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l-.7 .7m12.9 -.7l.7 .7m-7.2 12.1l-.7 .7m7.2 -12.1l.7 .7" /></svg>
-                    </a>
-                </div>
+
+                <!-- User Dropdown -->
                 <div class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
-                        <span class="avatar avatar-sm" style="background-image: url(<?= BASE_URL ?>/static/000m.jpg)"></span>
+                    <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Menu do usuário">
+                        <span class="avatar avatar-sm bg-primary text-white">
+                            <?= strtoupper(substr(Session::get('user_name'), 0, 2)) ?>
+                        </span>
                         <div class="d-none d-xl-block ps-2">
-                            <div><?= htmlspecialchars(Session::get('user_name')) ?></div>
-                            <div class="mt-1 small text-secondary"><?= htmlspecialchars(ucfirst(Session::get('user_role'))) ?></div>
+                            <div class="fw-medium"><?= htmlspecialchars(Session::get('user_name')) ?></div>
+                            <div class="mt-1 small text-muted"><?= htmlspecialchars(ucfirst(Session::get('user_role'))) ?></div>
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <a href="/users/<?= urlencode((string) Session::get('user_id')) ?>/edit" class="dropdown-item">Perfil</a>
+                        <a href="<?= ROUTE_BASE ?>/users/<?= urlencode((string) Session::get('user_id')) ?>/edit" class="dropdown-item">
+                            <i class="bi bi-person me-2"></i>Meu Perfil
+                        </a>
+                        <a href="<?= ROUTE_BASE ?>/settings" class="dropdown-item">
+                            <i class="bi bi-gear me-2"></i>Configurações
+                        </a>
                         <div class="dropdown-divider"></div>
-                        <a href="/logout" class="dropdown-item">Logout</a>
+                        <a href="<?= ROUTE_BASE ?>/logout" class="dropdown-item text-danger">
+                            <i class="bi bi-box-arrow-left me-2"></i>Sair
+                        </a>
                     </div>
                 </div>
             </div>
-            <div class="collapse navbar-collapse" id="navbar-menu">
-                <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/dashboard">
-                                <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></svg>
-                                </span>
-                                <span class="nav-link-title">
-                                    Dashboard
-                                </span>
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#navbar-clients" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                                <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/users -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
-                                </span>
-                                <span class="nav-link-title">
-                                    Clientes
-                                </span>
-                            </a>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="/clients">
-                                    Listar Clientes
-                                </a>
-                                <a class="dropdown-item" href="/clients/create">
-                                    Novo Cliente
-                                </a>
-                            </div>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#navbar-services" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                                <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/briefcase -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2" /><path d="M12 12l0 .01" /><path d="M3 13h18" /></svg>
-                                </span>
-                                <span class="nav-link-title">
-                                    Serviços
-                                </span>
-                            </a>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="/services">
-                                    Listar Serviços
-                                </a>
-                                <a class="dropdown-item" href="/services/create">
-                                    Novo Serviço
-                                </a>
-                            </div>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#navbar-jobs" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                                <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/clipboard-list -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M9 12l.01 0" /><path d="M13 12l2 0" /><path d="M9 16l.01 0" /><path d="M13 16l2 0" /></svg>
-                                </span>
-                                <span class="nav-link-title">
-                                    Tarefas
-                                </span>
-                            </a>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="/jobs">
-                                    Listar Tarefas
-                                </a>
-                                <a class="dropdown-item" href="/jobs/create">
-                                    Nova Tarefa
-                                </a>
-                            </div>
-                        </li>
-                        <?php if (Session::get('user_role') === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/users">
-                                    <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/user-check -->
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M15 11l2 2l4 -4" /></svg>
-                                    </span>
-                                    <span class="nav-link-title">
-                                        Usuários
-                                    </span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/settings">
-                                    <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/settings -->
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37a1.724 1.724 0 0 0 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
-                                    </span>
-                                    <span class="nav-link-title">
-                                        Configurações
-                                    </span>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
+
+            <!-- Navigation Menu -->
+            <div class="collapse navbar-collapse" id="sidebar-menu">
+                <ul class="navbar-nav pt-lg-3">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a class="nav-link <?= isActive('dashboard', $currentPage) ?: isActive('', $currentPage) ?>" href="<?= ROUTE_BASE ?>/dashboard">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-grid-1x2"></i>
+                            </span>
+                            <span class="nav-link-title">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <!-- Separator -->
+                    <li class="nav-item mt-2 mb-1">
+                        <small class="text-muted text-uppercase px-3 fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Gestão</small>
+                    </li>
+
+                    <!-- Clients -->
+                    <li class="nav-item">
+                        <a class="nav-link <?= isActive('clients', $currentPage) ?>" href="<?= ROUTE_BASE ?>/clients">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-people"></i>
+                            </span>
+                            <span class="nav-link-title">Clientes</span>
+                        </a>
+                    </li>
+
+                    <!-- Jobs -->
+                    <li class="nav-item">
+                        <a class="nav-link <?= isActive('jobs', $currentPage) ?>" href="<?= ROUTE_BASE ?>/jobs">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-clipboard-check"></i>
+                            </span>
+                            <span class="nav-link-title">Trabalhos</span>
+                        </a>
+                    </li>
+
+                    <!-- Services -->
+                    <li class="nav-item">
+                        <a class="nav-link <?= isActive('services', $currentPage) ?>" href="<?= ROUTE_BASE ?>/services">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-box-seam"></i>
+                            </span>
+                            <span class="nav-link-title">Serviços</span>
+                        </a>
+                    </li>
+
+                    <!-- Separator -->
+                    <li class="nav-item mt-3 mb-1">
+                        <small class="text-muted text-uppercase px-3 fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Sistema</small>
+                    </li>
+
+                    <!-- Users -->
+                    <li class="nav-item">
+                        <a class="nav-link <?= isActive('users', $currentPage) ?>" href="<?= ROUTE_BASE ?>/users">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-person-gear"></i>
+                            </span>
+                            <span class="nav-link-title">Usuários</span>
+                        </a>
+                    </li>
+
+                    <!-- Settings -->
+                    <li class="nav-item">
+                        <a class="nav-link <?= isActive('settings', $currentPage) ?>" href="<?= ROUTE_BASE ?>/settings">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-sliders"></i>
+                            </span>
+                            <span class="nav-link-title">Configurações</span>
+                        </a>
+                    </li>
+
+                    <!-- Logout (Mobile) -->
+                    <li class="nav-item d-lg-none mt-3">
+                        <a class="nav-link text-danger" href="<?= ROUTE_BASE ?>/logout">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-box-arrow-left"></i>
+                            </span>
+                            <span class="nav-link-title">Sair</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
-    </header>
+    </aside>
 
+    <!-- Main Content -->
     <div class="page-wrapper">
-        <!-- Page header -->
+        <!-- Page Header -->
         <div class="page-header d-print-none">
             <div class="container-xl">
                 <div class="row g-2 align-items-center">
                     <div class="col">
+                        <!-- Breadcrumb -->
+                        <?php if (!empty($breadcrumb)): ?>
+                        <nav aria-label="breadcrumb" class="mb-1">
+                            <ol class="breadcrumb breadcrumb-arrows">
+                                <li class="breadcrumb-item"><a href="<?= ROUTE_BASE ?>/dashboard">Home</a></li>
+                                <?php foreach ($breadcrumb as $item): ?>
+                                    <?php if (isset($item['url'])): ?>
+                                        <li class="breadcrumb-item"><a href="<?= $item['url'] ?>"><?= htmlspecialchars($item['label']) ?></a></li>
+                                    <?php else: ?>
+                                        <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($item['label']) ?></li>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </ol>
+                        </nav>
+                        <?php endif; ?>
+
+                        <!-- Page Title -->
                         <h2 class="page-title">
                             <?= htmlspecialchars($title) ?>
                         </h2>
                     </div>
+
+                    <!-- Page Actions -->
+                    <?php if (!empty($pageActions)): ?>
+                    <div class="col-auto ms-auto d-print-none">
+                        <div class="btn-list">
+                            <?= $pageActions ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
-        <!-- Page body -->
+
+        <!-- Page Body -->
         <div class="page-body">
-            <div class="container-xl d-flex flex-column justify-content-center">
-                <?php $flashSuccess = Session::getFlash('success'); ?>
-                <?php if (!empty($flashSuccess)): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?= htmlspecialchars($flashSuccess) ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="container-xl">
+                <!-- Flash Messages -->
+                <?php if (Session::has('success')): ?>
+                    <div class="alert alert-success alert-dismissible animate-fade-in" role="alert">
+                        <div class="d-flex">
+                            <div class="me-2">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div><?= Session::get('success') ?></div>
+                        </div>
+                        <a class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></a>
                     </div>
-                <?php endif; ?>
-                <?php $flashError = Session::getFlash('error'); ?>
-                <?php if (!empty($flashError)): ?>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?= htmlspecialchars($flashError) ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <?php endif; ?>
-                <?php $flashWarning = Session::getFlash('warning'); ?>
-                <?php if (!empty($flashWarning)): ?>
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        <?= htmlspecialchars($flashWarning) ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                    <?php Session::remove('success'); ?>
                 <?php endif; ?>
 
-                <?= $content ?>
+                <?php if (Session::has('error')): ?>
+                    <div class="alert alert-danger alert-dismissible animate-fade-in" role="alert">
+                        <div class="d-flex">
+                            <div class="me-2">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div><?= Session::get('error') ?></div>
+                        </div>
+                        <a class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></a>
+                    </div>
+                    <?php Session::remove('error'); ?>
+                <?php endif; ?>
+
+                <?php if (Session::has('warning')): ?>
+                    <div class="alert alert-warning alert-dismissible animate-fade-in" role="alert">
+                        <div class="d-flex">
+                            <div class="me-2">
+                                <i class="bi bi-exclamation-circle"></i>
+                            </div>
+                            <div><?= Session::get('warning') ?></div>
+                        </div>
+                        <a class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></a>
+                    </div>
+                    <?php Session::remove('warning'); ?>
+                <?php endif; ?>
+
+                <!-- Main Content -->
+                <div class="animate-fade-in">
+                    <?= $content ?>
+                </div>
             </div>
         </div>
+
+        <!-- Footer -->
         <?php require_once BASE_PATH . '/app/views/partials/footer.php'; ?>
     </div>
 </div>
-<!-- Tabler Core -->
-<script src="<?= BASE_URL ?>/static/tabler/dist/js/tabler.min.js" defer></script>
-<script src="<?= BASE_URL ?>/static/js/demo.min.js" defer></script>
+
+<!-- Main Modal -->
+<div class="modal fade" id="mainModal" tabindex="-1" aria-labelledby="mainModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mainModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <span class="text-muted">Carregando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-status bg-danger"></div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">Tem certeza?</h3>
+                <p class="text-muted" id="confirmDeleteMessage">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="<?= BASE_URL ?>/static/js/app.js" defer></script>
 </body>
 </html>

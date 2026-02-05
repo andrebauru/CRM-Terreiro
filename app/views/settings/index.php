@@ -3,7 +3,8 @@
         <h3 class="card-title">Configurações da Empresa</h3>
     </div>
     <div class="card-body">
-        <form action="/settings" method="POST" enctype="multipart/form-data">
+        <div id="settings-alert-placeholder"></div>
+        <form id="settings-form" action="<?= ROUTE_BASE ?>/settings" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
             <div class="mb-3">
@@ -44,13 +45,16 @@
                 <div class="mb-3">
                     <label class="form-label">Logo atual</label>
                     <div>
-                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="max-height: 80px;">
+                        <img id="current-logo" src="<?= BASE_URL ?>/<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="max-height: 80px;">
                     </div>
                 </div>
             <?php endif; ?>
 
             <div class="form-footer">
-                <button type="submit" class="btn btn-primary">Salvar</button>
+                <button type="submit" class="btn btn-primary">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                    Salvar
+                </button>
             </div>
         </form>
     </div>

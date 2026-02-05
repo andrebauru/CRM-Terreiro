@@ -1,52 +1,182 @@
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Listagem de Clientes</h3>
-        <div class="card-actions">
-            <a href="/clients/create" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
-                Novo Cliente
-            </a>
+<!-- Search and Filter Bar -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <div class="input-icon">
+                    <span class="input-icon-addon">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="searchClients" class="form-control" placeholder="Buscar clientes...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select id="filterOrder" class="form-select">
+                    <option value="name_asc">Nome (A-Z)</option>
+                    <option value="name_desc">Nome (Z-A)</option>
+                    <option value="recent">Mais recentes</option>
+                    <option value="oldest">Mais antigos</option>
+                </select>
+            </div>
+            <div class="col-md-5 text-md-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/clients/create" data-title="Novo Cliente">
+                    <i class="bi bi-plus-lg me-2"></i>
+                    Novo Cliente
+                </button>
+            </div>
         </div>
     </div>
-    <div class="table-responsive">
-        <table class="table card-table table-vcenter text-nowrap datatable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Telefone</th>
-                <th>Ações</th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php if (empty($clients)): ?>
-                <tr>
-                    <td colspan="5" class="text-center">Nenhum cliente encontrado.</td>
-                </tr>
-            <?php else: ?>
-                <?php foreach ($clients as $client): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($client['id']) ?></td>
-                        <td><a href="/clients/<?= htmlspecialchars($client['id']) ?>"><?= htmlspecialchars($client['name']) ?></a></td>
-                        <td><?= htmlspecialchars($client['email']) ?></td>
-                        <td><?= htmlspecialchars($client['phone']) ?></td>
-                        <td>
-                            <a href="/clients/<?= htmlspecialchars($client['id']) ?>/edit" class="btn btn-sm btn-icon btn-primary" title="Editar">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-                            </a>
-                            <form action="/clients/<?= htmlspecialchars($client['id']) ?>" method="POST" style="display:inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
-                                <button type="submit" class="btn btn-sm btn-icon btn-danger" title="Excluir">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
 </div>
+
+<!-- Clients List -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="bi bi-people me-2"></i>
+            Clientes
+        </h3>
+        <div class="card-actions">
+            <span class="badge bg-primary-lt" id="clientCount">
+                <?= count($clients) ?> cliente(s)
+            </span>
+        </div>
+    </div>
+
+    <?php if (empty($clients)): ?>
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <p class="empty-state-title">Nenhum cliente cadastrado</p>
+                <p class="empty-state-description">Comece adicionando seu primeiro cliente ao sistema.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/clients/create" data-title="Novo Cliente">
+                    <i class="bi bi-plus-lg me-2"></i>
+                    Adicionar Cliente
+                </button>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="table-responsive">
+            <table class="table card-table table-vcenter" id="clientsTable">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Contato</th>
+                        <th>Endereço</th>
+                        <th>Cadastrado em</th>
+                        <th class="w-1 text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($clients as $client): ?>
+                        <tr class="client-row"
+                            data-name="<?= htmlspecialchars(strtolower($client['name'])) ?>"
+                            data-email="<?= htmlspecialchars(strtolower($client['email'] ?? '')) ?>"
+                            data-created="<?= $client['created_at'] ?>">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar avatar-md bg-primary-lt text-primary me-3">
+                                        <?= strtoupper(substr($client['name'], 0, 2)) ?>
+                                    </span>
+                                    <div>
+                                        <a href="<?= ROUTE_BASE ?>/clients/<?= htmlspecialchars($client['id']) ?>" class="text-reset fw-medium">
+                                            <?= htmlspecialchars($client['name']) ?>
+                                        </a>
+                                        <div class="text-muted small">#<?= htmlspecialchars($client['id']) ?></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <?php if (!empty($client['email'])): ?>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bi bi-envelope text-muted me-2"></i>
+                                        <a href="mailto:<?= htmlspecialchars($client['email']) ?>" class="text-reset">
+                                            <?= htmlspecialchars($client['email']) ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($client['phone'])): ?>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-telephone text-muted me-2"></i>
+                                        <a href="tel:<?= htmlspecialchars($client['phone']) ?>" class="text-reset">
+                                            <?= htmlspecialchars($client['phone']) ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (empty($client['email']) && empty($client['phone'])): ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if (!empty($client['address'])): ?>
+                                    <div class="text-truncate" style="max-width: 200px;" title="<?= htmlspecialchars($client['address']) ?>">
+                                        <i class="bi bi-geo-alt text-muted me-1"></i>
+                                        <?= htmlspecialchars($client['address']) ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="text-muted">
+                                    <?= (new DateTime($client['created_at']))->format('d/m/Y') ?>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-actions justify-content-end">
+                                    <a href="<?= ROUTE_BASE ?>/clients/<?= htmlspecialchars($client['id']) ?>" class="btn btn-sm btn-ghost-primary" title="Ver detalhes">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-ghost-primary" title="Editar"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#mainModal"
+                                            data-url="<?= ROUTE_BASE ?>/clients/<?= htmlspecialchars($client['id']) ?>/edit"
+                                            data-title="Editar: <?= htmlspecialchars($client['name']) ?>">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form action="<?= ROUTE_BASE ?>/clients/<?= htmlspecialchars($client['id']) ?>" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
+                                        <button type="submit" class="btn btn-sm btn-ghost-danger" title="Excluir">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchClients');
+    const filterOrder = document.getElementById('filterOrder');
+    const clientRows = document.querySelectorAll('.client-row');
+    const clientCount = document.getElementById('clientCount');
+
+    function filterClients() {
+        const searchTerm = searchInput.value.toLowerCase();
+        let visibleCount = 0;
+
+        clientRows.forEach(row => {
+            const name = row.dataset.name;
+            const email = row.dataset.email;
+            const matches = name.includes(searchTerm) || email.includes(searchTerm);
+
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
+        });
+
+        clientCount.textContent = visibleCount + ' cliente(s)';
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', filterClients);
+    }
+});
+</script>

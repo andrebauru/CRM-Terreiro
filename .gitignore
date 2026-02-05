@@ -17,3 +17,9 @@
 *.log
 .DS_Store
 Thumbs.db
+
+# Gemini/Claude specific files
+.claude/
+
+# Node modules (for root if present, but primarily frontend handles its own)
+package-lock.json

@@ -1,0 +1,16 @@
+RewriteEngine On
+
+# Obtém o diretório base dinamicamente
+RewriteCond %{REQUEST_URI}::$1 ^(/.+)(.+)::\2$
+RewriteRule ^(.*) - [E=BASE:%1]
+
+# Não redireciona arquivos e diretórios existentes
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Não redireciona se já está em /public/
+RewriteCond %{REQUEST_URI} !^/public/
+
+# Redireciona tudo para /public/
+RewriteRule ^(.*)$ public/$1 [L]

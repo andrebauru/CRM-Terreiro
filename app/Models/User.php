@@ -49,13 +49,13 @@ class User extends BaseModel
     }
 
     /**
-     * Get all active users (excluding password).
+     * Get all users (excluding password).
      *
      * @return array An array of user data.
      */
     public function all(): array
     {
-        $stmt = $this->db->query("SELECT id, name, email, role FROM {$this->table} WHERE is_active = TRUE ORDER BY name ASC");
+        $stmt = $this->db->query("SELECT id, name, email, role, is_active, created_at FROM {$this->table} ORDER BY name ASC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

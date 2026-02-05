@@ -26,7 +26,7 @@ class HomeController
     {
         // If user is logged in, redirect to dashboard
         if (Session::exists('user_id')) {
-            header('Location: /dashboard');
+            header('Location: ' . ROUTE_BASE . '/dashboard');
             exit();
         }
 

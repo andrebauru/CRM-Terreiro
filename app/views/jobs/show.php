@@ -8,11 +8,11 @@ $settings = $settings ?? (new Setting())->get();
     <div class="card-header">
         <h3 class="card-title">Detalhes da Tarefa: <?= htmlspecialchars($job['title']) ?></h3>
         <div class="card-actions">
-            <a href="/jobs/<?= htmlspecialchars($job['id']) ?>/edit" class="btn btn-primary">
+            <a href="<?= ROUTE_BASE ?>/jobs/<?= htmlspecialchars($job['id']) ?>/edit" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
                 Editar
             </a>
-            <form action="/jobs/<?= htmlspecialchars($job['id']) ?>" method="POST" style="display:inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa?');">
+            <form action="<?= ROUTE_BASE ?>/jobs/<?= htmlspecialchars($job['id']) ?>" method="POST" style="display:inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa?');">
                 <input type="hidden" name="_method" value="DELETE">
                 <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
                 <button type="submit" class="btn btn-danger">
@@ -20,7 +20,7 @@ $settings = $settings ?? (new Setting())->get();
                     Excluir
                 </button>
             </form>
-            <a href="/jobs" class="btn btn-secondary">Voltar para a lista</a>
+            <a href="<?= ROUTE_BASE ?>/jobs" class="btn btn-secondary">Voltar para a lista</a>
         </div>
     </div>
     <div class="card-body">
@@ -35,10 +35,10 @@ $settings = $settings ?? (new Setting())->get();
             <dd class="col-9"><?= nl2br(htmlspecialchars($job['description'])) ?></dd>
 
             <dt class="col-3">Cliente:</dt>
-            <dd class="col-9"><a href="/clients/<?= htmlspecialchars($job['client_id']) ?>"><?= htmlspecialchars($job['client_name']) ?></a></dd>
+            <dd class="col-9"><a href="<?= ROUTE_BASE ?>/clients/<?= htmlspecialchars($job['client_id']) ?>"><?= htmlspecialchars($job['client_name']) ?></a></dd>
 
             <dt class="col-3">Serviço:</dt>
-            <dd class="col-9"><a href="/services/<?= htmlspecialchars($job['service_id']) ?>"><?= htmlspecialchars($job['service_name']) ?></a></dd>
+            <dd class="col-9"><a href="<?= ROUTE_BASE ?>/services/<?= htmlspecialchars($job['service_id']) ?>"><?= htmlspecialchars($job['service_name']) ?></a></dd>
 
             <dt class="col-3">Status:</dt>
             <dd class="col-9">
@@ -144,7 +144,7 @@ $settings = $settings ?? (new Setting())->get();
                             <td><?= htmlspecialchars($inst['paid_at'] ?? 'N/A') ?></td>
                             <td>
                                 <?php if (($inst['status'] ?? 'pending') !== 'paid'): ?>
-                                    <form action="/jobs/installments/<?= htmlspecialchars($inst['id']) ?>/pay" method="POST" class="d-flex gap-2 align-items-center">
+                                    <form action="<?= ROUTE_BASE ?>/jobs/installments/<?= htmlspecialchars($inst['id']) ?>/pay" method="POST" class="d-flex gap-2 align-items-center">
                                         <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
                                         <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
                                         <input type="number" name="amount" class="form-control form-control-sm" step="0.01" min="0" placeholder="Valor (opcional)">
@@ -166,7 +166,7 @@ $settings = $settings ?? (new Setting())->get();
         <h4 class="mt-4">Notas:</h4>
         <div class="card mb-3">
             <div class="card-body">
-                <form action="/jobs/<?= htmlspecialchars($job['id']) ?>/notes" method="POST">
+                <form action="<?= ROUTE_BASE ?>/jobs/<?= htmlspecialchars($job['id']) ?>/notes" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
                     <div class="mb-3">
                         <label class="form-label">Adicionar Nova Nota</label>
@@ -194,7 +194,7 @@ $settings = $settings ?? (new Setting())->get();
                             </div>
                             <?php if (App\Helpers\Session::get('user_id') == $note['user_id'] || App\Helpers\Session::get('user_role') == 'admin'): ?>
                                 <div class="col-auto">
-                                    <form action="/jobs/notes/<?= htmlspecialchars($note['id']) ?>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta nota?');">
+                                    <form action="<?= ROUTE_BASE ?>/jobs/notes/<?= htmlspecialchars($note['id']) ?>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta nota?');">
                                         <input type="hidden" name="_method" value="DELETE">
                                         <input type="hidden" name="csrf_token" value="<?= App\Helpers\Session::generateCsrfToken() ?>">
                                         <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">

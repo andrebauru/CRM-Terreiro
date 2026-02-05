@@ -23,7 +23,7 @@ class ReportController
     public function __construct()
     {
         if (!Session::exists('user_id')) {
-            header('Location: /login');
+            header('Location: ' . ROUTE_BASE . '/login');
             exit();
         }
         $this->clientModel = new Client();
@@ -39,7 +39,7 @@ class ReportController
 
         if (!class_exists(Dompdf::class)) {
             Session::flash('error', 'Exportação em PDF indisponível.');
-            header('Location: /dashboard');
+            header('Location: ' . ROUTE_BASE . '/dashboard');
             exit();
         }
 

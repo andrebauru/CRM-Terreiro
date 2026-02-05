@@ -17,12 +17,12 @@ class SettingsController
     public function __construct()
     {
         if (!Session::exists('user_id')) {
-            header('Location: /login');
+            header('Location: ' . ROUTE_BASE . '/login');
             exit();
         }
         if (Session::get('user_role') !== 'admin') {
             Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            header('Location: /dashboard');
+            header('Location: ' . ROUTE_BASE . '/dashboard');
             exit();
         }
         $this->settingsModel = new Setting();
@@ -43,9 +43,7 @@ class SettingsController
     public function update(): void
     {
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
-            Session::flash('error', 'Token CSRF inválido.');
-            header('Location: /settings');
-            exit();
+            $this->handleError('Token CSRF inválido.');
         }
 
         $clientName = trim($_POST['client_name'] ?? '');
@@ -65,13 +63,12 @@ class SettingsController
         }
 
         if (empty($clientName) || empty($companyName)) {
-            Session::flash('error', 'Preencha o nome do cliente e da empresa.');
-            header('Location: /settings');
-            exit();
+            $this->handleError('Preencha o nome do cliente e da empresa.');
         }
 
         $settings = $this->settingsModel->get();
         $logoPath = $settings['logo_path'] ?? null;
+        $newLogoUploaded = false;
 
         if (isset($_FILES['logo']) && is_array($_FILES['logo']) && $_FILES['logo']['error'] !== UPLOAD_ERR_NO_FILE) {
             $file = $_FILES['logo'];
@@ -83,7 +80,12 @@ class SettingsController
             );
 
             if (!$uploadResult) {
-                header('Location: /settings');
+                // Upload::handle... already flashes an error message
+                if ($this->isAjax()) {
+                    // The helper doesn't know about ajax, so we handle it here
+                    $this->handleError(Session::get('error'));
+                }
+                header('Location: ' . ROUTE_BASE . '/settings');
                 exit();
             }
 
@@ -95,6 +97,7 @@ class SettingsController
             }
 
             $logoPath = $uploadResult['filepath'];
+            $newLogoUploaded = true;
         }
 
         if ($this->settingsModel->updateSettings([
@@ -105,12 +108,39 @@ class SettingsController
             'currency_symbol' => $currencySymbol,
             'timezone' => $timezone,
         ])) {
+            if ($this->isAjax()) {
+                header('Content-Type: application/json');
+                $response = ['success' => true, 'message' => 'Configurações atualizadas com sucesso!'];
+                if ($newLogoUploaded) {
+                    $response['new_logo_url'] = BASE_URL . '/' . $logoPath;
+                }
+                echo json_encode($response);
+                exit();
+            }
             Session::flash('success', 'Configurações atualizadas com sucesso!');
         } else {
-            Session::flash('error', 'Erro ao atualizar configurações.');
+            $this->handleError('Erro ao atualizar configurações.');
         }
 
-        header('Location: /settings');
+        header('Location: ' . ROUTE_BASE . '/settings');
+        exit();
+    }
+
+    private function isAjax(): bool
+    {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+
+    private function handleError(string $message): void
+    {
+        if ($this->isAjax()) {
+            header('Content-Type: application/json');
+            http_response_code(422);
+            echo json_encode(['success' => false, 'errors' => [$message]]);
+            exit();
+        }
+        Session::flash('error', $message);
+        header('Location: ' . ROUTE_BASE . '/settings');
         exit();
     }
 }

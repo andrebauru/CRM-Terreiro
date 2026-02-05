@@ -2,12 +2,47 @@
 
 declare(strict_types=1);
 
+define('IS_API_REQUEST', false); // Definir inicialmente como false
+
 // Basic Router
 // This router is intentionally simple and can be expanded later.
 
 use App\Helpers\Session;
 
-$requestUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+// Obtém a URI da requisição
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Calcula o caminho base (subdiretório onde a aplicação está instalada)
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+$basePath = '';
+
+if (strpos($scriptName, '/public/index.php') !== false) {
+    $basePath = str_replace('/public/index.php', '', $scriptName);
+} elseif (strpos($scriptName, '/index.php') !== false) {
+    $basePath = dirname(dirname($scriptName));
+    if ($basePath === '\\' || $basePath === '/') {
+        $basePath = '';
+    }
+}
+
+// Remove o caminho base da URI
+if (!empty($basePath) && strpos($requestUri, $basePath) === 0) {
+    $requestUri = substr($requestUri, strlen($basePath));
+}
+
+// Remove /public se presente
+if (strpos($requestUri, '/public') === 0) {
+    $requestUri = substr($requestUri, 7);
+}
+
+// Limpa a URI
+$requestUri = trim($requestUri, '/');
+
+// Verifica se é uma requisição de API
+if (str_starts_with($requestUri, 'api/')) {
+    define('IS_API_REQUEST', true); // Se a URI começar com 'api/', define como requisição de API
+}
+
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 
 // Handle _method spoofing for PUT/DELETE
@@ -18,8 +53,8 @@ if (isset($_POST['_method'])) {
 // Define routes
 $routes = [
     'GET' => [
-        '' => 'HomeController@index', // Default route, e.g., /
-        'dashboard' => 'HomeController@dashboard', // Corrected controller
+        '' => 'HomeController@index',
+        'dashboard' => 'HomeController@dashboard',
         'dashboard/export/pdf' => 'ReportController@dashboardPdf',
         'dashboard/export/xls' => 'ReportController@dashboardXls',
         'login' => 'AuthController@showLoginForm',
@@ -43,8 +78,13 @@ $routes = [
         // Users CRUD
         'users' => 'UserController@index',
         'users/create' => 'UserController@create',
-        'users/(\d+)' => 'UserController@show', // Although not explicitly asked, it's good practice for CRUD
+        'users/(\d+)' => 'UserController@show',
         'users/(\d+)/edit' => 'UserController@edit',
+
+        // API Routes
+        'api/clients' => 'ClientController@apiIndex',
+        'api/clients/(\d+)' => 'ClientController@apiShow',
+        'api/logout' => 'AuthController@apiLogout',
     ],
     'POST' => [
         'login' => 'AuthController@login',
@@ -52,23 +92,33 @@ $routes = [
         'clients' => 'ClientController@store',
         'services' => 'ServiceController@store',
         'jobs' => 'JobController@store',
-        'jobs/(\d+)/notes' => 'JobController@addNote', // New route for adding notes
+        'jobs/(\d+)/notes' => 'JobController@addNote',
         'jobs/installments/(\d+)/pay' => 'JobController@payInstallment',
-        'users' => 'UserController@store', // New route for creating users
+        'users' => 'UserController@store',
+
+        // API Routes
+        'api/clients' => 'ClientController@apiStore',
+        'api/login' => 'AuthController@apiLogin',
     ],
     'PUT' => [
-        'clients/(\d+)' => 'ClientController@update', // RESTful update
-        'services/(\d+)' => 'ServiceController@update', // RESTful update
-        'jobs/(\d+)' => 'JobController@update', // RESTful update
-        'users/(\d+)' => 'UserController@update', // New route for updating users
+        'clients/(\d+)' => 'ClientController@update',
+        'services/(\d+)' => 'ServiceController@update',
+        'jobs/(\d+)' => 'JobController@update',
+        'users/(\d+)' => 'UserController@update',
+
+        // API Routes
+        'api/clients/(\d+)' => 'ClientController@apiUpdate',
     ],
     'DELETE' => [
-        'clients/(\d+)' => 'ClientController@destroy', // RESTful delete
-        'services/(\d+)' => 'ServiceController@destroy', // RESTful delete
-        'jobs/(\d+)' => 'JobController@destroy', // RESTful delete
-        'jobs/notes/(\d+)' => 'JobController@deleteNote', // New route for deleting notes
-        'jobs/attachments/(\d+)' => 'JobController@deleteAttachment', // New route for deleting attachments
-        'users/(\d+)' => 'UserController@destroy', // New route for deleting users
+        'clients/(\d+)' => 'ClientController@destroy',
+        'services/(\d+)' => 'ServiceController@destroy',
+        'jobs/(\d+)' => 'JobController@destroy',
+        'jobs/notes/(\d+)' => 'JobController@deleteNote',
+        'jobs/attachments/(\d+)' => 'JobController@deleteAttachment',
+        'users/(\d+)' => 'UserController@destroy',
+
+        // API Routes
+        'api/clients/(\d+)' => 'ClientController@apiDestroy',
     ]
 ];
 
@@ -76,11 +126,10 @@ $routes = [
 function dispatch(string $controllerAction, array $params = []): void
 {
     list($controllerName, $actionName) = explode('@', $controllerAction);
-    $controllerFile = BASE_PATH . '/app/Controllers/' . $controllerName . '.php'; // Corrected path
+    $controllerFile = BASE_PATH . '/app/Controllers/' . $controllerName . '.php';
 
     if (file_exists($controllerFile)) {
         require_once $controllerFile;
-        // Prepend namespace to controller name
         $fullControllerName = 'App\\Controllers\\' . $controllerName;
         if (class_exists($fullControllerName)) {
             $controller = new $fullControllerName();
@@ -91,7 +140,7 @@ function dispatch(string $controllerAction, array $params = []): void
         }
     }
 
-    // Fallback for 404 or other errors
+    // Fallback for 404
     http_response_code(404);
     $notFoundView = BASE_PATH . '/app/views/errors/404.php';
     if (file_exists($notFoundView)) {
@@ -117,10 +166,9 @@ if (isset($routes[$requestMethod])) {
 // If no exact match, check for dynamic routes with regex
 if (!$routeFound && isset($routes[$requestMethod])) {
     foreach ($routes[$requestMethod] as $route => $controllerAction) {
-        // Convert route to a regex pattern, capturing groups for parameters
         $pattern = '#^' . str_replace('/', '\/', $route) . '$#';
         if (preg_match($pattern, $requestUri, $matches)) {
-            array_shift($matches); // Remove the full match, keep only captured groups
+            array_shift($matches);
             dispatch($controllerAction, $matches);
             $routeFound = true;
             break;
@@ -134,6 +182,6 @@ if (!$routeFound) {
     if (file_exists($notFoundView)) {
         require $notFoundView;
     } else {
-        echo "404 Not Found - No route matched.";
+        echo "404 Not Found - No route matched for: " . htmlspecialchars($requestUri);
     }
 }

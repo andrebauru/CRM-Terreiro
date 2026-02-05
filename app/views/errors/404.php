@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
     <title>404 - Página não encontrada</title>
-    <link href="/static/tabler/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link href="<?= BASE_URL ?>/static/tabler/dist/css/tabler.min.css" rel="stylesheet"/>
 </head>
 <body class="d-flex flex-column">
 <div class="page page-center">
@@ -17,7 +17,7 @@
         <div class="card">
             <div class="card-body">
                 <p class="mb-3">A rota solicitada não existe ou foi movida.</p>
-                <a href="/" class="btn btn-primary w-100">Voltar ao início</a>
+                <a href="<?= ROUTE_BASE ?>/" class="btn btn-primary w-100">Voltar ao início</a>
             </div>
         </div>
     </div>
