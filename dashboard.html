@@ -1,0 +1,140 @@
+ <!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM Terreiro - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'sans-serif'] },
+            colors: { accent: '#6366f1' },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  </head>
+  <body class="bg-[#f8fafc] font-sans text-slate-900">
+    <div class="min-h-screen flex">
+      <aside class="w-64 bg-white border-r border-slate-200 p-6">
+        <div class="text-xl font-bold text-accent">CRM Terreiro</div>
+        <p class="text-slate-500 text-sm mt-1">SaaS Premium</p>
+        <nav class="mt-8 space-y-2">
+          <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-accent text-white">
+            <i class="fa-solid fa-chart-line"></i> Dashboard
+          </a>
+          <a href="clientes.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
+            <i class="fa-solid fa-users"></i> Clientes
+          </a>
+          <a href="servicos.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
+            <i class="fa-solid fa-briefcase"></i> Serviços
+          </a>
+          <a href="usuarios.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
+            <i class="fa-solid fa-user-shield"></i> Usuários
+          </a>
+          <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+          </a>
+        </nav>
+      </aside>
+
+      <main class="flex-1 p-8">
+        <header class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-2xl font-bold">Dashboard</h1>
+            <p class="text-slate-500">Bem-vindo, André</p>
+          </div>
+          <button class="px-4 py-2 rounded-lg bg-accent text-white font-medium">Nova ação</button>
+        </header>
+
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div class="bg-white border border-slate-200 rounded-2xl p-5">
+            <p class="text-slate-500 text-sm">Clientes</p>
+            <p class="text-2xl font-semibold mt-2" id="countClients">0</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5">
+            <p class="text-slate-500 text-sm">Trabalhos em andamento</p>
+            <p class="text-2xl font-semibold mt-2" id="countJobs">0</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5">
+            <p class="text-slate-500 text-sm">Serviços</p>
+            <p class="text-2xl font-semibold mt-2" id="countServices">0</p>
+          </div>
+        </section>
+
+        <section class="bg-white border border-slate-200 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Últimos Trabalhos</h2>
+            <span class="text-slate-400 text-sm">Atualizado em tempo real</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-slate-500">
+                <tr>
+                  <th class="text-left pb-3">Título</th>
+                  <th class="text-left pb-3">Cliente</th>
+                  <th class="text-left pb-3">Serviço</th>
+                  <th class="text-left pb-3">Status</th>
+                  <th class="text-right pb-3">Entrega</th>
+                </tr>
+              </thead>
+              <tbody id="jobsTable">
+                <tr>
+                  <td class="py-3" colspan="5">Carregando...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const jobsTable = document.getElementById('jobsTable');
+      const countClients = document.getElementById('countClients');
+      const countJobs = document.getElementById('countJobs');
+      const countServices = document.getElementById('countServices');
+
+      const statusBadge = (status) => {
+        const map = {
+          pending: 'bg-amber-100 text-amber-700',
+          in_progress: 'bg-blue-100 text-blue-700',
+          completed: 'bg-green-100 text-green-700',
+          cancelled: 'bg-red-100 text-red-700',
+        };
+        return map[status] || 'bg-slate-100 text-slate-700';
+      };
+
+      const loadDashboard = async () => {
+        const response = await fetch('dashboard.php');
+        const data = await response.json();
+
+        countClients.textContent = data.counts.clients ?? 0;
+        countJobs.textContent = data.counts.jobs_in_progress ?? 0;
+        countServices.textContent = data.counts.services ?? 0;
+
+        const rows = (data.latest_jobs || []).map(
+          (job) => `
+            <tr class="border-t border-slate-100">
+              <td class="py-3">${job.title}</td>
+              <td class="py-3">${job.client_name || '-'}</td>
+              <td class="py-3">${job.service_name || '-'}</td>
+              <td class="py-3"><span class="px-2 py-1 rounded-full text-xs ${statusBadge(job.status)}">${job.status}</span></td>
+              <td class="py-3 text-right">${job.due_date || '-'}</td>
+            </tr>
+          `
+        );
+
+        jobsTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="5">Nenhum trabalho encontrado.</td></tr>';
+      };
+
+      loadDashboard();
+    </script>
+  </body>
+</html>

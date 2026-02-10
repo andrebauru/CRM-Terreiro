@@ -4,45 +4,17 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
+
 use App\Helpers\Session;
 use App\Models\User;
 
-class UserController
+class UserController extends BaseController
 {
     private User $userModel;
 
     public function __construct()
     {
-        // Redirect to login if not authenticated
-        if (!Session::exists('user_id')) {
-            header('Location: ' . ROUTE_BASE . '/login');
-            exit();
-        }
-        // Only admin can access user management (non-admin can only edit/update own profile)
-        if (Session::get('user_role') !== 'admin') {
-            $requestPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-            $requestMethod = $_SERVER['REQUEST_METHOD'];
-            if (isset($_POST['_method'])) {
-                $requestMethod = strtoupper($_POST['_method']);
-            }
-
-            $sessionUserId = (int) Session::get('user_id');
-            $isSelfEdit = false;
-            $isSelfUpdate = false;
-
-            if ($requestMethod === 'GET' && preg_match('#^users/(\d+)/edit$#', $requestPath, $matches)) {
-                $isSelfEdit = ((int) $matches[1] === $sessionUserId);
-            }
-            if ($requestMethod === 'PUT' && preg_match('#^users/(\d+)$#', $requestPath, $matches)) {
-                $isSelfUpdate = ((int) $matches[1] === $sessionUserId);
-            }
-
-            if (!$isSelfEdit && !$isSelfUpdate) {
-                Session::flash('error', 'Você não tem permissão para acessar esta área.');
-                header('Location: ' . ROUTE_BASE . '/dashboard');
-                exit();
-            }
-        }
         $this->userModel = new User();
     }
 
@@ -51,12 +23,19 @@ class UserController
      */
     public function index(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+        $this->authorize('admin'); // Apenas administradores podem ver a lista de usuários.
+
         $users = $this->userModel->all();
-        $title = "Gerenciar Usuários";
-        ob_start();
-        require_once BASE_PATH . '/app/views/users/index.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('users/index', [
+            'title' => "Gerenciar Usuários",
+            'users' => $users,
+            'breadcrumb' => [
+                ['label' => 'Usuários']
+            ]
+        ]);
     }
 
     /**
@@ -64,20 +43,22 @@ class UserController
      */
     public function create(): void
     {
-        $title = "Novo Usuário";
-        $csrfToken = Session::generateCsrfToken();
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+        $this->authorize('admin'); // Apenas administradores podem criar usuários.
+
+        $data = [
+            'title' => "Novo Usuário",
+            'csrfToken' => Session::generateCsrfToken()
+        ];
 
         if ($this->isAjax()) {
-            ob_start();
-            require_once BASE_PATH . '/app/views/users/create.php';
-            echo ob_get_clean();
+            $this->render('users/create', $data);
             return;
         }
 
-        ob_start();
-        require_once BASE_PATH . '/app/views/users/create.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('users/create', $data);
     }
 
     /**
@@ -85,6 +66,11 @@ class UserController
      */
     public function store(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+        $this->authorize('admin'); // Apenas administradores podem criar usuários.
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             $this->handleError('Token CSRF inválido.');
         }
@@ -99,13 +85,10 @@ class UserController
 
         if ($userId) {
             if ($this->isAjax()) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'Usuário criado com sucesso!']);
-                exit();
+                $this->json(['success' => true, 'message' => 'Usuário criado com sucesso!']);
             }
             Session::flash('success', 'Usuário criado com sucesso!');
-            header('Location: ' . ROUTE_BASE . '/users');
-            exit();
+            $this->redirect('users');
         } else {
             $this->handleError('Erro ao criar usuário.');
         }
@@ -118,35 +101,33 @@ class UserController
      */
     public function edit(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $isAdmin = Session::get('user_role') === 'admin';
         if (!$isAdmin && $id !== (int) Session::get('user_id')) {
             Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            header('Location: ' . ROUTE_BASE . '/dashboard');
-            exit();
+            $this->redirect('dashboard');
         }
 
         $user = $this->userModel->findById($id);
 
         if (!$user) {
             Session::flash('error', 'Usuário não encontrado.');
-            header('Location: ' . ROUTE_BASE . ($isAdmin ? '/users' : '/dashboard'));
-            exit();
+            $this->redirect($isAdmin ? 'users' : 'dashboard');
         }
 
-        $title = $isAdmin ? "Editar Usuário: " . htmlspecialchars($user['name']) : "Editar Perfil";
-        $csrfToken = Session::generateCsrfToken();
-
-        if ($this->isAjax()) {
-            ob_start();
-            require_once BASE_PATH . '/app/views/users/edit.php';
-            echo ob_get_clean();
-            return;
-        }
-
-        ob_start();
-        require_once BASE_PATH . '/app/views/users/edit.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('users/edit', [
+            'title' => $isAdmin ? "Editar Usuário: " . htmlspecialchars($user['name']) : "Editar Perfil",
+            'user' => $user,
+            'csrfToken' => Session::generateCsrfToken(),
+            'isAdmin' => $isAdmin,
+            'breadcrumb' => [
+                ['label' => 'Usuários', 'url' => ROUTE_BASE . '/users'],
+                ['label' => $user['name']]
+            ]
+        ]);
     }
 
     /**
@@ -156,6 +137,10 @@ class UserController
      */
     public function update(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $isAdmin = Session::get('user_role') === 'admin';
         if (!$isAdmin && $id !== (int) Session::get('user_id')) {
             $this->handleError('Você não tem permissão para acessar esta área.', $id, $isAdmin);
@@ -179,13 +164,10 @@ class UserController
 
         if ($this->userModel->update($id, $data)) {
             if ($this->isAjax()) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!']);
-                exit();
+                $this->json(['success' => true, 'message' => $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!']);
             }
             Session::flash('success', $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!');
-            header('Location: ' . ROUTE_BASE . ($isAdmin ? '/users' : '/dashboard'));
-            exit();
+            $this->redirect($isAdmin ? 'users' : 'dashboard');
         } else {
             $this->handleError($isAdmin ? 'Erro ao atualizar usuário.' : 'Erro ao atualizar perfil.', $id, $isAdmin);
         }
@@ -198,17 +180,20 @@ class UserController
      */
     public function destroy(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+        $this->authorize('admin'); // Apenas administradores podem excluir usuários.
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            header('Location: ' . ROUTE_BASE . '/users');
-            exit();
+            $this->redirect('users');
         }
 
         // Prevent admin from deleting themselves
-        if ($id === Session::get('user_id')) {
+        if ($id === (int)Session::get('user_id')) { // Cast para int para comparação estrita
             Session::flash('error', 'Você não pode excluir seu próprio usuário.');
-            header('Location: ' . ROUTE_BASE . '/users');
-            exit();
+            $this->redirect('users');
         }
 
         if ($this->userModel->delete($id)) {
@@ -216,14 +201,10 @@ class UserController
         } else {
             Session::flash('error', 'Erro ao excluir usuário.');
         }
-        header('Location: ' . ROUTE_BASE . '/users');
-        exit();
+        $this->redirect('users');
     }
 
-    private function isAjax(): bool
-    {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-    }
+
 
     private function validateUserData(array $post, ?int $userId = null): array
     {
@@ -277,18 +258,14 @@ class UserController
     private function handleError(string $message, ?int $userId = null, bool $isAdmin = false): void
     {
         if ($this->isAjax()) {
-            header('Content-Type: application/json');
-            http_response_code(422);
-            echo json_encode(['success' => false, 'errors' => [$message]]);
-            exit();
+            $this->json(['success' => false, 'errors' => [$message]], 422);
         }
         Session::flash('error', $message);
         if ($userId) {
-            $location = ROUTE_BASE . '/users/' . $userId . '/edit';
+            $location = 'users/' . $userId . '/edit';
         } else {
-            $location = ROUTE_BASE . '/users/create';
+            $location = 'users/create';
         }
-        header('Location: ' . $location);
-        exit();
+        $this->redirect($location);
     }
 }

@@ -2,12 +2,6 @@
 use App\Helpers\Session;
 use App\Models\Setting;
 
-// Redirect to login if not authenticated
-if (!Session::exists('user_id')) {
-    header('Location: ' . ROUTE_BASE . '/login');
-    exit();
-}
-
 $settings = (new Setting())->get();
 $companyName = $settings['company_name'] ?? APP_NAME;
 $clientName = $settings['client_name'] ?? '';
@@ -15,7 +9,7 @@ $logoPath = $settings['logo_path'] ?? null;
 $title = $title ?? APP_NAME;
 
 // Theme switcher logic
-$currentTheme = 'theme-light';
+$currentTheme = 'theme-dark';
 if (isset($_GET['theme']) && ($_GET['theme'] === 'dark' || $_GET['theme'] === 'light')) {
     $currentTheme = 'theme-' . $_GET['theme'];
     setcookie('theme_preference', $currentTheme, [
@@ -83,12 +77,17 @@ function isActive($page, $currentPage) {
                 <!-- User Dropdown -->
                 <div class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Menu do usuário">
+                        <?php
+                        $userName = (string) Session::get('user_name');
+                        $userRole = (string) Session::get('user_role');
+                        $userInitials = $userName !== '' ? strtoupper(substr($userName, 0, 2)) : 'U';
+                        ?>
                         <span class="avatar avatar-sm bg-primary text-white">
-                            <?= strtoupper(substr(Session::get('user_name'), 0, 2)) ?>
+                            <?= htmlspecialchars($userInitials) ?>
                         </span>
                         <div class="d-none d-xl-block ps-2">
-                            <div class="fw-medium"><?= htmlspecialchars(Session::get('user_name')) ?></div>
-                            <div class="mt-1 small text-muted"><?= htmlspecialchars(ucfirst(Session::get('user_role'))) ?></div>
+                            <div class="fw-medium"><?= htmlspecialchars($userName) ?></div>
+                            <div class="mt-1 small text-muted"><?= htmlspecialchars($userRole !== '' ? ucfirst($userRole) : '') ?></div>
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
@@ -328,5 +327,64 @@ function isActive($page, $currentPage) {
 </div>
 
 <script src="<?= BASE_URL ?>/static/js/app.js" defer></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var mainModal = new bootstrap.Modal(document.getElementById('mainModal'));
+        var mainModalTitle = document.getElementById('mainModalLabel');
+        var mainModalBody = document.querySelector('#mainModal .modal-body');
+        var modalLoading = document.createElement('div'); // Create a new loading element
+        modalLoading.classList.add('modal-loading');
+        modalLoading.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <span class="text-muted">Carregando...</span>
+        `;
+        
+        document.body.addEventListener('click', function(e) {
+            var trigger = e.target.closest('[data-bs-toggle="modal"][data-target="#mainModal"]');
+            if (trigger) {
+                e.preventDefault();
+                var url = trigger.getAttribute('data-url');
+                var title = trigger.getAttribute('data-title') || 'Carregando...';
+
+                mainModalTitle.textContent = title;
+                mainModalBody.innerHTML = ''; // Clear previous content
+                mainModalBody.appendChild(modalLoading); // Add loading spinner
+                modalLoading.style.display = 'flex'; // Ensure it's visible
+
+                mainModal.show();
+
+                if (url) {
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.text();
+                        })
+                        .then(html => {
+                            mainModalBody.innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error('Erro ao carregar conteúdo do modal:', error);
+                            mainModalBody.innerHTML = '<div class="alert alert-danger" role="alert">Erro ao carregar conteúdo. Tente novamente.</div>';
+                        })
+                        .finally(() => {
+                            modalLoading.style.display = 'none'; // Hide loading spinner
+                        });
+                }
+            }
+        });
+
+        // Ensure loading spinner is shown when modal is hidden, ready for next load
+        document.getElementById('mainModal').addEventListener('hidden.bs.modal', function () {
+            // Remove previous content, show loading for next time
+            mainModalBody.innerHTML = '';
+            mainModalBody.appendChild(modalLoading);
+            modalLoading.style.display = 'flex';
+        });
+    });
+</script>
 </body>
 </html>

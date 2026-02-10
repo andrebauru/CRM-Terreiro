@@ -20,7 +20,7 @@
                 </select>
             </div>
             <div class="col-md-5 text-md-end">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/services/create" data-title="Novo Serviço">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/services/create" data-title="Novo Serviço">
                     <i class="bi bi-plus-lg me-2"></i>
                     Novo Serviço
                 </button>
@@ -51,7 +51,7 @@
                 </div>
                 <p class="empty-state-title">Nenhum serviço cadastrado</p>
                 <p class="empty-state-description">Cadastre os serviços que sua empresa oferece.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/services/create" data-title="Novo Serviço">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/services/create" data-title="Novo Serviço">
                     <i class="bi bi-plus-lg me-2"></i>
                     Adicionar Serviço
                 </button>
@@ -59,7 +59,7 @@
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table card-table table-vcenter" id="servicesTable">
+            <table class="table card-table table-vcenter table-dark-purple" id="servicesTable">
                 <thead>
                     <tr>
                         <th>Serviço</th>

@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
+
 use App\Helpers\Session;
 use App\Helpers\ForgeLogger; // Adicionado para logging
 use App\Models\Service;
 use App\Models\Setting;
 
-class ServiceController
+class ServiceController extends BaseController
 {
     private Service $serviceModel;
 
     public function __construct()
     {
-        // Redirect to login if not authenticated
-        if (!Session::exists('user_id')) {
-            header('Location: ' . ROUTE_BASE . '/login');
-            exit();
-        }
         $this->serviceModel = new Service();
     }
 
@@ -28,13 +25,20 @@ class ServiceController
      */
     public function index(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $services = $this->serviceModel->all();
         $settings = (new Setting())->get();
-        $title = "Serviços";
-        ob_start();
-        require_once BASE_PATH . '/app/views/services/index.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('services/index', [
+            'title' => "Serviços",
+            'services' => $services,
+            'settings' => $settings,
+            'breadcrumb' => [
+                ['label' => 'Serviços']
+            ]
+        ]);
     }
 
     /**
@@ -42,20 +46,21 @@ class ServiceController
      */
     public function create(): void
     {
-        $title = "Novo Serviço";
-        $csrfToken = Session::generateCsrfToken();
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
+        $data = [
+            'title' => "Novo Serviço",
+            'csrfToken' => Session::generateCsrfToken()
+        ];
 
         if ($this->isAjax()) {
-            ob_start();
-            require_once BASE_PATH . '/app/views/services/create.php';
-            echo ob_get_clean();
+            $this->render('services/create', $data);
             return;
         }
 
-        ob_start();
-        require_once BASE_PATH . '/app/views/services/create.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('services/create', $data);
     }
 
     /**
@@ -63,6 +68,10 @@ class ServiceController
      */
     public function store(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             $this->handleError('Token CSRF inválido.');
         }
@@ -78,13 +87,10 @@ class ServiceController
         if ($serviceId) {
             ForgeLogger::logAction('Serviço "' . $data['name'] . '" (ID: ' . $serviceId . ') criado pelo usuário ' . Session::get('user_name') . '.');
             if ($this->isAjax()) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'Serviço criado com sucesso!']);
-                exit();
+                $this->json(['success' => true, 'message' => 'Serviço criado com sucesso!']);
             }
             Session::flash('success', 'Serviço criado com sucesso!');
-            header('Location: ' . ROUTE_BASE . '/services');
-            exit();
+            $this->redirect('services');
         } else {
             $this->handleError('Erro ao criar serviço.');
         }
@@ -97,20 +103,27 @@ class ServiceController
      */
     public function show(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $service = $this->serviceModel->find($id);
 
         if (!$service) {
             Session::flash('error', 'Serviço não encontrado.');
-            header('Location: ' . ROUTE_BASE . '/services');
-            exit();
+            $this->redirect('services');
         }
 
         $settings = (new Setting())->get();
-        $title = "Detalhes do Serviço: " . $service['name'];
-        ob_start();
-        require_once BASE_PATH . '/app/views/services/show.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('services/show', [
+            'title' => "Detalhes do Serviço: " . $service['name'],
+            'service' => $service,
+            'settings' => $settings,
+            'breadcrumb' => [
+                ['label' => 'Serviços', 'url' => ROUTE_BASE . '/services'],
+                ['label' => $service['name']]
+            ]
+        ]);
     }
 
     /**
@@ -120,28 +133,29 @@ class ServiceController
      */
     public function edit(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $service = $this->serviceModel->find($id);
 
         if (!$service) {
             Session::flash('error', 'Serviço não encontrado.');
-            header('Location: ' . ROUTE_BASE . '/services');
-            exit();
+            $this->redirect('services');
         }
 
-        $title = "Editar Serviço: " . htmlspecialchars($service['name']);
-        $csrfToken = Session::generateCsrfToken();
+        $data = [
+            'title' => "Editar Serviço: " . htmlspecialchars($service['name']),
+            'csrfToken' => Session::generateCsrfToken(),
+            'service' => $service
+        ];
 
         if ($this->isAjax()) {
-            ob_start();
-            require_once BASE_PATH . '/app/views/services/edit.php';
-            echo ob_get_clean();
+            $this->render('services/edit', $data);
             return;
         }
 
-        ob_start();
-        require_once BASE_PATH . '/app/views/services/edit.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('services/edit', $data);
     }
 
     /**
@@ -151,6 +165,10 @@ class ServiceController
      */
     public function update(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             $this->handleError('Token CSRF inválido.', $id);
         }
@@ -170,13 +188,10 @@ class ServiceController
         if ($this->serviceModel->update($id, $data)) {
             ForgeLogger::logAction('Serviço "' . $data['name'] . '" (ID: ' . $id . ') atualizado pelo usuário ' . Session::get('user_name') . '.');
             if ($this->isAjax()) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'Serviço atualizado com sucesso!']);
-                exit();
+                $this->json(['success' => true, 'message' => 'Serviço atualizado com sucesso!']);
             }
             Session::flash('success', 'Serviço atualizado com sucesso!');
-            header('Location: ' . ROUTE_BASE . '/services');
-            exit();
+            $this->redirect('services');
         } else {
             $this->handleError('Erro ao atualizar serviço.', $id);
         }
@@ -189,10 +204,13 @@ class ServiceController
      */
     public function destroy(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            header('Location: ' . ROUTE_BASE . '/services');
-            exit();
+            $this->redirect('services');
         }
 
         if ($this->serviceModel->delete($id)) {
@@ -201,14 +219,10 @@ class ServiceController
         } else {
             Session::flash('error', 'Erro ao excluir serviço.');
         }
-        header('Location: ' . ROUTE_BASE . '/services');
-        exit();
+        $this->redirect('services');
     }
 
-    private function isAjax(): bool
-    {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-    }
+
 
     private function validateServiceData(array $post): array
     {
@@ -234,15 +248,12 @@ class ServiceController
 
     private function handleError(string $message, ?int $serviceId = null): void
     {
+        // Use the isAjax from BaseController
         if ($this->isAjax()) {
-            header('Content-Type: application/json');
-            http_response_code(422); // Unprocessable Entity
-            echo json_encode(['success' => false, 'errors' => [$message]]);
-            exit();
+            $this->json(['success' => false, 'errors' => [$message]], 422);
         }
         Session::flash('error', $message);
-        $location = ROUTE_BASE . ($serviceId ? '/services/' . $serviceId . '/edit' : '/services/create');
-        header('Location: ' . $location);
-        exit();
+        $location = ($serviceId ? 'services/' . $serviceId . '/edit' : 'services/create');
+        $this->redirect($location);
     }
 }

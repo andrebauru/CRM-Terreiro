@@ -14,3 +14,14 @@ RewriteCond %{REQUEST_URI} !^/public/
 
 # Redireciona tudo para /public/
 RewriteRule ^(.*)$ public/$1 [L]
+
+# --- TENTATIVA DE CONFIGURAÇÃO PHP (Use com cautela) ---
+# Tenta carregar o php.ini local (funciona em alguns servidores cPanel/Apache)
+<IfModule mod_suphp.c>
+    suPHP_ConfigPath ./
+</IfModule>
+
+# Alternativa para servidores que usam lsapi/php-fpm (CloudLinux)
+<IfModule mod_lsapi.c>
+   lsapi_phpini ./php.ini
+</IfModule>

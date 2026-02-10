@@ -9,7 +9,7 @@ use App\Models\Client;
 use App\Models\Service;
 use App\Models\Job;
 
-class HomeController
+class HomeController extends BaseController // Extende BaseController
 {
     private Client $clientModel;
     private Service $serviceModel;
@@ -24,20 +24,25 @@ class HomeController
 
     public function index(): void
     {
-        // If user is logged in, redirect to dashboard
+        // Se o usuário estiver logado, redireciona para o dashboard
         if (Session::exists('user_id')) {
-            header('Location: ' . ROUTE_BASE . '/dashboard');
-            exit();
+            $this->redirect('dashboard');
         }
 
-        // If not logged in, redirect to login page as per app/views/home.php's content
-        // The view itself handles the redirect now.
-        require_once BASE_PATH . '/app/views/home.php';
+        // Se não estiver logado, renderiza a página inicial (que deve ser o login)
+        // O layout.php já trata o redirecionamento se não houver user_id
+        // Para a página inicial que mostra o formulário de login
+        $this->render('auth/login', [
+            'title' => 'Login' // Título para a página de login
+        ]);
     }
 
     public function dashboard(): void
     {
-        $title = "Dashboard";
+        // Verifica se o usuário está autenticado antes de exibir o dashboard
+        if (!Session::exists('user_id')) {
+            $this->redirect('login'); // Redireciona para login se não autenticado
+        }
 
         // Fetch statistics
         $totalClients = $this->clientModel->count();
@@ -47,12 +52,19 @@ class HomeController
         $inProgressJobs = $this->jobModel->countByStatus('in_progress');
         $completedJobs = $this->jobModel->countByStatus('completed');
 
-        // Output buffering to capture the view content
-        ob_start();
-        require_once BASE_PATH . '/app/views/dashboard/index.php';
-        $content = ob_get_clean();
+        $data = [
+            'title' => "Dashboard",
+            'totalClients' => $totalClients,
+            'totalServices' => $totalServices,
+            'totalJobs' => $totalJobs,
+            'pendingJobs' => $pendingJobs,
+            'inProgressJobs' => $inProgressJobs,
+            'completedJobs' => $completedJobs,
+            'breadcrumb' => [
+                ['label' => 'Dashboard']
+            ]
+        ];
 
-        // Include the main layout for authenticated users
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('dashboard/index', $data);
     }
 }

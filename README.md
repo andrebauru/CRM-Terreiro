@@ -5,7 +5,7 @@ Este é um projeto de CRM (Customer Relationship Management) em transição para
 ## Stack Tecnológica
 
 -   **Backend:** PHP 8.2+ (servindo como API REST)
--   **Banco de Dados:** MySQL 8 com PDO para prepared statements
+-   **Banco de Dados:** MySQL 8 com camada de portabilidade (PDO com fallback automático para MySQLi quando o driver pdo_mysql não estiver disponível)
 -   **Frontend:** React (com Vite) e MUI (Material UI) para uma interface responsiva e moderna
 
 ## Funcionalidades Principais
@@ -91,7 +91,7 @@ Siga os passos de configuração do ambiente PHP (Passos 1 a 4 da seção anteri
 ### 1. Melhorias de Segurança
 
 -   **Prevenção de XSS (Cross-Site Scripting):** É crucial aplicar `htmlspecialchars()` ou equivalente a **todas** as saídas de dados fornecidas pelo usuário antes de exibi-las nas views (se houver views legadas). Para a API, garanta que os dados retornados sejam corretamente codificados em JSON para evitar injeções no cliente.
--   **Controle de Acesso Baseado em Papéis (RBAC):** Considere implementar um sistema de RBAC mais granular. Atualmente, a autenticação básica está presente, mas a autorização por papéis (e.g., "admin" pode deletar, "staff" não) poderia ser mais explicitamente verificada em cada ação do controlador para maior segurança.
+-   **Controle de Acesso Baseado em Papéis (RBAC):** O sistema agora utiliza um `BaseController` centralizado para gerenciar a autenticação e autorização por roles (`admin`/`staff`) de forma mais consistente em todos os controladores, redirecionando usuários sem permissão.
 -   **Logging Avançado:** O uso de `App\Helpers\ForgeLogger` é positivo. Garanta que eventos de segurança críticos, como tentativas de login falhas, alterações de permissão e acessos a dados sensíveis, sejam logados de forma robusta e monitorados.
 
 ### 2. Melhorias de Performance
@@ -101,6 +101,8 @@ Siga os passos de configuração do ambiente PHP (Passos 1 a 4 da seção anteri
 
 ### 3. Qualidade e Arquitetura do Código
 
+-   **Template Mestre e Padronização de Páginas:** A arquitetura agora utiliza um template mestre (`layout.php`) e um `BaseController` para padronizar a renderização das views, garantindo consistência visual e a correta inclusão de CSS/JS em todas as páginas internas.
+-   **Sistema de Rotas Aprimorado:** O roteador (`app/router.php`) foi aprimorado para registrar erros de roteamento, facilitando o diagnóstico de páginas 404 e exceções.
 -   **Consistência da API:** Garanta que todos os endpoints da API sigam um padrão consistente de nomenclatura, estrutura de resposta JSON e tratamento de erros.
 -   **Limpeza de Código:** Mantenha o código limpo, bem comentado e seguindo padrões de codificação PHP para facilitar a manutenção e futuras expansões.
 

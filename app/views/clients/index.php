@@ -19,11 +19,10 @@
                 </select>
             </div>
             <div class="col-md-5 text-md-end">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/clients/create" data-title="Novo Cliente">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/clients/create" data-title="Novo Cliente">
                     <i class="bi bi-plus-lg me-2"></i>
                     Novo Cliente
-                </button>
-            </div>
+                </button>            </div>
         </div>
     </div>
 </div>
@@ -50,7 +49,7 @@
                 </div>
                 <p class="empty-state-title">Nenhum cliente cadastrado</p>
                 <p class="empty-state-description">Comece adicionando seu primeiro cliente ao sistema.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/clients/create" data-title="Novo Cliente">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/clients/create" data-title="Novo Cliente">
                     <i class="bi bi-plus-lg me-2"></i>
                     Adicionar Cliente
                 </button>
@@ -58,7 +57,7 @@
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table card-table table-vcenter" id="clientsTable">
+            <table class="table card-table table-vcenter table-dark-purple" id="clientsTable">
                 <thead>
                     <tr>
                         <th>Cliente</th>

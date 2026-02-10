@@ -6,9 +6,14 @@
 .env.local
 .env.*.local
 
+# Composer artifacts
+composer.phar
+
 # Storage files
 /storage/uploads/
 /storage/logs/
+!/storage/uploads/.gitkeep
+!/storage/logs/.gitkeep
 
 # IDE specific files
 .idea/
@@ -20,6 +25,18 @@ Thumbs.db
 
 # Gemini/Claude specific files
 .claude/
+
+# Frontend dependencies/builds
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+/frontend/.vite/
+/frontend/.cache/
+
+# Temp/debug artifacts
+app.log
+php_errors.log
+gemini_history.txt
 
 # Node modules (for root if present, but primarily frontend handles its own)
 package-lock.json

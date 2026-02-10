@@ -15,8 +15,8 @@ $title = "Dashboard"; // Define title for layout
     <div class="col-12">
         <div class="card">
             <div class="card-body d-flex gap-2">
-                <a href="<?= ROUTE_BASE ?>/dashboard/export/pdf" class="btn btn-outline-primary">Exportar PDF</a>
-                <a href="<?= ROUTE_BASE ?>/dashboard/export/xls" class="btn btn-outline-success">Exportar XLS</a>
+                <a href="<?= ROUTE_BASE ?>/dashboard/export/pdf" class="btn btn-dark-purple">Exportar PDF</a>
+                <a href="<?= ROUTE_BASE ?>/dashboard/export/xls" class="btn btn-dark-purple">Exportar XLS</a>
             </div>
         </div>
     </div>

@@ -4,44 +4,52 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
+
 use App\Helpers\Session;
 use App\Models\Setting;
 use App\Helpers\Upload;
 
-class SettingsController
+class SettingsController extends BaseController
 {
     private Setting $settingsModel;
 
-
-
     public function __construct()
     {
-        if (!Session::exists('user_id')) {
-            header('Location: ' . ROUTE_BASE . '/login');
-            exit();
-        }
-        if (Session::get('user_role') !== 'admin') {
-            Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            header('Location: ' . ROUTE_BASE . '/dashboard');
-            exit();
-        }
         $this->settingsModel = new Setting();
     }
 
     public function index(): void
     {
-        $settings = $this->settingsModel->get();
-        $title = 'Configurações';
-        $csrfToken = Session::generateCsrfToken();
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+        if (Session::get('user_role') !== 'admin') {
+            Session::flash('error', 'Você não tem permissão para acessar esta área.');
+            $this->redirect('dashboard');
+        }
 
-        ob_start();
-        require_once BASE_PATH . '/app/views/settings/index.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $settings = $this->settingsModel->get();
+        $this->render('settings/index', [
+            'title' => 'Configurações',
+            'settings' => $settings,
+            'csrfToken' => Session::generateCsrfToken(),
+            'breadcrumb' => [
+                ['label' => 'Configurações']
+            ]
+        ]);
     }
 
     public function update(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+        if (Session::get('user_role') !== 'admin') {
+            Session::flash('error', 'Você não tem permissão para acessar esta área.');
+            $this->redirect('dashboard');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             $this->handleError('Token CSRF inválido.');
         }
@@ -83,10 +91,9 @@ class SettingsController
                 // Upload::handle... already flashes an error message
                 if ($this->isAjax()) {
                     // The helper doesn't know about ajax, so we handle it here
-                    $this->handleError(Session::get('error'));
+                    $this->json(['success' => false, 'errors' => [Session::get('error')]]);
                 }
-                header('Location: ' . ROUTE_BASE . '/settings');
-                exit();
+                $this->redirect('settings');
             }
 
             if (!empty($logoPath)) {
@@ -109,38 +116,27 @@ class SettingsController
             'timezone' => $timezone,
         ])) {
             if ($this->isAjax()) {
-                header('Content-Type: application/json');
                 $response = ['success' => true, 'message' => 'Configurações atualizadas com sucesso!'];
                 if ($newLogoUploaded) {
                     $response['new_logo_url'] = BASE_URL . '/' . $logoPath;
                 }
-                echo json_encode($response);
-                exit();
+                $this->json($response);
             }
             Session::flash('success', 'Configurações atualizadas com sucesso!');
         } else {
             $this->handleError('Erro ao atualizar configurações.');
         }
 
-        header('Location: ' . ROUTE_BASE . '/settings');
-        exit();
-    }
-
-    private function isAjax(): bool
-    {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        $this->redirect('settings');
     }
 
     private function handleError(string $message): void
     {
+        // Use the isAjax from BaseController
         if ($this->isAjax()) {
-            header('Content-Type: application/json');
-            http_response_code(422);
-            echo json_encode(['success' => false, 'errors' => [$message]]);
-            exit();
+            $this->json(['success' => false, 'errors' => [$message]], 422);
         }
         Session::flash('error', $message);
-        header('Location: ' . ROUTE_BASE . '/settings');
-        exit();
+        $this->redirect('settings');
     }
 }

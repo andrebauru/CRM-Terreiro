@@ -13,7 +13,7 @@ if (!function_exists('getPDOConnection')) {
 
 abstract class BaseModel
 {
-    protected PDO $db;
+    protected object $db;
     protected string $table;
 
     public function __construct(string $table)

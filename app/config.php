@@ -47,21 +47,27 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 // Calcula o caminho base removendo /public/index.php ou /index.php
 $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
 $basePath = '';
+$publicPrefix = '';
 
 if (strpos($scriptName, '/public/index.php') !== false) {
     $basePath = str_replace('/public/index.php', '', $scriptName);
+    $publicPrefix = '/public';
 } elseif (strpos($scriptName, '/index.php') !== false) {
     $basePath = dirname(dirname($scriptName));
     if ($basePath === '\\' || $basePath === '/') {
         $basePath = '';
     }
+
+    $docRoot = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/');
+    $isPublicRoot = $docRoot !== '' && basename($docRoot) === 'public';
+    $publicPrefix = $isPublicRoot ? '' : '/public';
 }
 
 // Remove barra final se existir
 $basePath = rtrim($basePath, '/');
 
 // BASE_URL aponta para a pasta public (para CSS, JS, imagens)
-define('BASE_URL', $protocol . $host . $basePath . '/public');
+define('BASE_URL', $protocol . $host . $basePath . $publicPrefix);
 
 // ROUTE_BASE é o caminho base para links/rotas (sem /public pois .htaccess redireciona)
 define('ROUTE_BASE', $basePath);

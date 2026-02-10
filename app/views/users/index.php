@@ -18,7 +18,7 @@
                 </select>
             </div>
             <div class="col-md-5 text-md-end">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/users/create" data-title="Novo Usuário">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/users/create" data-title="Novo Usuário">
                     <i class="bi bi-plus-lg me-2"></i>
                     Novo Usuário
                 </button>
@@ -49,7 +49,7 @@
                 </div>
                 <p class="empty-state-title">Nenhum usuário cadastrado</p>
                 <p class="empty-state-description">Adicione usuários para gerenciar o sistema.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/users/create" data-title="Novo Usuário">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/users/create" data-title="Novo Usuário">
                     <i class="bi bi-plus-lg me-2"></i>
                     Adicionar Usuário
                 </button>
@@ -57,7 +57,7 @@
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table card-table table-vcenter" id="usersTable">
+            <table class="table card-table table-vcenter table-dark-purple" id="usersTable">
                 <thead>
                     <tr>
                         <th>Usuário</th>

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
+
 use App\Models\User;
 use App\Helpers\Session;
 use App\Helpers\ForgeLogger; // Adicionado para logging
 
-class AuthController
+class AuthController extends BaseController
 {
     private User $userModel;
 
     public function __construct()
     {
         $this->userModel = new User();
-        // Ensure session is started for CSRF and flash messages
-        Session::init();
     }
 
     /**
@@ -26,8 +26,11 @@ class AuthController
     {
         // Generate CSRF token for the form
         $csrfToken = Session::generateCsrfToken();
-        // Render the login view
-        require_once BASE_PATH . '/app/views/auth/login.php';
+        // Render the login view using BaseController's render method
+        $this->render('auth/login', [
+            'csrfToken' => $csrfToken,
+            'title' => 'Login'
+        ]);
     }
 
     /**
@@ -38,8 +41,7 @@ class AuthController
         // Check CSRF token
         if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken((string)$_POST['csrf_token'])) {
             Session::flash('error', 'Token CSRF inválido. Tente novamente.');
-            header('Location: ' . ROUTE_BASE . '/login');
-            exit();
+            $this->redirect('login');
         }
 
         $email = $_POST['email'] ?? '';
@@ -53,7 +55,7 @@ class AuthController
      */
     public function apiLogin(): void
     {
-        $input = $this->getJsonInput();
+        $input = $this->getJsonInput(); // Usar o getJsonInput do BaseController
         $email = $input['email'] ?? '';
         $password = $input['password'] ?? '';
 
@@ -67,10 +69,10 @@ class AuthController
     {
         if (empty($email) || empty($password)) {
             if ($isApi) {
-                $this->jsonResponse(['message' => 'Por favor, preencha todos os campos.'], 400);
+                $this->json(['message' => 'Por favor, preencha todos os campos.'], 400);
             } else {
                 Session::flash('error', 'Por favor, preencha todos os campos.');
-                header('Location: ' . ROUTE_BASE . '/login');
+                $this->redirect('login');
             }
             exit();
         }
@@ -86,19 +88,19 @@ class AuthController
             ForgeLogger::logAction('Usuário ' . $user['email'] . ' fez login.'); // Log login
 
             if ($isApi) {
-                $this->jsonResponse(['message' => 'Login realizado com sucesso!', 'user' => ['id' => $user['id'], 'name' => $user['name'], 'role' => $user['role']]], 200);
+                $this->json(['message' => 'Login realizado com sucesso!', 'user' => ['id' => $user['id'], 'name' => $user['name'], 'role' => $user['role']]], 200);
             } else {
                 Session::flash('success', 'Login realizado com sucesso!');
-                header('Location: ' . ROUTE_BASE . '/dashboard'); // Redirect to dashboard or intended page
+                $this->redirect('dashboard'); // Redirect to dashboard or intended page
             }
             exit();
         } else {
             // Authentication failed
             if ($isApi) {
-                $this->jsonResponse(['message' => 'Email ou senha inválidos.'], 401);
+                $this->json(['message' => 'Email ou senha inválidos.'], 401);
             } else {
                 Session::flash('error', 'Email ou senha inválidos.');
-                header('Location: ' . ROUTE_BASE . '/login');
+                $this->redirect('login');
             }
             exit();
         }
@@ -113,8 +115,7 @@ class AuthController
         Session::destroy();
         ForgeLogger::logAction('Usuário ' . ($userName ?? 'Desconhecido') . ' fez logout.'); // Log logout
         Session::flash('success', 'Você foi desconectado com sucesso.');
-        header('Location: ' . ROUTE_BASE . '/login');
-        exit();
+        $this->redirect('login');
     }
 
     /**
@@ -127,34 +128,10 @@ class AuthController
             $userName = Session::get('user_name');
             Session::destroy();
             ForgeLogger::logAction('Usuário ' . ($userName ?? 'Desconhecido') . ' fez logout via API.');
-            $this->jsonResponse(['message' => 'Desconectado com sucesso.'], 200);
+            $this->json(['message' => 'Desconectado com sucesso.'], 200);
         } else {
-            $this->jsonResponse(['message' => 'Nenhum usuário autenticado.'], 401);
+            $this->json(['message' => 'Nenhum usuário autenticado.'], 401);
         }
-    }
-
-    /**
-     * Respond with JSON data and exit.
-     */
-    private function jsonResponse(array $data, int $statusCode = 200): void
-    {
-        http_response_code($statusCode);
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        exit();
-    }
-
-    /**
-     * Get JSON input from the request body.
-     */
-    private function getJsonInput(): array
-    {
-        $input = file_get_contents('php://input');
-        $data = json_decode($input, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->jsonResponse(['message' => 'Invalid JSON input'], 400);
-        }
-        return $data ?? [];
     }
 }
 

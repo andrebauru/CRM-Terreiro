@@ -3,13 +3,20 @@
 declare(strict_types=1);
 
 // Define base path
-define('BASE_PATH', dirname(__DIR__));
+define('BASE_PATH', __DIR__);
 
 // Autoload Composer dependencies
 require BASE_PATH . '/vendor/autoload.php';
 
 // Include configuration
 require BASE_PATH . '/app/config.php';
+
+// Ensure log directory exists and capture PHP errors
+if (!is_dir(LOG_PATH)) {
+    @mkdir(LOG_PATH, 0777, true);
+}
+ini_set('log_errors', '1');
+ini_set('error_log', LOG_PATH . '/php_errors.log');
 
 // Report errors based on environment
 $displayErrors = (defined('APP_ENV') && APP_ENV === 'development');

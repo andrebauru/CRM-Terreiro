@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
+
 use App\Helpers\Session;
 use App\Helpers\Upload; // Adicionado para lidar com uploads
 use App\Helpers\ForgeLogger; // Adicionado para logging
@@ -15,7 +17,7 @@ use App\Models\JobAttachment; // Adicionado para gerenciar anexos
 use App\Models\JobNote; // Adicionado para gerenciar notas
 use App\Models\JobInstallment; // Gerenciar parcelas
 
-class JobController
+class JobController extends BaseController
 {
     private Job $jobModel;
     private Client $clientModel;
@@ -25,16 +27,8 @@ class JobController
     private JobNote $jobNoteModel; // Instância do modelo JobNote
     private JobInstallment $jobInstallmentModel;
 
-    // Constantes para upload de arquivos
-
-
     public function __construct()
     {
-        // Redirect to login if not authenticated
-        if (!Session::exists('user_id')) {
-            header('Location: ' . ROUTE_BASE . '/login');
-            exit();
-        }
         $this->jobModel = new Job();
         $this->clientModel = new Client();
         $this->serviceModel = new Service();
@@ -49,12 +43,17 @@ class JobController
      */
     public function index(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
         $jobs = $this->jobModel->all();
-        $title = "Trabalhos";
-        ob_start();
-        require_once BASE_PATH . '/app/views/jobs/index.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('jobs/index', [
+            'title' => "Trabalhos",
+            'jobs' => $jobs,
+            'breadcrumb' => [
+                ['label' => 'Trabalhos']
+            ]
+        ]);
     }
 
     /**
@@ -62,24 +61,27 @@ class JobController
      */
     public function create(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
         $clients = $this->clientModel->all();
         $services = $this->serviceModel->all();
         $users = $this->userModel->all();
 
-        $title = "Novo Trabalho";
-        $csrfToken = Session::generateCsrfToken();
+        $data = [
+            'title' => "Novo Trabalho",
+            'csrfToken' => Session::generateCsrfToken(),
+            'clients' => $clients,
+            'services' => $services,
+            'users' => $users
+        ];
 
         if ($this->isAjax()) {
-            ob_start();
-            require_once BASE_PATH . '/app/views/jobs/create.php';
-            echo ob_get_clean();
+            $this->render('jobs/create', $data);
             return;
         }
 
-        ob_start();
-        require_once BASE_PATH . '/app/views/jobs/create.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('jobs/create', $data);
     }
 
     /**
@@ -87,6 +89,10 @@ class JobController
      */
     public function store(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             $this->handleError('Token CSRF inválido.');
         }
@@ -110,13 +116,10 @@ class JobController
             $this->handleFileUploads($jobId);
 
             if ($this->isAjax()) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'Trabalho criado com sucesso!']);
-                exit();
+                $this->json(['success' => true, 'message' => 'Trabalho criado com sucesso!']);
             }
             Session::flash('success', 'Trabalho criado com sucesso!');
-            header('Location: ' . ROUTE_BASE . '/jobs');
-            exit();
+            $this->redirect('jobs');
         } else {
             $this->handleError('Erro ao criar trabalho.');
         }
@@ -129,20 +132,22 @@ class JobController
      */
     public function show(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $job = $this->jobModel->find($id);
 
         if (!$job) {
-            Session::flash('error', 'Trabalho não encontrada.');
-            header('Location: ' . ROUTE_BASE . '/jobs');
-            exit();
+            Session::flash('error', 'Trabalho não encontrado.');
+            $this->redirect('jobs');
         }
 
         $currentUserId = Session::get('user_id');
         $currentUserRole = Session::get('user_role');
         if ($currentUserRole !== 'admin' && (int)$job['created_by'] !== (int)$currentUserId) {
-            Session::flash('error', 'Você não tem permissão para excluir esta tarefa.');
-            header('Location: ' . ROUTE_BASE . '/jobs');
-            exit();
+            Session::flash('error', 'Você não tem permissão para visualizar esta tarefa.');
+            $this->redirect('jobs');
         }
 
         $attachments = $this->jobAttachmentModel->getByJobId($id); // Fetch attachments
@@ -155,11 +160,17 @@ class JobController
         );
         $installments = $this->jobInstallmentModel->getByJobId($id);
 
-        $title = "Detalhes da Tarefa: " . $job['title'];
-        ob_start();
-        require_once BASE_PATH . '/app/views/jobs/show.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('jobs/show', [
+            'title' => "Detalhes da Tarefa: " . $job['title'],
+            'job' => $job,
+            'attachments' => $attachments,
+            'notes' => $notes,
+            'installments' => $installments,
+            'breadcrumb' => [
+                ['label' => 'Trabalhos', 'url' => ROUTE_BASE . '/jobs'],
+                ['label' => $job['title']]
+            ]
+        ]);
     }
 
     /**
@@ -169,12 +180,15 @@ class JobController
      */
     public function edit(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $job = $this->jobModel->find($id);
 
         if (!$job) {
             Session::flash('error', 'Trabalho não encontrado.');
-            header('Location: ' . ROUTE_BASE . '/jobs');
-            exit();
+            $this->redirect('jobs');
         }
 
         $clients = $this->clientModel->all();
@@ -182,20 +196,22 @@ class JobController
         $users = $this->userModel->all();
         $attachments = $this->jobAttachmentModel->getByJobId($id);
 
-        $title = "Editar Trabalho: " . htmlspecialchars($job['title']);
-        $csrfToken = Session::generateCsrfToken();
+        $data = [
+            'title' => "Editar Trabalho: " . htmlspecialchars($job['title']),
+            'csrfToken' => Session::generateCsrfToken(),
+            'job' => $job,
+            'clients' => $clients,
+            'services' => $services,
+            'users' => $users,
+            'attachments' => $attachments
+        ];
 
         if ($this->isAjax()) {
-            ob_start();
-            require_once BASE_PATH . '/app/views/jobs/edit.php';
-            echo ob_get_clean();
+            $this->render('jobs/edit', $data);
             return;
         }
 
-        ob_start();
-        require_once BASE_PATH . '/app/views/jobs/edit.php';
-        $content = ob_get_clean();
-        require_once BASE_PATH . '/app/views/layout.php';
+        $this->render('jobs/edit', $data);
     }
 
     /**
@@ -205,6 +221,10 @@ class JobController
      */
     public function update(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             $this->handleError('Token CSRF inválido.', $id);
         }
@@ -232,13 +252,10 @@ class JobController
             $this->handleFileUploads($id);
 
             if ($this->isAjax()) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'Trabalho atualizado com sucesso!']);
-                exit();
+                $this->json(['success' => true, 'message' => 'Trabalho atualizado com sucesso!']);
             }
             Session::flash('success', 'Trabalho atualizado com sucesso!');
-            header('Location: ' . ROUTE_BASE . '/jobs');
-            exit();
+            $this->redirect('jobs');
         } else {
             $this->handleError('Erro ao atualizar trabalho.', $id);
         }
@@ -251,10 +268,13 @@ class JobController
      */
     public function destroy(int $id): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            header('Location: ' . ROUTE_BASE . '/jobs');
-            exit();
+            $this->redirect('jobs');
         }
 
         // Before deleting job, delete associated attachments from filesystem
@@ -273,8 +293,7 @@ class JobController
         } else {
             Session::flash('error', 'Erro ao excluir trabalho.');
         }
-        header('Location: ' . ROUTE_BASE . '/jobs');
-        exit();
+        $this->redirect('jobs');
     }
 
     /**
@@ -284,10 +303,13 @@ class JobController
      */
     public function addNote(int $jobId): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-            exit();
+            $this->redirect('jobs/' . $jobId);
         }
 
         $noteContent = trim($_POST['note'] ?? '');
@@ -295,14 +317,12 @@ class JobController
 
         if (empty($noteContent)) {
             Session::flash('error', 'A nota não pode estar vazia.');
-            header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-            exit();
+            $this->redirect('jobs/' . $jobId);
         }
 
         if ($userId === null) {
             Session::flash('error', 'Usuário não autenticado.');
-            header('Location: ' . ROUTE_BASE . '/login');
-            exit();
+            $this->redirect('login');
         }
 
         $data = [
@@ -318,8 +338,7 @@ class JobController
             Session::flash('error', 'Erro ao adicionar nota.');
         }
 
-        header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-        exit();
+        $this->redirect('jobs/' . $jobId);
     }
 
     /**
@@ -329,41 +348,30 @@ class JobController
      */
     public function deleteNote(int $noteId): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         // Get job_id from POST or wherever it's passed for redirection
         $jobId = (int)($_POST['job_id'] ?? 0); // Assuming job_id will be passed via POST for redirection
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            if ($jobId) {
-                header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-            } else {
-                header('Location: ' . ROUTE_BASE . '/jobs'); // Fallback if jobId is not available
-            }
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId : 'jobs');
         }
 
         $note = $this->jobNoteModel->find($noteId);
 
         if (!$note) {
             Session::flash('error', 'Nota não encontrada.');
-            if ($jobId) {
-                header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-            } else {
-                header('Location: ' . ROUTE_BASE . '/jobs');
-            }
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId : 'jobs');
         }
 
         $currentUserId = Session::get('user_id');
         $currentUserRole = Session::get('user_role');
         if ($currentUserRole !== 'admin' && $currentUserId !== ($note['user_id'] ?? null)) {
             Session::flash('error', 'Você não tem permissão para excluir esta nota.');
-            if ($jobId) {
-                header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-            } else {
-                header('Location: ' . ROUTE_BASE . '/jobs');
-            }
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId : 'jobs');
         }
 
         if ($this->jobNoteModel->delete($noteId)) {
@@ -373,12 +381,7 @@ class JobController
             Session::flash('error', 'Erro ao excluir nota.');
         }
 
-        if ($jobId) {
-            header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-        } else {
-            header('Location: ' . ROUTE_BASE . '/jobs');
-        }
-        exit();
+        $this->redirect($jobId ? 'jobs/' . $jobId : 'jobs');
     }
 
     /**
@@ -388,41 +391,30 @@ class JobController
      */
     public function deleteAttachment(int $attachmentId): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         // Get job_id from POST or wherever it's passed for redirection
         $jobId = (int)($_POST['job_id'] ?? 0); // Assuming job_id will be passed via POST for redirection
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            if ($jobId) {
-                header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId . '/edit'); // Redirect back to edit page
-            } else {
-                header('Location: ' . ROUTE_BASE . '/jobs'); // Fallback if jobId is not available
-            }
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId . '/edit' : 'jobs');
         }
 
         $attachment = $this->jobAttachmentModel->find($attachmentId);
 
         if (!$attachment) {
             Session::flash('error', 'Anexo não encontrado.');
-            if ($jobId) {
-                header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId . '/edit');
-            } else {
-                header('Location: ' . ROUTE_BASE . '/jobs');
-            }
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId . '/edit' : 'jobs');
         }
 
         $currentUserId = Session::get('user_id');
         $currentUserRole = Session::get('user_role');
         if ($currentUserRole !== 'admin' && $currentUserId !== ($attachment['user_id'] ?? null)) {
             Session::flash('error', 'Você não tem permissão para excluir este anexo.');
-            if ($jobId) {
-                header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId . '/edit');
-            } else {
-                header('Location: ' . ROUTE_BASE . '/jobs');
-            }
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId . '/edit' : 'jobs');
         }
 
         // Delete file from server
@@ -438,8 +430,7 @@ class JobController
             Session::flash('error', 'Erro ao remover anexo.');
         }
 
-        header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-        exit();
+        $this->redirect('jobs/' . $jobId);
     }
 
     /**
@@ -449,23 +440,21 @@ class JobController
      */
     public function payInstallment(int $installmentId): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $jobId = (int)($_POST['job_id'] ?? 0);
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            if ($jobId) {
-                header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-            } else {
-                header('Location: ' . ROUTE_BASE . '/jobs');
-            }
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId : 'jobs');
         }
 
         $installment = $this->jobInstallmentModel->find($installmentId);
         if (!$installment) {
             Session::flash('error', 'Parcela não encontrada.');
-            header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-            exit();
+            $this->redirect($jobId ? 'jobs/' . $jobId : 'jobs');
         }
 
         $amount = trim((string)($_POST['amount'] ?? ''));
@@ -479,17 +468,10 @@ class JobController
             Session::flash('error', 'Erro ao baixar parcela.');
         }
 
-        header('Location: ' . ROUTE_BASE . '/jobs/' . $jobId);
-        exit();
+        $this->redirect($jobId ? 'jobs/' . $jobId : 'jobs');
     }
 
-    /**
-     * Check if the request is an AJAX request.
-     */
-    private function isAjax(): bool
-    {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-    }
+
 
     /**
      * Validate job data from POST request.
@@ -584,14 +566,12 @@ class JobController
      */
     private function handleError(string $message, ?int $jobId = null): void
     {
-        if ($this->isAjax()) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'errors' => [$message]]);
-            exit();
+        // Use the isAjax from BaseController
+        if ($this->isAjax()) { 
+            $this->json(['success' => false, 'errors' => [$message]], 400);
         }
         Session::flash('error', $message);
-        $location = ROUTE_BASE . ($jobId ? '/jobs/' . $jobId . '/edit' : '/jobs/create');
-        header('Location: ' . $location);
-        exit();
+        $location = ($jobId ? 'jobs/' . $jobId . '/edit' : 'jobs/create');
+        $this->redirect($location);
     }
 }

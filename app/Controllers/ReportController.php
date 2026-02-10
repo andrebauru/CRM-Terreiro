@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
+
 use App\Helpers\Session;
 use App\Models\Client;
 use App\Models\Service;
@@ -13,7 +15,7 @@ use Dompdf\Dompdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class ReportController
+class ReportController extends BaseController
 {
     private Client $clientModel;
     private Service $serviceModel;
@@ -22,10 +24,6 @@ class ReportController
 
     public function __construct()
     {
-        if (!Session::exists('user_id')) {
-            header('Location: ' . ROUTE_BASE . '/login');
-            exit();
-        }
         $this->clientModel = new Client();
         $this->serviceModel = new Service();
         $this->jobModel = new Job();
@@ -34,13 +32,16 @@ class ReportController
 
     public function dashboardPdf(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $stats = $this->getDashboardStats();
         $settings = $this->settingModel->get();
 
         if (!class_exists(Dompdf::class)) {
             Session::flash('error', 'Exportação em PDF indisponível.');
-            header('Location: ' . ROUTE_BASE . '/dashboard');
-            exit();
+            $this->redirect('dashboard');
         }
 
         $logoDataUri = null;
@@ -71,6 +72,10 @@ class ReportController
 
     public function dashboardXls(): void
     {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
         $stats = $this->getDashboardStats();
         $settings = $this->settingModel->get();
 

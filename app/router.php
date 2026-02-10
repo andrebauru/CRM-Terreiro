@@ -8,6 +8,7 @@ define('IS_API_REQUEST', false); // Definir inicialmente como false
 // This router is intentionally simple and can be expanded later.
 
 use App\Helpers\Session;
+use App\Helpers\Logger; // Adicionado: Uso do Logger
 
 // Obtém a URI da requisição
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -123,21 +124,31 @@ $routes = [
 ];
 
 // Dispatcher
-function dispatch(string $controllerAction, array $params = []): void
+function dispatch(string $controllerAction, array $params = [], string $requestUri = ''): void // Adicionado $requestUri para log
 {
     list($controllerName, $actionName) = explode('@', $controllerAction);
     $controllerFile = BASE_PATH . '/app/Controllers/' . $controllerName . '.php';
 
-    if (file_exists($controllerFile)) {
-        require_once $controllerFile;
-        $fullControllerName = 'App\\Controllers\\' . $controllerName;
-        if (class_exists($fullControllerName)) {
-            $controller = new $fullControllerName();
-            if (method_exists($controller, $actionName)) {
-                call_user_func_array([$controller, $actionName], $params);
-                return;
+    try {
+        if (file_exists($controllerFile)) {
+            require_once $controllerFile;
+            $fullControllerName = 'App\\Controllers\\' . $controllerName;
+            if (class_exists($fullControllerName)) {
+                $controller = new $fullControllerName();
+                if (method_exists($controller, $actionName)) {
+                    call_user_func_array([$controller, $actionName], $params);
+                    return;
+                } else {
+                    Logger::error("Método '$actionName' não encontrado no controlador '$controllerName' para URI: $requestUri");
+                }
+            } else {
+                Logger::error("Classe controladora '$fullControllerName' não encontrada para URI: $requestUri");
             }
+        } else {
+            Logger::error("Arquivo do controlador '$controllerFile' não encontrado para URI: $requestUri");
         }
+    } catch (\Throwable $e) {
+        Logger::error("Exceção ao despachar rota para URI: $requestUri - " . $e->getMessage() . " em " . $e->getFile() . " na linha " . $e->getLine());
     }
 
     // Fallback for 404
@@ -156,7 +167,7 @@ $routeFound = false;
 if (isset($routes[$requestMethod])) {
     foreach ($routes[$requestMethod] as $route => $controllerAction) {
         if ($route === $requestUri) {
-            dispatch($controllerAction);
+            dispatch($controllerAction, [], $requestUri); // Passa $requestUri para o dispatch
             $routeFound = true;
             break;
         }
@@ -169,7 +180,7 @@ if (!$routeFound && isset($routes[$requestMethod])) {
         $pattern = '#^' . str_replace('/', '\/', $route) . '$#';
         if (preg_match($pattern, $requestUri, $matches)) {
             array_shift($matches);
-            dispatch($controllerAction, $matches);
+            dispatch($controllerAction, $matches, $requestUri); // Passa $requestUri para o dispatch
             $routeFound = true;
             break;
         }
@@ -178,6 +189,7 @@ if (!$routeFound && isset($routes[$requestMethod])) {
 
 if (!$routeFound) {
     http_response_code(404);
+    Logger::warning("Rota não encontrada para método: '$requestMethod' e URI: '$requestUri'"); // Loga rota não encontrada
     $notFoundView = BASE_PATH . '/app/views/errors/404.php';
     if (file_exists($notFoundView)) {
         require $notFoundView;
@@ -185,3 +197,4 @@ if (!$routeFound) {
         echo "404 Not Found - No route matched for: " . htmlspecialchars($requestUri);
     }
 }
+

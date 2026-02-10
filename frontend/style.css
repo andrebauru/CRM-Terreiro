@@ -1,0 +1,164 @@
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #7c3aed;
+  --accent-weak: rgba(124, 58, 237, 0.12);
+  --border: #e2e8f0;
+  --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 32px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.brand {
+  margin-bottom: 32px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 500;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  background: var(--accent-weak);
+}
+
+.menu-item.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
+}
+
+.content {
+  padding: 32px 48px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.btn-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-accent:hover {
+  background: #6d28d9;
+  border-color: #6d28d9;
+}
+
+.card-panel {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.metric {
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+.metric .label {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.metric .value {
+  display: block;
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.section {
+  display: none;
+}
+
+.section.active {
+  display: block;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+@media (max-width: 992px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: relative;
+    height: auto;
+  }
+
+  .content {
+    padding: 24px;
+  }
+}

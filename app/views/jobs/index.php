@@ -28,7 +28,7 @@
                 </select>
             </div>
             <div class="col-md-5 text-md-end">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/jobs/create" data-title="Novo Trabalho">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/jobs/create" data-title="Novo Trabalho">
                     <i class="bi bi-plus-lg me-2"></i>
                     Novo Trabalho
                 </button>
@@ -120,7 +120,7 @@
                 </div>
                 <p class="empty-state-title">Nenhum trabalho cadastrado</p>
                 <p class="empty-state-description">Comece criando um novo trabalho para seus clientes.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/jobs/create" data-title="Novo Trabalho">
+                <button type="button" class="btn btn-dark-purple" data-bs-toggle="modal" data-bs-target="#mainModal" data-url="<?= ROUTE_BASE ?>/jobs/create" data-title="Novo Trabalho">
                     <i class="bi bi-plus-lg me-2"></i>
                     Criar Trabalho
                 </button>
@@ -128,7 +128,7 @@
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table card-table table-vcenter" id="jobsTable">
+            <table class="table card-table table-vcenter table-dark-purple" id="jobsTable">
                 <thead>
                     <tr>
                         <th>Trabalho</th>

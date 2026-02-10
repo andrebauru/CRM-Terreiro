@@ -13,10 +13,12 @@
 <link href="<?= BASE_URL ?>/static/css/custom.css" rel="stylesheet"/>
 <link href="<?= BASE_URL ?>/static/css/demo.min.css" rel="stylesheet"/>
 <!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    @import url('https://rsms.me/inter/inter.css');
     :root {
-        --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+        --tblr-font-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
     }
     body {
         font-feature-settings: "cv03", "cv04", "cv11";

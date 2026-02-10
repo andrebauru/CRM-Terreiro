@@ -1,18 +1,16 @@
 import React from 'react';
-import { Box, Typography, Container, Button } from '@mui/material';
-import { useAuth } from '../context/AuthContext'; // Importar useAuth
+import { Box, Typography, Container, Button, Grid, Card, CardContent, CardActions } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom'; // Importar Link
 
 const DashboardPage: React.FC = () => {
-  const auth = useAuth(); // Usar o hook useAuth
+  const auth = useAuth();
 
   const handleLogout = async () => {
-    // Call API to invalidate session/token if applicable
-    // This part should be handled within AuthContext.logout for a clean separation.
-    // For now, we simulate the API call here and then call auth.logout() to update state.
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/crm-terreiro/public';
       const response = await fetch(`${API_BASE_URL}/api/logout`, {
-        method: 'GET', // Or POST, depending on your API design
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -27,42 +25,58 @@ const DashboardPage: React.FC = () => {
     } catch (error) {
       console.error('Network error during logout API call:', error);
     } finally {
-      auth.logout(); // Call logout from auth context regardless of API call success/failure for client-side state update
+      auth.logout();
     }
   };
 
+  const dashboardItems = [
+    { title: 'Clientes', description: 'Gerencie seus contatos e clientes.', path: '/clients' },
+    { title: 'Trabalhos', description: 'Acompanhe projetos e tarefas.', path: '/jobs' },
+    { title: 'Serviços', description: 'Configure os serviços oferecidos.', path: '/services' },
+    { title: 'Usuários', description: 'Administre usuários e permissões.', path: '/users' },
+    { title: 'Configurações', description: 'Ajuste as configurações do sistema.', path: '/settings' },
+  ];
+
   return (
-    <Container component="main" maxWidth="md">
+    <Container component="main" maxWidth="lg">
       <Box
         sx={{
-          marginTop: 8,
+          marginTop: 4,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
         }}
       >
         <Typography component="h1" variant="h4" gutterBottom>
-          CRM Dashboard
+          Dashboard CRM Moderno
         </Typography>
-        <Typography variant="body1" paragraph>
-          Bem-vindo ao seu novo painel de controle!
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Esta é uma página de placeholder. Em breve, ela será preenchida com
-          conteúdo dinâmico e gráficos para gerenciar seus clientes, trabalhos e serviços.
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ mt: 3 }}
-          onClick={() => alert('Em breve!')}
-        >
-          Ver Clientes
-        </Button>
+
+        <Grid container spacing={3} sx={{ mt: 3 }}>
+          {dashboardItems.map((item, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Card raised sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography gutterBottom variant="h5" component="div">
+                    {item.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {item.description}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button size="small" component={Link} to={item.path}>
+                    Acessar
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
         <Button
           variant="outlined"
           color="secondary"
-          sx={{ mt: 2 }}
+          sx={{ mt: 4 }}
           onClick={handleLogout}
         >
           Logout
