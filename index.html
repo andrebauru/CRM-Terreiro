@@ -24,7 +24,8 @@
     <div class="min-h-screen flex items-center justify-center px-4">
       <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
         <div class="mb-6 text-center">
-          <div class="text-2xl font-bold text-accent">CRM Terreiro</div>
+          <div id="brandLogo" class="mx-auto h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-accent font-bold">CT</div>
+          <div class="text-2xl font-bold text-accent mt-3" id="brandName">CRM Terreiro</div>
           <p class="text-slate-500 mt-2">Acesse seu painel</p>
         </div>
         <form class="space-y-4">
@@ -36,12 +37,23 @@
             <label class="text-sm font-medium text-slate-700">Senha</label>
             <input type="password" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="••••••••" />
           </div>
-          <button type="button" class="w-full rounded-xl bg-accent py-3 text-white font-semibold hover:opacity-90">Entrar</button>
+          <a href="dashboard.html" class="block text-center w-full rounded-xl bg-accent py-3 text-white font-semibold hover:opacity-90">Entrar</a>
         </form>
-        <div class="mt-6 text-center text-sm text-slate-500">
-          <a href="dashboard.html" class="text-accent font-medium">Entrar direto</a>
-        </div>
       </div>
     </div>
+    <script>
+      const loadBrand = async () => {
+        const response = await fetch('settings.php?action=get', { cache: 'no-store' });
+        const data = await response.json();
+        if (data.ok && data.data?.company_name) {
+          document.getElementById('brandName').textContent = data.data.company_name;
+        }
+        if (data.ok && data.data?.logo_path) {
+          document.getElementById('brandLogo').innerHTML = `<img src="${data.data.logo_path}" class="h-12 w-12 rounded-2xl object-cover" />`;
+        }
+      };
+
+      loadBrand();
+    </script>
   </body>
 </html>

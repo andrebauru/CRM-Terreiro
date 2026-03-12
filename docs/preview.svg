@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" font-family="Inter,system-ui,sans-serif">
+  <!-- Background -->
+  <rect width="1200" height="720" fill="#f8fafc"/>
+
+  <!-- ─── SIDEBAR ─── -->
+  <rect width="220" height="720" fill="#000"/>
+  <rect x="220" width="1" height="720" fill="#7f1d1d"/>
+
+  <!-- Brand -->
+  <rect x="20" y="22" width="40" height="40" rx="10" fill="#7f1d1d"/>
+  <text x="40" y="48" text-anchor="middle" fill="#f87171" font-size="13" font-weight="900">CT</text>
+  <text x="70" y="38" fill="#dc2626" font-size="15" font-weight="900">CRM Terreiro</text>
+  <text x="70" y="54" fill="#6b7280" font-size="10">SaaS Premium</text>
+
+  <!-- Nav items -->
+  <!-- Dashboard (active) -->
+  <rect x="12" y="84" width="196" height="32" rx="8" fill="#b91c1c"/>
+  <text x="36" y="104" fill="white" font-size="12" font-weight="700">⬛ Dashboard</text>
+
+  <!-- Other items -->
+  <text x="36" y="136" fill="#9ca3af" font-size="12" font-weight="700">👥 Filhos</text>
+  <text x="36" y="164" fill="#9ca3af" font-size="12" font-weight="700">🔥 Quimbandeiro</text>
+  <text x="36" y="192" fill="#9ca3af" font-size="12" font-weight="700">💰 Mensalidades</text>
+  <text x="36" y="220" fill="#9ca3af" font-size="12" font-weight="700">👤 Clientes</text>
+  <text x="36" y="248" fill="#9ca3af" font-size="12" font-weight="700">💼 Trabalhos</text>
+  <text x="36" y="276" fill="#9ca3af" font-size="12" font-weight="700">🛡 Usuários</text>
+  <text x="36" y="304" fill="#9ca3af" font-size="12" font-weight="700">🎧 Atendimentos</text>
+  <text x="36" y="332" fill="#9ca3af" font-size="12" font-weight="700">📄 Relatórios</text>
+  <text x="36" y="360" fill="#9ca3af" font-size="12" font-weight="700">⚙ Configurações</text>
+  <text x="36" y="692" fill="#f87171" font-size="12" font-weight="700">→ Sair</text>
+
+  <!-- ─── MAIN CONTENT ─── -->
+  <!-- Header -->
+  <text x="248" y="44" fill="#0f172a" font-size="20" font-weight="700">Dashboard</text>
+  <text x="248" y="62" fill="#64748b" font-size="12">Visão geral do terreiro</text>
+  <!-- Nova Ação button -->
+  <rect x="1080" y="22" width="100" height="34" rx="8" fill="#b91c1c"/>
+  <text x="1130" y="44" text-anchor="middle" fill="white" font-size="12" font-weight="700">+ Nova Ação</text>
+
+  <!-- ─── STAT CARDS ─── -->
+  <!-- Card 1 -->
+  <rect x="248" y="84" width="200" height="88" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="268" y="108" fill="#64748b" font-size="11">Total de Filhos</text>
+  <text x="268" y="140" fill="#0f172a" font-size="28" font-weight="700">12</text>
+  <text x="268" y="160" fill="#16a34a" font-size="10">↑ 2 este mês</text>
+
+  <!-- Card 2 -->
+  <rect x="464" y="84" width="200" height="88" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="484" y="108" fill="#64748b" font-size="11">Trabalhos Pendentes</text>
+  <text x="484" y="140" fill="#0f172a" font-size="28" font-weight="700">5</text>
+  <text x="484" y="160" fill="#dc2626" font-size="10">3 esta semana</text>
+
+  <!-- Card 3 -->
+  <rect x="680" y="84" width="200" height="88" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="700" y="108" fill="#64748b" font-size="11">Clientes</text>
+  <text x="700" y="140" fill="#0f172a" font-size="28" font-weight="700">34</text>
+  <text x="700" y="160" fill="#16a34a" font-size="10">↑ 5 este mês</text>
+
+  <!-- Card 4 -->
+  <rect x="896" y="84" width="200" height="88" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="916" y="108" fill="#64748b" font-size="11">Previsão Mensal</text>
+  <text x="916" y="140" fill="#0f172a" font-size="24" font-weight="700">¥ 48.000</text>
+  <text x="916" y="160" fill="#64748b" font-size="10">12 filhos ativos</text>
+
+  <!-- ─── FILHOS TABLE ─── -->
+  <rect x="248" y="192" width="550" height="480" rx="16" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="270" y="222" fill="#0f172a" font-size="14" font-weight="600">Filhos da Casa</text>
+
+  <!-- Table header -->
+  <rect x="248" y="234" width="550" height="28" fill="#f8fafc"/>
+  <text x="270" y="252" fill="#64748b" font-size="11" font-weight="600">Nome</text>
+  <text x="430" y="252" fill="#64748b" font-size="11" font-weight="600">Grau</text>
+  <text x="560" y="252" fill="#64748b" font-size="11" font-weight="600">Mensalidade</text>
+  <text x="700" y="252" fill="#64748b" font-size="11" font-weight="600">Status</text>
+
+  <!-- Row 1 -->
+  <rect x="248" y="262" width="550" height="36" fill="white"/>
+  <text x="270" y="284" fill="#0f172a" font-size="12" font-weight="500">Maria Santos</text>
+  <rect x="426" y="268" width="64" height="18" rx="9" fill="#fef3c7"/>
+  <text x="458" y="281" text-anchor="middle" fill="#b45309" font-size="10" font-weight="700">2º Grau</text>
+  <text x="560" y="284" fill="#0f172a" font-size="12">¥ 5.000</text>
+  <rect x="690" y="268" width="48" height="18" rx="9" fill="#dcfce7"/>
+  <text x="714" y="281" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Ativo</text>
+  <line x1="248" y1="298" x2="798" y2="298" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Row 2 -->
+  <rect x="248" y="298" width="550" height="36" fill="white"/>
+  <text x="270" y="320" fill="#0f172a" font-size="12" font-weight="500">João Pereira</text>
+  <rect x="426" y="304" width="64" height="18" rx="9" fill="#fee2e2"/>
+  <text x="458" y="317" text-anchor="middle" fill="#b91c1c" font-size="10" font-weight="700">Mestre</text>
+  <text x="560" y="320" fill="#0f172a" font-size="12">¥ 8.000</text>
+  <rect x="690" y="304" width="48" height="18" rx="9" fill="#dcfce7"/>
+  <text x="714" y="317" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Ativo</text>
+  <line x1="248" y1="334" x2="798" y2="334" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Row 3 -->
+  <rect x="248" y="334" width="550" height="36" fill="white"/>
+  <text x="270" y="356" fill="#0f172a" font-size="12" font-weight="500">Ana Lima</text>
+  <rect x="426" y="340" width="64" height="18" rx="9" fill="#dbeafe"/>
+  <text x="458" y="353" text-anchor="middle" fill="#1d4ed8" font-size="10" font-weight="700">Iniciação</text>
+  <text x="560" y="356" fill="#0f172a" font-size="12">¥ 3.000</text>
+  <rect x="690" y="340" width="48" height="18" rx="9" fill="#dcfce7"/>
+  <text x="714" y="353" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Ativo</text>
+  <line x1="248" y1="370" x2="798" y2="370" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Row 4 -->
+  <rect x="248" y="370" width="550" height="36" fill="white"/>
+  <text x="270" y="392" fill="#6b7280" font-size="12" font-weight="500">Carlos Souza</text>
+  <rect x="426" y="376" width="64" height="18" rx="9" fill="#f1f5f9"/>
+  <text x="458" y="389" text-anchor="middle" fill="#64748b" font-size="10" font-weight="700">Probatório</text>
+  <text x="560" y="392" fill="#6b7280" font-size="12">—</text>
+  <rect x="690" y="376" width="48" height="18" rx="9" fill="#f1f5f9"/>
+  <text x="714" y="389" text-anchor="middle" fill="#6b7280" font-size="10" font-weight="700">Saiu</text>
+
+  <!-- ─── TRABALHOS TABLE ─── -->
+  <rect x="818" y="192" width="378" height="480" rx="16" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="838" y="222" fill="#0f172a" font-size="14" font-weight="600">Trabalhos Recentes</text>
+
+  <!-- Table header -->
+  <rect x="818" y="234" width="378" height="28" fill="#f8fafc"/>
+  <text x="838" y="252" fill="#64748b" font-size="11" font-weight="600">Trabalho</text>
+  <text x="1020" y="252" fill="#64748b" font-size="11" font-weight="600">Data</text>
+  <text x="1130" y="252" fill="#64748b" font-size="11" font-weight="600">Status</text>
+
+  <!-- Work Row 1 -->
+  <text x="838" y="283" fill="#0f172a" font-size="11">Limpeza Espiritual</text>
+  <text x="1020" y="283" fill="#64748b" font-size="11">05/03</text>
+  <rect x="1118" y="268" width="68" height="18" rx="9" fill="#fef9c3"/>
+  <text x="1152" y="281" text-anchor="middle" fill="#a16207" font-size="10" font-weight="700">Pendente</text>
+  <line x1="818" y1="296" x2="1196" y2="296" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Work Row 2 -->
+  <text x="838" y="319" fill="#0f172a" font-size="11">Banho de Cheiro</text>
+  <text x="1020" y="319" fill="#64748b" font-size="11">01/03</text>
+  <rect x="1118" y="304" width="68" height="18" rx="9" fill="#dcfce7"/>
+  <text x="1152" y="317" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Realizado</text>
+  <line x1="818" y1="332" x2="1196" y2="332" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Work Row 3 -->
+  <text x="838" y="355" fill="#0f172a" font-size="11">Amarração</text>
+  <text x="1020" y="355" fill="#64748b" font-size="11">28/02</text>
+  <rect x="1118" y="340" width="68" height="18" rx="9" fill="#fef3c7"/>
+  <text x="1152" y="353" text-anchor="middle" fill="#d97706" font-size="10" font-weight="700">Adiado</text>
+  <line x1="818" y1="368" x2="1196" y2="368" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Work Row 4 -->
+  <text x="838" y="391" fill="#0f172a" font-size="11">Defumação</text>
+  <text x="1020" y="391" fill="#64748b" font-size="11">10/03</text>
+  <rect x="1118" y="376" width="68" height="18" rx="9" fill="#fef9c3"/>
+  <text x="1152" y="389" text-anchor="middle" fill="#a16207" font-size="10" font-weight="700">Pendente</text>
+
+  <!-- ─── FAB ─── -->
+  <circle cx="1162" cy="680" r="28" fill="#b91c1c" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.3))"/>
+  <text x="1162" y="688" text-anchor="middle" fill="white" font-size="22" font-weight="300">+</text>
+</svg>

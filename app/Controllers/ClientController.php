@@ -28,7 +28,7 @@ class ClientController extends BaseController
 
         $clients = $this->clientModel->all();
         $this->render('clients/index', [
-            'title' => "Clientes",
+            'title' => 'Clientes',
             'clients' => $clients,
             'breadcrumb' => [
                 ['label' => 'Clientes']
@@ -41,8 +41,9 @@ class ClientController extends BaseController
      */
     public function apiIndex(): void
     {
-        if (!Session::exists('user_id')) { // API precisa de autenticação também
+        if (!Session::exists('user_id')) {
             $this->json(['message' => 'Unauthorized'], 401);
+            return;
         }
         $clients = $this->clientModel->all();
         $this->json(['data' => $clients]);
@@ -58,14 +59,9 @@ class ClientController extends BaseController
         }
 
         $data = [
-            'title' => "Novo Cliente",
+            'title' => 'Novo Cliente',
             'csrfToken' => Session::generateCsrfToken()
         ];
-
-        if ($this->isAjax()) {
-            $this->render('clients/create', $data);
-            return;
-        }
 
         $this->render('clients/create', $data);
     }
@@ -76,7 +72,7 @@ class ClientController extends BaseController
     public function store(): void
     {
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
-            $this->respondError('Token CSRF inválido.', '/clients/create');
+            $this->respondError('Token CSRF invalido.', '/clients/create');
             return;
         }
 
@@ -92,7 +88,7 @@ class ClientController extends BaseController
         $clientId = $this->clientModel->create($data);
 
         if ($clientId) {
-            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $clientId . ') criado pelo usuário ' . Session::get('user_name') . '.');
+            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $clientId . ') criado pelo usuario ' . Session::get('user_name') . '.');
             $this->respondSuccess('Cliente criado com sucesso!', '/clients');
         } else {
             $this->respondError('Erro ao criar cliente.', '/clients/create');
@@ -106,17 +102,10 @@ class ClientController extends BaseController
     {
         if (!Session::exists('user_id')) {
             $this->json(['message' => 'Unauthorized'], 401);
+            return;
         }
 
         $input = $this->getJsonInput();
-        
-        // CSRF validation for API. For simplicity, keeping it here, but generally
-        // API authentication (e.g., Bearer Token) replaces CSRF for APIs.
-        // if (!Session::validateCsrfToken((string)($input['csrf_token'] ?? ''))) {
-        //     $this->json(['message' => 'Invalid CSRF token'], 403);
-        //     return;
-        // }
-
         $data = $this->extractClientData($input);
         $data['created_by'] = Session::get('user_id');
         $errors = $this->validateClientData($data);
@@ -129,7 +118,7 @@ class ClientController extends BaseController
         $clientId = $this->clientModel->create($data);
 
         if ($clientId) {
-            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $clientId . ') criado pelo usuário ' . Session::get('user_name') . '.');
+            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $clientId . ') criado pelo usuario ' . Session::get('user_name') . '.');
             $this->json(['message' => 'Client created successfully', 'id' => $clientId], 201);
         } else {
             $this->json(['message' => 'Error creating client'], 500);
@@ -148,7 +137,7 @@ class ClientController extends BaseController
         $client = $this->clientModel->find($id);
 
         if (!$client) {
-            Session::flash('error', 'Cliente não encontrado.');
+            Session::flash('error', 'Cliente nao encontrado.');
             $this->redirect('clients');
             return;
         }
@@ -175,6 +164,7 @@ class ClientController extends BaseController
     {
         if (!Session::exists('user_id')) {
             $this->json(['message' => 'Unauthorized'], 401);
+            return;
         }
 
         $client = $this->clientModel->find($id);
@@ -198,21 +188,16 @@ class ClientController extends BaseController
 
         $client = $this->clientModel->find($id);
         if (!$client) {
-            Session::flash('error', 'Cliente não encontrado.');
+            Session::flash('error', 'Cliente nao encontrado.');
             $this->redirect('clients');
             return;
         }
 
         $data = [
-            'title' => "Editar Cliente: " . htmlspecialchars($client['name']),
+            'title' => 'Editar Cliente: ' . htmlspecialchars($client['name']),
             'client' => $client,
             'csrfToken' => Session::generateCsrfToken()
         ];
-
-        if ($this->isAjax()) {
-            $this->render('clients/edit', $data);
-            return;
-        }
 
         $this->render('clients/edit', $data);
     }
@@ -223,7 +208,7 @@ class ClientController extends BaseController
     public function update(int $id): void
     {
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
-            $this->respondError('Token CSRF inválido.', '/clients/' . $id . '/edit');
+            $this->respondError('Token CSRF invalido.', '/clients/' . $id . '/edit');
             return;
         }
 
@@ -237,7 +222,7 @@ class ClientController extends BaseController
         }
 
         if ($this->clientModel->update($id, $data)) {
-            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $id . ') atualizado pelo usuário ' . Session::get('user_name') . '.');
+            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $id . ') atualizado pelo usuario ' . Session::get('user_name') . '.');
             $this->respondSuccess('Cliente atualizado com sucesso!', '/clients');
         } else {
             $this->respondError('Erro ao atualizar cliente.', '/clients/' . $id . '/edit');
@@ -251,16 +236,10 @@ class ClientController extends BaseController
     {
         if (!Session::exists('user_id')) {
             $this->json(['message' => 'Unauthorized'], 401);
+            return;
         }
 
         $input = $this->getJsonInput();
-        
-        // CSRF validation for API
-        // if (!Session::validateCsrfToken((string)($input['csrf_token'] ?? ''))) {
-        //     $this->json(['message' => 'Invalid CSRF token'], 403);
-        //     return;
-        // }
-
         $data = $this->extractClientData($input);
         $data['updated_by'] = Session::get('user_id');
         $errors = $this->validateClientData($data);
@@ -271,7 +250,7 @@ class ClientController extends BaseController
         }
 
         if ($this->clientModel->update($id, $data)) {
-            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $id . ') atualizado pelo usuário ' . Session::get('user_name') . '.');
+            ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $id . ') atualizado pelo usuario ' . Session::get('user_name') . '.');
             $this->json(['message' => 'Client updated successfully'], 200);
         } else {
             $this->json(['message' => 'Error updating client'], 500);
@@ -288,14 +267,14 @@ class ClientController extends BaseController
         }
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
-            Session::flash('error', 'Token CSRF inválido.');
+            Session::flash('error', 'Token CSRF invalido.');
             $this->redirect('clients');
             return;
         }
 
         if ($this->clientModel->delete($id)) {
-            ForgeLogger::logAction('Cliente (ID: ' . $id . ') excluído pelo usuário ' . Session::get('user_name') . '.');
-            Session::flash('success', 'Cliente excluído com sucesso!');
+            ForgeLogger::logAction('Cliente (ID: ' . $id . ') excluido pelo usuario ' . Session::get('user_name') . '.');
+            Session::flash('success', 'Cliente excluido com sucesso!');
         } else {
             Session::flash('error', 'Erro ao excluir cliente.');
         }
@@ -309,25 +288,19 @@ class ClientController extends BaseController
     {
         if (!Session::exists('user_id')) {
             $this->json(['message' => 'Unauthorized'], 401);
+            return;
         }
-    {
-        // CSRF validation for API
-        // if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
-        //     $this->jsonResponse(['message' => 'Invalid CSRF token'], 403);
-        //     return;
-        // }
 
         if ($this->clientModel->delete($id)) {
-            ForgeLogger::logAction('Cliente (ID: ' . $id . ') excluído pelo usuário ' . Session::get('user_name') . '.');
+            ForgeLogger::logAction('Cliente (ID: ' . $id . ') excluido pelo usuario ' . Session::get('user_name') . '.');
             $this->json(['message' => 'Client deleted successfully'], 200);
         } else {
             $this->json(['message' => 'Error deleting client'], 500);
         }
     }
 
-    /**
-     * Extract client data from POST request (or JSON input).
-     */
+    // --- Helper methods ------------------------------------------------
+
     private function extractClientData(array $input): array
     {
         return [
@@ -348,27 +321,21 @@ class ClientController extends BaseController
         ];
     }
 
-    /**
-     * Validate client data.
-     */
     private function validateClientData(array $data): array
     {
         $errors = [];
 
         if (empty($data['name'])) {
-            $errors[] = 'O nome do cliente é obrigatório.';
+            $errors[] = 'O nome do cliente e obrigatorio.';
         }
 
         if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'O e-mail fornecido não é válido.';
+            $errors[] = 'O e-mail fornecido nao e valido.';
         }
 
         return $errors;
     }
 
-    /**
-     * Respond with success message (web or API).
-     */
     private function respondSuccess(string $message, string $redirect = ''): void
     {
         if ($this->isAjax() || (defined('IS_API_REQUEST') && IS_API_REQUEST === true)) {
@@ -378,12 +345,9 @@ class ClientController extends BaseController
         if (!empty($redirect)) {
             $this->redirect($redirect);
         }
-        exit(); // Ensure script terminates after redirect or JSON response
+        exit();
     }
 
-    /**
-     * Respond with error message (web or API).
-     */
     private function respondError(string $message, string $redirect = '', array $errors = []): void
     {
         if ($this->isAjax() || (defined('IS_API_REQUEST') && IS_API_REQUEST === true)) {
@@ -393,33 +357,6 @@ class ClientController extends BaseController
         if (!empty($redirect)) {
             $this->redirect($redirect);
         }
-        exit(); // Ensure script terminates after redirect or JSON response
-    }
-
-
-
-    /**
-     * Get JSON input from the request body.
-     * Moved from BaseController to allow for specific override if needed.
-     */
-    private function getJsonInput(): array
-    {
-        $input = file_get_contents('php://input');
-        $data = json_decode($input, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            // Log the error
-            ForgeLogger::error("Invalid JSON input: " . $input);
-            $this->json(['message' => 'Invalid JSON input'], 400);
-        }
-        return $data ?? [];
-    }
-
-    /**
-     * Check if the request is an AJAX request.
-     * Moved from BaseController to allow for specific override if needed.
-     */
-    private function isAjax(): bool
-    {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        exit();
     }
 }

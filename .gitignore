@@ -38,5 +38,6 @@ app.log
 php_errors.log
 gemini_history.txt
 
-# Node modules (for root if present, but primarily frontend handles its own)
+# Node modules
+node_modules/
 package-lock.json

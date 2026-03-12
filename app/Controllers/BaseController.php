@@ -72,8 +72,6 @@ class BaseController
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            // Log the error if needed
-            // Logger::error("Invalid JSON input: " . $input);
             $this->json(['message' => 'Invalid JSON input'], 400);
         }
         return $data ?? [];
