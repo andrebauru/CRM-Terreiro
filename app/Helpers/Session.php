@@ -51,6 +51,14 @@ class Session
     }
 
     /**
+     * Alias for exists().
+     */
+    public static function has(string $key): bool
+    {
+        return self::exists($key);
+    }
+
+    /**
      * Deletes a session key.
      *
      * @param string $key The key to delete.
@@ -58,6 +66,14 @@ class Session
     public static function delete(string $key): void
     {
         unset($_SESSION[$key]);
+    }
+
+    /**
+     * Alias for delete().
+     */
+    public static function remove(string $key): void
+    {
+        self::delete($key);
     }
 
     /**

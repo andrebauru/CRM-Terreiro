@@ -511,6 +511,7 @@ class FinanceiroApp(ctk.CTk):
         fields["status"] = status_menu
 
         def _save():
+            assert self.conn
             try:
                 payload = {
                     "descricao": fields["descricao"].get(),
@@ -523,6 +524,7 @@ class FinanceiroApp(ctk.CTk):
                     "comprovante_path": data_atual.get("comprovante_path"),
                 }
                 if is_edit:
+                    assert conta_id is not None
                     db.update_conta(self.conn, conta_id, payload)
                 else:
                     db.create_conta(self.conn, payload)
@@ -535,6 +537,7 @@ class FinanceiroApp(ctk.CTk):
                        command=_save).pack(fill="x", padx=20, pady=16)
 
     def _delete_conta(self, conta_id: int) -> None:
+        assert self.conn
         if messagebox.askyesno("Confirmar", "Excluir esta conta?"):
             db.delete_conta(self.conn, conta_id)
             self._show_frame("contas")
@@ -635,6 +638,7 @@ class FinanceiroApp(ctk.CTk):
                        command=_select_img).pack(padx=20, pady=(8, 0), anchor="w")
 
         def _save():
+            assert self.conn
             try:
                 valor = float(fields["valor"].get().replace(",", "."))
                 entrada_data, credito_data = finance.preparar_entrada_com_credito(
@@ -646,6 +650,7 @@ class FinanceiroApp(ctk.CTk):
 
                 if is_edit:
                     entrada_data["comprovante_path"] = data_atual.get("comprovante_path")
+                    assert entrada_id is not None
                     db.update_entrada(self.conn, entrada_id, entrada_data)
                 else:
                     new_id = db.create_entrada(self.conn, entrada_data)
@@ -670,6 +675,7 @@ class FinanceiroApp(ctk.CTk):
                        command=_save).pack(fill="x", padx=20, pady=16)
 
     def _delete_entrada(self, entrada_id: int) -> None:
+        assert self.conn
         if messagebox.askyesno("Confirmar", "Excluir esta entrada?"):
             db.delete_entrada(self.conn, entrada_id)
             self._show_frame("entradas")
@@ -750,6 +756,7 @@ class FinanceiroApp(ctk.CTk):
             fields[key] = entry
 
         def _save():
+            assert self.conn
             try:
                 valor = float(fields["valor"].get().replace(",", "."))
                 payload = finance.preparar_mensalidade(
@@ -851,6 +858,7 @@ class FinanceiroApp(ctk.CTk):
             side="left", padx=(0, 8))
 
         def _gen_resumo():
+            assert self.conn
             try:
                 mes = date.today().strftime("%Y-%m")
                 path = reports.gerar_relatorio_resumo(self.conn, mes)
