@@ -1,7 +1,7 @@
 <?php
 /**
  * Database Dump Generator
- * Acesse via browser no servidor: http://152.42.165.18/dump_db.php
+ * Acesse via browser no servidor: http://<seu-servidor>/dump_db.php
  * Apague este arquivo após usar!
  */
 declare(strict_types=1);

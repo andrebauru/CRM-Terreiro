@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Container, Box, Typography, TextField, Button, Alert } from '@mui/material';
 import { useAuth } from '../context/AuthContext'; // Importar useAuth
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/crm-terreiro/public'; // Fallback for development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''; // Configure via VITE_API_BASE_URL no .env
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState<string>('');

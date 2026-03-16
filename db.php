@@ -35,7 +35,7 @@ function db(): PDO
         return $pdo;
     }
 
-    $host    = $_ENV['DB_HOST'] ?? 'localhost';
+    $host    = $_ENV['DB_HOST'] ?? '127.0.0.1';
     $port    = $_ENV['DB_PORT'] ?? '3306';
     $db      = $_ENV['DB_NAME'] ?? 'crm_terreiro';
     $user    = $_ENV['DB_USER'] ?? 'root';

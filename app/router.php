@@ -13,27 +13,12 @@ use App\Helpers\Logger; // Adicionado: Uso do Logger
 // Obtém a URI da requisição
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Calcula o caminho base (subdiretório onde a aplicação está instalada)
-$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-$basePath = '';
-
-if (strpos($scriptName, '/public/index.php') !== false) {
-    $basePath = str_replace('/public/index.php', '', $scriptName);
-} elseif (strpos($scriptName, '/index.php') !== false) {
-    $basePath = dirname(dirname($scriptName));
-    if ($basePath === '\\' || $basePath === '/') {
-        $basePath = '';
-    }
-}
+// Usa o ROUTE_BASE definido em config.php para calcular a URI relativa
+$basePath = defined('ROUTE_BASE') ? ROUTE_BASE : '';
 
 // Remove o caminho base da URI
 if (!empty($basePath) && strpos($requestUri, $basePath) === 0) {
     $requestUri = substr($requestUri, strlen($basePath));
-}
-
-// Remove /public se presente
-if (strpos($requestUri, '/public') === 0) {
-    $requestUri = substr($requestUri, 7);
 }
 
 // Limpa a URI

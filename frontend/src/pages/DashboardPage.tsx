@@ -8,7 +8,7 @@ const DashboardPage: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/crm-terreiro/public';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
       const response = await fetch(`${API_BASE_URL}/api/logout`, {
         method: 'GET',
         headers: {

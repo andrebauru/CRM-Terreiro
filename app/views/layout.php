@@ -25,8 +25,10 @@ if (isset($_GET['theme']) && ($_GET['theme'] === 'dark' || $_GET['theme'] === 'l
 
 // Get current page for active menu
 $currentUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-if (str_starts_with($currentUri, 'public/')) {
-    $currentUri = substr($currentUri, 7);
+// Remove ROUTE_BASE do início da URI para obter a página atual
+$routeBase = defined('ROUTE_BASE') ? trim(ROUTE_BASE, '/') : '';
+if (!empty($routeBase) && str_starts_with($currentUri, $routeBase)) {
+    $currentUri = ltrim(substr($currentUri, strlen($routeBase)), '/');
 }
 $currentPage = explode('/', $currentUri)[0] ?? '';
 

@@ -30,7 +30,7 @@ if (file_exists($envFile)) {
 }
 
 // Database configuration
-define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_HOST', $_ENV['DB_HOST'] ?? '127.0.0.1');
 define('DB_NAME', $_ENV['DB_NAME'] ?? 'crm_terreiro');
 define('DB_USER', $_ENV['DB_USER'] ?? 'root');
 define('DB_PASS', $_ENV['DB_PASS'] ?? '');
@@ -42,35 +42,36 @@ define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
 
 // Dynamic BASE_URL - detecta corretamente o caminho base
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
 
-// Calcula o caminho base removendo /public/index.php ou /index.php
-$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-$basePath = '';
-$publicPrefix = '';
+// Se BASE_URL está definida no .env, usa ela; senão calcula dinamicamente
+if (!empty($_ENV['BASE_URL'])) {
+    $envBaseUrl = rtrim($_ENV['BASE_URL'], '/');
+    define('BASE_URL', $envBaseUrl);
+    // Extrai o path da BASE_URL para usar como ROUTE_BASE
+    $parsedPath = parse_url($envBaseUrl, PHP_URL_PATH);
+    define('ROUTE_BASE', $parsedPath ?: '');
+} else {
+    // Calcula o caminho base removendo /index.php
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $basePath = '';
 
-if (strpos($scriptName, '/public/index.php') !== false) {
-    $basePath = str_replace('/public/index.php', '', $scriptName);
-    $publicPrefix = '/public';
-} elseif (strpos($scriptName, '/index.php') !== false) {
-    $basePath = dirname(dirname($scriptName));
-    if ($basePath === '\\' || $basePath === '/') {
-        $basePath = '';
+    if (strpos($scriptName, '/index.php') !== false) {
+        $basePath = dirname($scriptName);
+        if ($basePath === '\\' || $basePath === '/' || $basePath === '.') {
+            $basePath = '';
+        }
     }
 
-    $docRoot = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/');
-    $isPublicRoot = $docRoot !== '' && basename($docRoot) === 'public';
-    $publicPrefix = $isPublicRoot ? '' : '/public';
+    // Remove barra final se existir
+    $basePath = rtrim($basePath, '/');
+
+    // BASE_URL aponta para a raiz do projeto (sem /public)
+    define('BASE_URL', $protocol . $host . $basePath);
+
+    // ROUTE_BASE é o caminho base para links/rotas
+    define('ROUTE_BASE', $basePath);
 }
-
-// Remove barra final se existir
-$basePath = rtrim($basePath, '/');
-
-// BASE_URL aponta para a pasta public (para CSS, JS, imagens)
-define('BASE_URL', $protocol . $host . $basePath . $publicPrefix);
-
-// ROUTE_BASE é o caminho base para links/rotas (sem /public pois .htaccess redireciona)
-define('ROUTE_BASE', $basePath);
 
 define('APP_TIMEZONE', $_ENV['APP_TIMEZONE'] ?? 'Asia/Tokyo');
 
