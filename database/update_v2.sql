@@ -56,7 +56,7 @@ DEALLOCATE PREPARE stmt;
 SET @query = IF(
     (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'settings' AND COLUMN_NAME = 'currency_code') = 0,
-    'ALTER TABLE settings ADD COLUMN currency_code VARCHAR(3) DEFAULT "BRL"',
+    'ALTER TABLE settings ADD COLUMN currency_code VARCHAR(3) DEFAULT "JPY"',
     'SELECT "Coluna currency_code já existe"'
 );
 PREPARE stmt FROM @query;
@@ -66,7 +66,7 @@ DEALLOCATE PREPARE stmt;
 SET @query = IF(
     (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'settings' AND COLUMN_NAME = 'currency_symbol') = 0,
-    'ALTER TABLE settings ADD COLUMN currency_symbol VARCHAR(8) DEFAULT "R$"',
+    'ALTER TABLE settings ADD COLUMN currency_symbol VARCHAR(8) DEFAULT "¥"',
     'SELECT "Coluna currency_symbol já existe"'
 );
 PREPARE stmt FROM @query;
@@ -76,7 +76,7 @@ DEALLOCATE PREPARE stmt;
 SET @query = IF(
     (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'settings' AND COLUMN_NAME = 'timezone') = 0,
-    'ALTER TABLE settings ADD COLUMN timezone VARCHAR(64) DEFAULT "America/Sao_Paulo"',
+    'ALTER TABLE settings ADD COLUMN timezone VARCHAR(64) DEFAULT "Asia/Tokyo"',
     'SELECT "Coluna timezone já existe"'
 );
 PREPARE stmt FROM @query;

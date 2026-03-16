@@ -85,7 +85,7 @@ Dados cadastrais dos filhos da casa.
 | email | VARCHAR(255) | Email (opcional) |
 | phone | VARCHAR(50) | Telefone/WhatsApp |
 | grade | ENUM | Iniciação / 1º / 2º / 3º Grau / Mestre |
-| mensalidade_value | INT | Valor da mensalidade em centavos (BRL) |
+| mensalidade_value | INT | Valor da mensalidade em centavos (JPY) |
 | due_day | INT | Dia do mês para vencimento (1–28) |
 | notes_evolucao | TEXT | Observações de evolução espiritual |
 
@@ -205,7 +205,7 @@ Dividida em duas seções:
 - Clicar na linha → modal de detalhe com opção Dar Baixa
 - Botão **Nova Mensalidade** + FAB `+` → modal com campos:
   - Filho (seleção)
-  - Valor (R$)
+  - Valor (¥)
   - Data de Vencimento
   - Descrição (opcional)
 
@@ -271,13 +271,13 @@ Brand:            text-red-600 font-black
 - **FAB** — botão `+` fixo `bottom-6 right-6 bg-red-700 w-14 h-14 rounded-full` presente em todas as páginas
 - **Clicar na linha da tabela** → abre modal de detalhe em todas as páginas
 - **Botões de ação (Editar/Excluir)** dentro da tabela usam `onclick="event.stopPropagation()"` para não disparar o modal de detalhe
-- **Valores monetários**: armazenados como INT em centavos (BRL), formatados como `R$ x,xx` no frontend
+- **Valores monetários**: armazenados como INT em centavos (JPY), formatados como `¥x` no frontend
 
 ### Funções JS padrão em todas as páginas
 ```js
 toggleModal(el, show)   // abre/fecha qualquer modal
-formatBRL(value)        // INT centavos → "R$ x,xx"
-parseBRL(value)         // "R$ x,xx" → INT centavos
+formatBRL(value)        // INT centavos → "¥x"
+parseBRL(value)         // "¥x" → INT centavos
 fmtDate(dateStr)        // "YYYY-MM-DD" → "DD/MM/YYYY"
 loadBrand()             // carrega nome/logo de settings.php
 ```

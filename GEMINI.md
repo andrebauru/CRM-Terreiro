@@ -138,11 +138,11 @@ Funções auxiliares para conexão com DB e respostas JSON são definidas em `db
 ### Padrões de Componentes e UI
 - **FAB (Floating Action Button):** Um botão `+` fixo no canto inferior direito está presente em todas as páginas para ações rápidas.
 - **Modais de Detalhe:** Clicar em qualquer linha de tabela geralmente abre um modal com detalhes e opções de edição/exclusão.
-- **Valores Monetários:** Armazenados como `INT` em centavos (BRL) no backend e formatados como `R$ x,xx` no frontend.
+- **Valores Monetários:** Armazenados como `INT` em centavos (JPY) no backend e formatados como `¥x` no frontend.
 - **Funções JavaScript Comuns:**
     - `toggleModal(el, show)`: Controla a visibilidade de modais.
-    - `formatBRL(value)`: Formata valores de centavos para "R$ x,xx".
-    - `parseBRL(value)`: Converte "R$ x,xx" para centavos.
+    - `formatBRL(value)`: Formata valores de centavos para "¥x".
+    - `parseBRL(value)`: Converte "¥x" para centavos.
     - `fmtDate(dateStr)`: Formata datas.
     - `loadBrand()`: Carrega nome e logo do terreiro das configurações.
 

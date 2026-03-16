@@ -353,7 +353,7 @@ class FinanceiroApp(ctk.CTk):
 
             ctk.CTkLabel(card, text=label, font=ctk.CTkFont(size=11),
                          text_color=COLOR_MUTED).pack(padx=16, pady=(14, 2), anchor="w")
-            val_text = f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            val_text = f"¥{int(value):,}"
             ctk.CTkLabel(card, text=val_text, font=ctk.CTkFont(size=22, weight="bold"),
                          text_color=color).pack(padx=16, pady=(0, 14), anchor="w")
 
@@ -372,7 +372,7 @@ class FinanceiroApp(ctk.CTk):
             ctk.CTkLabel(card, text=label, font=ctk.CTkFont(size=11),
                          text_color=COLOR_MUTED).pack(padx=16, pady=(14, 2), anchor="w")
             if isinstance(value, float):
-                val_text = f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                val_text = f"¥{int(value):,}"
             else:
                 val_text = str(value)
             ctk.CTkLabel(card, text=val_text, font=ctk.CTkFont(size=20, weight="bold"),
@@ -401,7 +401,7 @@ class FinanceiroApp(ctk.CTk):
                              font=ctk.CTkFont(size=10)).grid(row=0, column=0, padx=(12, 4))
                 ctk.CTkLabel(row_frame, text=c["descricao"][:40],
                              font=ctk.CTkFont(size=12)).grid(row=0, column=1, sticky="w")
-                val = f"R$ {c['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                val = f"¥{int(c['valor']):,}"
                 ctk.CTkLabel(row_frame, text=val,
                              font=ctk.CTkFont(size=12, weight="bold"),
                              text_color=COLOR_TEXT).grid(row=0, column=2, padx=12, pady=8)
@@ -448,7 +448,7 @@ class FinanceiroApp(ctk.CTk):
                 c["descricao"][:35],
                 c["data_vencimento"],
                 c.get("categoria") or "-",
-                f"R$ {c['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                f"¥{int(c['valor']):,}",
                 c["status"],
             ]
             for col_idx, v in enumerate(vals):
@@ -487,7 +487,7 @@ class FinanceiroApp(ctk.CTk):
         r = 0
         for label, key, default in [
             ("Descricao", "descricao", ""),
-            ("Valor (R$)", "valor", "0.00"),
+            ("Valor (¥)", "valor", "0"),
             ("Vencimento (YYYY-MM-DD)", "data_vencimento", date.today().isoformat()),
             ("Categoria", "categoria", ""),
         ]:
@@ -577,7 +577,7 @@ class FinanceiroApp(ctk.CTk):
                 e["descricao"][:40],
                 e.get("origem") or "-",
                 e["data_entrada"],
-                f"R$ {e['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                f"¥{int(e['valor']):,}",
             ]
             for col_idx, v in enumerate(vals):
                 ctk.CTkLabel(table_frame, text=v, font=ctk.CTkFont(size=11),
@@ -610,7 +610,7 @@ class FinanceiroApp(ctk.CTk):
         fields: dict[str, ctk.CTkEntry | ctk.CTkOptionMenu] = {}
         for label, key, default in [
             ("Descricao", "descricao", ""),
-            ("Valor (R$)", "valor", "0.00"),
+            ("Valor (¥)", "valor", "0"),
             ("Data (YYYY-MM-DD)", "data_entrada", date.today().isoformat()),
         ]:
             ctk.CTkLabel(dlg, text=label, font=ctk.CTkFont(size=12)).pack(padx=20, pady=(8, 0), anchor="w")
@@ -711,8 +711,8 @@ class FinanceiroApp(ctk.CTk):
                 str(m["id"]),
                 m["filho_nome"],
                 m["mes_referencia"],
-                f"R$ {m['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                f"R$ {m['credito_casa']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                f"¥{int(m['valor']):,}",
+                f"¥{int(m['credito_casa']):,}",
                 m["status"],
             ]
             for col_idx, v in enumerate(vals):
@@ -740,7 +740,7 @@ class FinanceiroApp(ctk.CTk):
         fields: dict[str, ctk.CTkEntry] = {}
         for label, key, default in [
             ("Nome do Filho", "filho_nome", ""),
-            ("Valor (R$)", "valor", "0.00"),
+            ("Valor (¥)", "valor", "0"),
             ("Mes Referencia (YYYY-MM)", "mes_referencia", date.today().strftime("%Y-%m")),
         ]:
             ctk.CTkLabel(dlg, text=label, font=ctk.CTkFont(size=12)).pack(padx=20, pady=(8, 0), anchor="w")

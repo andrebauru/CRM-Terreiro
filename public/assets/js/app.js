@@ -1,8 +1,8 @@
-// Currency formatting
+// Currency formatting (JPY - Iene Japonês)
 const formatBRL = (v) => {
   const n = String(v || '').replace(/\D+/g, '');
   if (!n) return '';
-  return 'R$ ' + (parseInt(n, 10) / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return '¥' + Math.round(parseInt(n, 10) / 100).toLocaleString('ja-JP');
 };
 const parseBRL = (v) => parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
 const fmtDate = (d) => d ? d.split('T')[0].split('-').reverse().join('/') : '—';

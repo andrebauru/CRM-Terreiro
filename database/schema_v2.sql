@@ -45,9 +45,9 @@ CREATE TABLE settings (
     client_name VARCHAR(255),
     company_name VARCHAR(255),
     logo_path VARCHAR(512),
-    currency_code VARCHAR(3) NOT NULL DEFAULT 'BRL',
-    currency_symbol VARCHAR(8) NOT NULL DEFAULT 'R$',
-    timezone VARCHAR(64) NOT NULL DEFAULT 'America/Sao_Paulo',
+    currency_code VARCHAR(3) NOT NULL DEFAULT 'JPY',
+    currency_symbol VARCHAR(8) NOT NULL DEFAULT '¥',
+    timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Tokyo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -415,7 +415,7 @@ DELIMITER ;
 
 -- Inserir configuração inicial
 INSERT INTO settings (company_name, client_name, currency_code, currency_symbol, timezone)
-VALUES ('CRM Terreiro', 'Cliente', 'BRL', 'R$', 'America/Sao_Paulo');
+VALUES ('CRM Terreiro', 'Cliente', 'JPY', '¥', 'Asia/Tokyo');
 
 -- Inserir usuário admin padrão (senha: password123)
 INSERT INTO users (name, email, password, role, is_active)

@@ -112,19 +112,19 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Saldo inicial</div>
-            <div class="text-lg font-bold" id="caixaSaldoInicial">R$ 0,00</div>
+            <div class="text-lg font-bold" id="caixaSaldoInicial">¥0</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Entradas (realizado)</div>
-            <div class="text-lg font-bold text-emerald-600" id="caixaEntradas">R$ 0,00</div>
+            <div class="text-lg font-bold text-emerald-600" id="caixaEntradas">¥0</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Saídas (realizado)</div>
-            <div class="text-lg font-bold text-rose-600" id="caixaSaidas">R$ 0,00</div>
+            <div class="text-lg font-bold text-rose-600" id="caixaSaidas">¥0</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Saldo final</div>
-            <div class="text-lg font-bold" id="caixaSaldoFinal">R$ 0,00</div>
+            <div class="text-lg font-bold" id="caixaSaldoFinal">¥0</div>
           </div>
         </div>
         <section class="bg-white/90 backdrop-blur border border-slate-200 rounded-3xl p-6 shadow-xl shadow-slate-200/40">
@@ -171,7 +171,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Valor</label>
-          <input id="lValor" data-mask="brl" inputmode="numeric" placeholder="R$ 0,00" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
+          <input id="lValor" data-mask="jpy" inputmode="numeric" placeholder="¥0" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Data de Vencimento</label>
@@ -219,7 +219,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Valor</label>
-          <input id="contaValor" data-mask="brl" inputmode="numeric" placeholder="R$ 0,00" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
+          <input id="contaValor" data-mask="jpy" inputmode="numeric" placeholder="¥0" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Data de Vencimento</label>
@@ -250,13 +250,13 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     let currentDetalhe = null;
 
-    const formatBRLDisplay = (value) => 'R$ ' + (Number(value || 0) / 100).toFixed(2).replace('.', ',');
+    const formatBRLDisplay = (value) => '¥' + Math.round(Number(value || 0) / 100).toLocaleString('ja-JP');
 
     const formatBRLInput = (value) => {
       const n = value.replace(/\D+/g, '');
       if (!n) return '';
       const cents = parseInt(n, 10);
-      return 'R$ ' + (cents / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return '¥' + Math.round(cents / 100).toLocaleString('ja-JP');
     };
 
     document.getElementById('lValor').addEventListener('input', function () {
@@ -293,7 +293,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 </td>
                 <td class="py-3">${item.grade}</td>
                 <td class="py-3"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>Dia ${item.due_day}</span></td>
-                <td class="py-3 font-medium">R$ ${(Number(item.mensalidade_value || 0) / 100).toFixed(2).replace('.', ',')}</td>
+                <td class="py-3 font-medium">¥${Math.round(Number(item.mensalidade_value || 0) / 100).toLocaleString('ja-JP')}</td>
                 <td class="py-3 text-right">
                   ${item.paid
                     ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
@@ -312,7 +312,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 <td class="py-3 font-medium">${item.name}</td>
                 <td class="py-3 text-slate-500">${item.descricao || '-'}</td>
                 <td class="py-3"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>${fmtDate(item.data_vencimento)}</span></td>
-                <td class="py-3 font-medium">R$ ${(Number(item.mensalidade_value || 0) / 100).toFixed(2).replace('.', ',')}</td>
+                <td class="py-3 font-medium">¥${Math.round(Number(item.mensalidade_value || 0) / 100).toLocaleString('ja-JP')}</td>
                 <td class="py-3 text-right">
                   ${item.paid
                     ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
@@ -393,7 +393,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('detalheBody').innerHTML = `
           <div class="flex justify-between"><span class="text-slate-500">Tipo:</span><span class="font-medium">Mensalidade Mensal</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Vencimento:</span><span class="font-medium flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>Dia ${row.dataset.day}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">R$ ${(val / 100).toFixed(2).replace('.', ',')}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">¥${Math.round(val / 100).toLocaleString('ja-JP')}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Status:</span>
             ${row.dataset.paid === 'true'
               ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
@@ -424,7 +424,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <div class="flex justify-between"><span class="text-slate-500">Tipo:</span><span class="font-medium">Lançamento Extra</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Descrição:</span><span class="font-medium">${row.dataset.desc || '-'}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Vencimento:</span><span class="font-medium flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>${fmtDate(row.dataset.venc)}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">R$ ${(val / 100).toFixed(2).replace('.', ',')}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">¥${Math.round(val / 100).toLocaleString('ja-JP')}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Status:</span>
             ${row.dataset.paid === 'true'
               ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'

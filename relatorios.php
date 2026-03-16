@@ -85,7 +85,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             </tbody>
           </table>
         </div>
-        <div class="mt-4 text-right text-lg font-semibold" id="totalSum">Total: R$ 0,00</div>
+        <div class="mt-4 text-right text-lg font-semibold" id="totalSum">Total: ¥0</div>
       </section>
     </main>
   </div>
@@ -102,7 +102,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const sourceFilter = document.getElementById('sourceFilter');
     const gradeFilter = document.getElementById('gradeFilter');
 
-    const formatBRLAmt = (value) => 'R$ ' + (Number(value || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const formatBRLAmt = (value) => '¥' + Math.round(Number(value || 0) / 100).toLocaleString('ja-JP');
 
     const loadServices = async () => {
       const response = await fetch('api/reports.php?action=bootstrap', { cache: 'no-store' });

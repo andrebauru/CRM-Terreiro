@@ -38,8 +38,8 @@ def _gen_filename(tipo: str) -> str:
 
 
 def _currency(value: float) -> str:
-    """Formata valor como moeda BRL."""
-    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    """Formata valor como moeda JPY."""
+    return f"¥{int(value):,}"
 
 
 def _build_styles() -> dict:

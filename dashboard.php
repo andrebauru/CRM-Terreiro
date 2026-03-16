@@ -62,7 +62,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <div class="flex items-center justify-between">
             <div>
               <p class="text-slate-500 text-sm">Previsão (Mês)</p>
-              <p class="text-3xl font-semibold mt-2" id="countReceivables">R$ 0,00</p>
+              <p class="text-3xl font-semibold mt-2" id="countReceivables">¥0</p>
             </div>
             <span class="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
               <i class="fa-solid fa-coins"></i>
@@ -74,7 +74,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <div class="flex items-center justify-between">
             <div>
               <p class="text-slate-500 text-sm">Contas a pagar (Mês)</p>
-              <p class="text-3xl font-semibold mt-2" id="countPayables">R$ 0,00</p>
+              <p class="text-3xl font-semibold mt-2" id="countPayables">¥0</p>
             </div>
             <span class="h-12 w-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
               <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -86,7 +86,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <div class="flex items-center justify-between">
             <div>
               <p class="text-slate-500 text-sm">Dinheiro em caixa</p>
-              <p class="text-3xl font-semibold mt-2" id="countCash">R$ 0,00</p>
+              <p class="text-3xl font-semibold mt-2" id="countCash">¥0</p>
             </div>
             <span class="h-12 w-12 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center">
               <i class="fa-solid fa-cash-register"></i>
@@ -247,7 +247,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const editReversed = document.getElementById('editReversed');
     let currentEditAttendanceId = null;
 
-    const formatBRLAmt = (v) => 'R$ ' + (Number(v || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const formatBRLAmt = (v) => '¥' + Math.round(Number(v || 0) / 100).toLocaleString('ja-JP');
 
     const loadDashboard = async () => {
       const response = await fetch(`api/dashboard.php?t=${Date.now()}`, { cache: 'no-store' });
