@@ -52,14 +52,14 @@ class UserController extends BaseController
         $isAdmin = Session::get('user_role') === 'admin';
         if (!$isAdmin && $id !== (int) Session::get('user_id')) {
             Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            $this->redirect('dashboard');
+            $this->redirect('dashboard.php');
         }
 
         $user = $this->userModel->findById($id);
 
         if (!$user) {
             Session::flash('error', 'Usuário não encontrado.');
-            $this->redirect($isAdmin ? 'users' : 'dashboard');
+            $this->redirect($isAdmin ? 'users' : 'dashboard.php');
         }
 
         $this->render('users/show', [
@@ -143,14 +143,14 @@ class UserController extends BaseController
         $isAdmin = Session::get('user_role') === 'admin';
         if (!$isAdmin && $id !== (int) Session::get('user_id')) {
             Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            $this->redirect('dashboard');
+            $this->redirect('dashboard.php');
         }
 
         $user = $this->userModel->findById($id);
 
         if (!$user) {
             Session::flash('error', 'Usuário não encontrado.');
-            $this->redirect($isAdmin ? 'users' : 'dashboard');
+            $this->redirect($isAdmin ? 'users' : 'dashboard.php');
         }
 
         $this->render('users/edit', [

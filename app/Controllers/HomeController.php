@@ -24,16 +24,17 @@ class HomeController extends BaseController // Extende BaseController
 
     public function index(): void
     {
-        // Se o usuário estiver logado, redireciona para o dashboard
+        // Se o usuário estiver logado, redireciona para o dashboard legacy
         if (Session::exists('user_id')) {
-            $this->redirect('dashboard');
+            $this->redirect('dashboard.php');
         }
 
-        // Se não estiver logado, renderiza a página inicial (que deve ser o login)
-        // O layout.php já trata o redirecionamento se não houver user_id
-        // Para a página inicial que mostra o formulário de login
-        $this->render('auth/login', [
-            'title' => 'Login' // Título para a página de login
+        // Se não estiver logado, renderiza a página de login
+        // Usa renderRaw pois login.php tem HTML completo próprio (sem Tabler)
+        $csrfToken = Session::generateCsrfToken();
+        $this->renderRaw('auth/login', [
+            'csrfToken' => $csrfToken,
+            'title' => 'Login'
         ]);
     }
 

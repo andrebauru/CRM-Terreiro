@@ -26,7 +26,7 @@ class SettingsController extends BaseController
         }
         if (Session::get('user_role') !== 'admin') {
             Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            $this->redirect('dashboard');
+            $this->redirect('dashboard.php');
         }
 
         $settings = $this->settingsModel->get();
@@ -47,7 +47,7 @@ class SettingsController extends BaseController
         }
         if (Session::get('user_role') !== 'admin') {
             Session::flash('error', 'Você não tem permissão para acessar esta área.');
-            $this->redirect('dashboard');
+            $this->redirect('dashboard.php');
         }
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {

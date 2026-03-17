@@ -26,8 +26,8 @@ class AuthController extends BaseController
     {
         // Generate CSRF token for the form
         $csrfToken = Session::generateCsrfToken();
-        // Render the login view using BaseController's render method
-        $this->render('auth/login', [
+        // Renderiza diretamente sem layout.php (login.php tem HTML completo próprio)
+        $this->renderRaw('auth/login', [
             'csrfToken' => $csrfToken,
             'title' => 'Login'
         ]);
@@ -91,7 +91,7 @@ class AuthController extends BaseController
                 $this->json(['message' => 'Login realizado com sucesso!', 'user' => ['id' => $user['id'], 'name' => $user['name'], 'role' => $user['role']]], 200);
             } else {
                 Session::flash('success', 'Login realizado com sucesso!');
-                $this->redirect('dashboard'); // Redirect to dashboard or intended page
+                $this->redirect('dashboard.php'); // Redireciona para o dashboard legacy
             }
             exit();
         } else {

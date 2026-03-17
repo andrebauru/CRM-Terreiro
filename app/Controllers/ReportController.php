@@ -41,7 +41,7 @@ class ReportController extends BaseController
 
         if (!class_exists(Dompdf::class)) {
             Session::flash('error', 'Exportação em PDF indisponível.');
-            $this->redirect('dashboard');
+            $this->redirect('dashboard.php');
         }
 
         $logoDataUri = null;

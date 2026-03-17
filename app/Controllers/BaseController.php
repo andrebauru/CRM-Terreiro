@@ -33,6 +33,23 @@ class BaseController
         require VIEW_PATH . '/layout.php';
     }
 
+    /**
+     * Render a view directly without wrapping in layout.php.
+     * Usado para páginas que possuem HTML completo próprio (ex: login).
+     */
+    protected function renderRaw(string $viewPath, array $data = []): void
+    {
+        extract($data);
+
+        $fullViewPath = VIEW_PATH . '/' . $viewPath . '.php';
+        if (file_exists($fullViewPath)) {
+            require $fullViewPath;
+        } else {
+            http_response_code(500);
+            echo "Error: View file not found: " . htmlspecialchars($fullViewPath);
+        }
+    }
+
     protected function redirect(string $path): void
     {
         header('Location: ' . ROUTE_BASE . '/' . ltrim($path, '/'));
@@ -52,7 +69,7 @@ class BaseController
     {
         if (!Session::exists('user_id') || Session::get('user_role') !== $requiredRole) {
             Session::set('error', 'Acesso negado.');
-            $this->redirect('dashboard'); // Or 'login' if not logged in
+            $this->redirect('dashboard.php'); // Redireciona para o dashboard legacy
         }
     }
 
