@@ -28,6 +28,31 @@ function loadEnv(string $path): void
 
 loadEnv(__DIR__ . '/.env');
 
+/**
+ * Inicia sessão com configuração segura de cookies.
+ * secure=false garante que cookies funcionam em HTTP (dev local).
+ * Em produção, o redirect HTTPS no index.php garante a segurança.
+ */
+function safeSessionStart(): void
+{
+    if (session_status() !== PHP_SESSION_NONE) {
+        return;
+    }
+    $name = $_ENV['SESSION_COOKIE_NAME'] ?? 'CRM_Terreiro_Session';
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    session_name($name);
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => false,
+        'httponly'  => true,
+        'samesite'  => 'Lax',
+    ]);
+    session_start();
+}
+
 function db(): PDO
 {
     static $pdo = null;

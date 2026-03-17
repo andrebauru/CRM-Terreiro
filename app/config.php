@@ -44,7 +44,12 @@ define('APP_NAME', $_ENV['APP_NAME'] ?? 'CRM Terreiro');
 define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
 
 // Dynamic BASE_URL - detecta corretamente o caminho base
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+// Detecta HTTPS via header direto ou X-Forwarded-Proto (reverse proxy / load balancer)
+$protocol = (
+    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (string)($_SERVER['SERVER_PORT'] ?? '') === '443'
+    || (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
+) ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
 
 // Se BASE_URL está definida no .env, usa ela; senão calcula dinamicamente

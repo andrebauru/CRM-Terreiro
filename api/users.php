@@ -7,7 +7,7 @@ require_once __DIR__ . '/../db.php';
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    safeSessionStart();
 }
 
 $currentUserId = (int)($_SESSION['user_id'] ?? 0);

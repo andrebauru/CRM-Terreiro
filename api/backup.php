@@ -6,7 +6,7 @@ require_once __DIR__ . '/../db.php';
 
 // Autenticação obrigatória para backup
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    safeSessionStart();
 }
 if (empty($_SESSION['user_id'])) {
     http_response_code(403);

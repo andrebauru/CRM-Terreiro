@@ -17,7 +17,7 @@ if (isset($_GET['theme']) && ($_GET['theme'] === 'dark' || $_GET['theme'] === 'l
         'path' => '/',
         'httponly' => true,
         'samesite' => 'Lax',
-        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        'secure' => false,
     ]);
 } elseif (isset($_COOKIE['theme_preference']) && ($_COOKIE['theme_preference'] === 'theme-dark' || $_COOKIE['theme_preference'] === 'theme-light')) {
     $currentTheme = $_COOKIE['theme_preference'];
