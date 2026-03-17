@@ -9,6 +9,7 @@ $navItems = [
   ['page' => 'quimbandeiro',  'href' => 'quimbandeiro.php',  'icon' => 'fa-fire',         'label' => 'Quimbandeiro'],
   ['page' => 'mensalidades',  'href' => 'mensalidades.php',  'icon' => 'fa-coins',        'label' => 'Mensalidades'],
   ['page' => 'clientes',      'href' => 'clientes.php',      'icon' => 'fa-users',        'label' => 'Clientes'],
+  ['page' => 'servicos',      'href' => 'servicos.php',      'icon' => 'fa-tags',         'label' => 'Serviços'],
   ['page' => 'trabalhos',     'href' => 'trabalhos.php',     'icon' => 'fa-briefcase',    'label' => 'Trabalhos'],
   ['page' => 'financeiro',    'href' => 'financeiro.php',    'icon' => 'fa-wallet',       'label' => 'Financeiro'],
   ['page' => 'usuarios',      'href' => 'usuarios.php',      'icon' => 'fa-user-shield',  'label' => 'Usuários'],
@@ -35,7 +36,7 @@ $active = $activePage ?? '';
         <i class="fa-solid <?= $item['icon'] ?> w-4"></i> <?= htmlspecialchars($item['label']) ?>
       </a>
     <?php endforeach; ?>
-    <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-red-400 hover:bg-red-900 font-bold transition-colors">
+    <a href="logout" class="flex items-center gap-3 px-3 py-2 rounded-lg text-red-400 hover:bg-red-900 font-bold transition-colors">
       <i class="fa-solid fa-right-from-bracket w-4"></i> Sair
     </a>
   </nav>

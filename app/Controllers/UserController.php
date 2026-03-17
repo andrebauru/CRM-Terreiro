@@ -59,7 +59,7 @@ class UserController extends BaseController
 
         if (!$user) {
             Session::flash('error', 'Usuário não encontrado.');
-            $this->redirect($isAdmin ? 'users' : 'dashboard.php');
+            $this->redirect($isAdmin ? 'usuarios.php' : 'dashboard.php');
         }
 
         $this->render('users/show', [
@@ -123,7 +123,7 @@ class UserController extends BaseController
                 $this->json(['success' => true, 'message' => 'Usuário criado com sucesso!']);
             }
             Session::flash('success', 'Usuário criado com sucesso!');
-            $this->redirect('users');
+            $this->redirect('usuarios.php');
         } else {
             $this->handleError('Erro ao criar usuário.');
         }
@@ -150,7 +150,7 @@ class UserController extends BaseController
 
         if (!$user) {
             Session::flash('error', 'Usuário não encontrado.');
-            $this->redirect($isAdmin ? 'users' : 'dashboard.php');
+            $this->redirect($isAdmin ? 'usuarios.php' : 'dashboard.php');
         }
 
         $this->render('users/edit', [
@@ -202,7 +202,7 @@ class UserController extends BaseController
                 $this->json(['success' => true, 'message' => $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!']);
             }
             Session::flash('success', $isAdmin ? 'Usuário atualizado com sucesso!' : 'Perfil atualizado com sucesso!');
-            $this->redirect($isAdmin ? 'users' : 'dashboard');
+            $this->redirect($isAdmin ? 'usuarios.php' : 'dashboard.php');
         } else {
             $this->handleError($isAdmin ? 'Erro ao atualizar usuário.' : 'Erro ao atualizar perfil.', $id, $isAdmin);
         }
@@ -222,13 +222,13 @@ class UserController extends BaseController
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            $this->redirect('users');
+            $this->redirect('usuarios.php');
         }
 
         // Prevent admin from deleting themselves
         if ($id === (int)Session::get('user_id')) { // Cast para int para comparação estrita
             Session::flash('error', 'Você não pode excluir seu próprio usuário.');
-            $this->redirect('users');
+            $this->redirect('usuarios.php');
         }
 
         if ($this->userModel->delete($id)) {
@@ -236,7 +236,7 @@ class UserController extends BaseController
         } else {
             Session::flash('error', 'Erro ao excluir usuário.');
         }
-        $this->redirect('users');
+        $this->redirect('usuarios.php');
     }
 
 

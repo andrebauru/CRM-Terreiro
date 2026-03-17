@@ -89,7 +89,7 @@ class ClientController extends BaseController
 
         if ($clientId) {
             ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $clientId . ') criado pelo usuario ' . Session::get('user_name') . '.');
-            $this->respondSuccess('Cliente criado com sucesso!', '/clients');
+            $this->respondSuccess('Cliente criado com sucesso!', '/clientes.php');
         } else {
             $this->respondError('Erro ao criar cliente.', '/clients/create');
         }
@@ -138,7 +138,7 @@ class ClientController extends BaseController
 
         if (!$client) {
             Session::flash('error', 'Cliente nao encontrado.');
-            $this->redirect('clients');
+            $this->redirect('clientes.php');
             return;
         }
 
@@ -189,7 +189,7 @@ class ClientController extends BaseController
         $client = $this->clientModel->find($id);
         if (!$client) {
             Session::flash('error', 'Cliente nao encontrado.');
-            $this->redirect('clients');
+            $this->redirect('clientes.php');
             return;
         }
 
@@ -223,7 +223,7 @@ class ClientController extends BaseController
 
         if ($this->clientModel->update($id, $data)) {
             ForgeLogger::logAction('Cliente ' . $data['name'] . ' (ID: ' . $id . ') atualizado pelo usuario ' . Session::get('user_name') . '.');
-            $this->respondSuccess('Cliente atualizado com sucesso!', '/clients');
+            $this->respondSuccess('Cliente atualizado com sucesso!', '/clientes.php');
         } else {
             $this->respondError('Erro ao atualizar cliente.', '/clients/' . $id . '/edit');
         }
@@ -268,7 +268,7 @@ class ClientController extends BaseController
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF invalido.');
-            $this->redirect('clients');
+            $this->redirect('clientes.php');
             return;
         }
 
@@ -278,7 +278,7 @@ class ClientController extends BaseController
         } else {
             Session::flash('error', 'Erro ao excluir cliente.');
         }
-        $this->redirect('clients');
+        $this->redirect('clientes.php');
     }
 
     /**

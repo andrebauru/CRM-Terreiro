@@ -90,7 +90,7 @@ class ServiceController extends BaseController
                 $this->json(['success' => true, 'message' => 'Serviço criado com sucesso!']);
             }
             Session::flash('success', 'Serviço criado com sucesso!');
-            $this->redirect('services');
+            $this->redirect('servicos.php');
         } else {
             $this->handleError('Erro ao criar serviço.');
         }
@@ -111,7 +111,7 @@ class ServiceController extends BaseController
 
         if (!$service) {
             Session::flash('error', 'Serviço não encontrado.');
-            $this->redirect('services');
+            $this->redirect('servicos.php');
         }
 
         $settings = (new Setting())->get();
@@ -141,7 +141,7 @@ class ServiceController extends BaseController
 
         if (!$service) {
             Session::flash('error', 'Serviço não encontrado.');
-            $this->redirect('services');
+            $this->redirect('servicos.php');
         }
 
         $data = [
@@ -191,7 +191,7 @@ class ServiceController extends BaseController
                 $this->json(['success' => true, 'message' => 'Serviço atualizado com sucesso!']);
             }
             Session::flash('success', 'Serviço atualizado com sucesso!');
-            $this->redirect('services');
+            $this->redirect('servicos.php');
         } else {
             $this->handleError('Erro ao atualizar serviço.', $id);
         }
@@ -210,7 +210,7 @@ class ServiceController extends BaseController
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            $this->redirect('services');
+            $this->redirect('servicos.php');
         }
 
         if ($this->serviceModel->delete($id)) {
@@ -219,7 +219,7 @@ class ServiceController extends BaseController
         } else {
             Session::flash('error', 'Erro ao excluir serviço.');
         }
-        $this->redirect('services');
+        $this->redirect('servicos.php');
     }
 
 

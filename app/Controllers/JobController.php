@@ -119,7 +119,7 @@ class JobController extends BaseController
                 $this->json(['success' => true, 'message' => 'Trabalho criado com sucesso!']);
             }
             Session::flash('success', 'Trabalho criado com sucesso!');
-            $this->redirect('jobs');
+            $this->redirect('trabalhos.php');
         } else {
             $this->handleError('Erro ao criar trabalho.');
         }
@@ -140,14 +140,14 @@ class JobController extends BaseController
 
         if (!$job) {
             Session::flash('error', 'Trabalho não encontrado.');
-            $this->redirect('jobs');
+            $this->redirect('trabalhos.php');
         }
 
         $currentUserId = Session::get('user_id');
         $currentUserRole = Session::get('user_role');
         if ($currentUserRole !== 'admin' && (int)$job['created_by'] !== (int)$currentUserId) {
             Session::flash('error', 'Você não tem permissão para visualizar esta tarefa.');
-            $this->redirect('jobs');
+            $this->redirect('trabalhos.php');
         }
 
         $attachments = $this->jobAttachmentModel->getByJobId($id); // Fetch attachments
@@ -188,7 +188,7 @@ class JobController extends BaseController
 
         if (!$job) {
             Session::flash('error', 'Trabalho não encontrado.');
-            $this->redirect('jobs');
+            $this->redirect('trabalhos.php');
         }
 
         $clients = $this->clientModel->all();
@@ -255,7 +255,7 @@ class JobController extends BaseController
                 $this->json(['success' => true, 'message' => 'Trabalho atualizado com sucesso!']);
             }
             Session::flash('success', 'Trabalho atualizado com sucesso!');
-            $this->redirect('jobs');
+            $this->redirect('trabalhos.php');
         } else {
             $this->handleError('Erro ao atualizar trabalho.', $id);
         }
@@ -274,7 +274,7 @@ class JobController extends BaseController
 
         if (!Session::validateCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
             Session::flash('error', 'Token CSRF inválido.');
-            $this->redirect('jobs');
+            $this->redirect('trabalhos.php');
         }
 
         // Before deleting job, delete associated attachments from filesystem
@@ -293,7 +293,7 @@ class JobController extends BaseController
         } else {
             Session::flash('error', 'Erro ao excluir trabalho.');
         }
-        $this->redirect('jobs');
+        $this->redirect('trabalhos.php');
     }
 
     /**

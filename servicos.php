@@ -1,6 +1,6 @@
 <?php
-$pageTitle = 'CRM Terreiro - Catálogo de Trabalhos';
-$activePage = 'trabalhos';
+$pageTitle = 'CRM Terreiro - Catálogo de Serviços';
+$activePage = 'servicos';
 require_once __DIR__ . '/app/views/partials/tw-head.php';
 ?>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
@@ -10,17 +10,17 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     <main class="flex-1 p-8">
       <header class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-2xl font-bold">Catálogo de Trabalhos</h1>
-          <p class="text-slate-500">Tipos de trabalhos disponíveis</p>
+          <h1 class="text-2xl font-bold">Catálogo de Serviços</h1>
+          <p class="text-slate-500">Tipos de serviços disponíveis</p>
         </div>
         <button id="openModal" class="px-4 py-2 rounded-lg bg-red-700 text-white font-bold hover:bg-red-800">
-          <i class="fa-solid fa-plus mr-2"></i>Adicionar Trabalho
+          <i class="fa-solid fa-plus mr-2"></i>Adicionar Serviço
         </button>
       </header>
 
       <section class="bg-white border border-slate-200 rounded-2xl p-6">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold">Lista de Trabalhos</h2>
+          <h2 class="text-lg font-semibold">Lista de Serviços</h2>
           <input id="searchInput" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Buscar..." />
         </div>
         <div class="overflow-x-auto">
@@ -45,13 +45,13 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/40 px-4">
     <div class="bg-white rounded-2xl w-full max-w-lg p-6 border border-slate-200">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold" id="modalTitle">Novo Trabalho</h2>
+        <h2 class="text-lg font-semibold" id="modalTitle">Novo Serviço</h2>
         <button id="closeModal" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <form id="serviceForm" class="space-y-4">
         <input type="hidden" id="serviceId" />
         <div>
-          <label class="text-sm font-medium text-slate-700">Nome do Trabalho</label>
+          <label class="text-sm font-medium text-slate-700">Nome do Serviço</label>
           <input id="serviceName" required class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
         </div>
         <div>
@@ -126,12 +126,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </td>
         </tr>
       `).join('');
-      servicesTable.innerHTML = html || '<tr><td class="py-3" colspan="4">Nenhum trabalho encontrado.</td></tr>';
+      servicesTable.innerHTML = html || '<tr><td class="py-3" colspan="4">Nenhum serviço encontrado.</td></tr>';
     };
 
     openModal.addEventListener('click', () => {
       resetForm();
-      modalTitle.textContent = 'Novo Trabalho';
+      modalTitle.textContent = 'Novo Serviço';
       openFn(true);
     });
 
@@ -157,12 +157,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         servicePrice.value = service.price ? formatBRL(String(service.price)) : '';
         serviceDescription.value = service.description || '';
         serviceActive.value = String(service.is_active ?? 1);
-        modalTitle.textContent = 'Editar Trabalho';
+        modalTitle.textContent = 'Editar Serviço';
         openFn(true);
       }
 
       if (deleteId) {
-        if (!confirm('Deseja excluir este trabalho?')) return;
+        if (!confirm('Deseja excluir este serviço?')) return;
         fetch('api/services.php', {
           method: 'POST',
           body: new URLSearchParams({ action: 'delete', id: deleteId }),

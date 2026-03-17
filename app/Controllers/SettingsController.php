@@ -93,7 +93,7 @@ class SettingsController extends BaseController
                     // The helper doesn't know about ajax, so we handle it here
                     $this->json(['success' => false, 'errors' => [Session::get('error')]]);
                 }
-                $this->redirect('settings');
+                $this->redirect('configuracoes.php');
             }
 
             if (!empty($logoPath)) {
@@ -127,7 +127,7 @@ class SettingsController extends BaseController
             $this->handleError('Erro ao atualizar configurações.');
         }
 
-        $this->redirect('settings');
+        $this->redirect('configuracoes.php');
     }
 
     private function handleError(string $message): void
@@ -137,6 +137,6 @@ class SettingsController extends BaseController
             $this->json(['success' => false, 'errors' => [$message]], 422);
         }
         Session::flash('error', $message);
-        $this->redirect('settings');
+        $this->redirect('configuracoes.php');
     }
 }
