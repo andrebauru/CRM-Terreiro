@@ -23,48 +23,33 @@ try {
         $grade = $_GET['grade'] ?? '';
         $source = $_GET['source'] ?? 'trabalhos';
 
-        $where = [];
-        $params = [];
-
-        if ($start && $end) {
-            $where[] = 'DATE(a.created_at) BETWEEN ? AND ?';
-            $params[] = $start;
-            $params[] = $end;
-        } elseif ($start) {
-            $where[] = 'DATE(a.created_at) >= ?';
-            $params[] = $start;
-        } elseif ($end) {
-            $where[] = 'DATE(a.created_at) <= ?';
-            $params[] = $end;
-        }
-
-        if ($name !== '') {
-            $where[] = 'c.name LIKE ?';
-            $params[] = '%' . $name . '%';
-        }
-
-        if ($serviceId > 0) {
-            $where[] = 's.id = ?';
-            $params[] = $serviceId;
-        }
-
-        if ($status === 'delinquent') {
-            $where[] = 'a.is_delinquent = 1';
-        }
-        if ($status === 'reversed') {
-            $where[] = 'a.is_reversed = 1';
-        }
-        if ($status === 'paid') {
-            $where[] = 'a.is_delinquent = 0';
-        }
-
-        $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-
         if ($source === 'mensalidades') {
+            // Filtros específicos para query de mensalidades (aliases: mp, f)
+            $where = [];
+            $params = [];
+
+            if ($start && $end) {
+                $where[] = 'DATE(mp.paid_at) BETWEEN ? AND ?';
+                $params[] = $start;
+                $params[] = $end;
+            } elseif ($start) {
+                $where[] = 'DATE(mp.paid_at) >= ?';
+                $params[] = $start;
+            } elseif ($end) {
+                $where[] = 'DATE(mp.paid_at) <= ?';
+                $params[] = $end;
+            }
+
+            if ($name !== '') {
+                $where[] = 'f.name LIKE ?';
+                $params[] = '%' . $name . '%';
+            }
+
             if ($grade !== '') {
                 $where[] = 'f.grade = ?';
                 $params[] = $grade;
             }
+
             $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
             $stmt = $pdo->prepare(
@@ -88,6 +73,44 @@ try {
             $sumStmt->execute($params);
             $total = (float)$sumStmt->fetchColumn();
         } else {
+            // Filtros específicos para query de trabalhos (aliases: a, c, s)
+            $where = [];
+            $params = [];
+
+            if ($start && $end) {
+                $where[] = 'DATE(a.created_at) BETWEEN ? AND ?';
+                $params[] = $start;
+                $params[] = $end;
+            } elseif ($start) {
+                $where[] = 'DATE(a.created_at) >= ?';
+                $params[] = $start;
+            } elseif ($end) {
+                $where[] = 'DATE(a.created_at) <= ?';
+                $params[] = $end;
+            }
+
+            if ($name !== '') {
+                $where[] = 'c.name LIKE ?';
+                $params[] = '%' . $name . '%';
+            }
+
+            if ($serviceId > 0) {
+                $where[] = 's.id = ?';
+                $params[] = $serviceId;
+            }
+
+            if ($status === 'delinquent') {
+                $where[] = 'a.is_delinquent = 1';
+            }
+            if ($status === 'reversed') {
+                $where[] = 'a.is_reversed = 1';
+            }
+            if ($status === 'paid') {
+                $where[] = 'a.is_delinquent = 0';
+            }
+
+            $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
             $stmt = $pdo->prepare(
                 "SELECT a.id, DATE(a.created_at) AS date, a.total_amount, a.payment_type, c.name AS client_name,
                         GROUP_CONCAT(s.name SEPARATOR ', ') AS services

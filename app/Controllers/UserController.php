@@ -39,6 +39,41 @@ class UserController extends BaseController
     }
 
     /**
+     * Display the specified user.
+     *
+     * @param int $id
+     */
+    public function show(int $id): void
+    {
+        if (!Session::exists('user_id')) {
+            $this->redirect('login');
+        }
+
+        $isAdmin = Session::get('user_role') === 'admin';
+        if (!$isAdmin && $id !== (int) Session::get('user_id')) {
+            Session::flash('error', 'Você não tem permissão para acessar esta área.');
+            $this->redirect('dashboard');
+        }
+
+        $user = $this->userModel->findById($id);
+
+        if (!$user) {
+            Session::flash('error', 'Usuário não encontrado.');
+            $this->redirect($isAdmin ? 'users' : 'dashboard');
+        }
+
+        $this->render('users/show', [
+            'title' => htmlspecialchars($user['name']),
+            'user' => $user,
+            'isAdmin' => $isAdmin,
+            'breadcrumb' => [
+                ['label' => 'Usuários', 'url' => ROUTE_BASE . '/users'],
+                ['label' => $user['name']]
+            ]
+        ]);
+    }
+
+    /**
      * Show the form for creating a new user.
      */
     public function create(): void

@@ -22,7 +22,8 @@ function getPDOConnection(): object
 {
     // Check if PDO and pdo_mysql are available
     if (extension_loaded('pdo_mysql')) {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        $port = defined('DB_PORT') ? DB_PORT : '3306';
+        $dsn = "mysql:host=" . DB_HOST . ";port=" . $port . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
         $options = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

@@ -158,6 +158,8 @@ try {
         if ($id <= 0) {
             jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
         }
+        $pdo->prepare("DELETE FROM caixa_movimentos WHERE origem = 'trabalho' AND referencia_id = ?")
+            ->execute([$id]);
         $stmt = $pdo->prepare('DELETE FROM trabalho_realizacoes WHERE id = ?');
         $stmt->execute([$id]);
         jsonResponse(['ok' => true]);
