@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'CRM Terreiro - Dashboard';
 $activePage = 'dashboard';
 $extraHead = <<<'HTML'

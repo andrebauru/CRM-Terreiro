@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'CRM Terreiro - Filhos da Casa';
 $activePage = 'filhos';
 require_once __DIR__ . '/app/views/partials/tw-head.php';
