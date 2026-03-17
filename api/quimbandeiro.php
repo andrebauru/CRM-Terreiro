@@ -20,6 +20,18 @@ try {
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
 
+    // Filhos que ainda NÃO possuem registro no quimbandeiro
+    if ($action === 'unregistered') {
+        $stmt = $pdo->query(
+            "SELECT f.id, f.name
+             FROM filhos f
+             WHERE (f.status IS NULL OR f.status = 'ativo')
+               AND NOT EXISTS (SELECT 1 FROM quimbandeiro q WHERE q.filho_id = f.id)
+             ORDER BY f.name ASC"
+        );
+        jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+    }
+
     if ($action === 'save') {
         $filhoId       = (int)($_POST['filho_id'] ?? 0);
         if ($filhoId <= 0) jsonResponse(['ok' => false, 'message' => 'Filho inválido'], 422);

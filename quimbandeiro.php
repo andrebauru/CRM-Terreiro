@@ -13,6 +13,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <h1 class="text-2xl font-bold">Quimbandeiro</h1>
           <p class="text-slate-500">Acompanhamento de graus e iniciações dos filhos</p>
         </div>
+        <button id="openAddModal" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold hover:bg-red-800">
+          <i class="fa-solid fa-plus mr-2"></i>Novo Registro
+        </button>
       </header>
 
       <div class="flex gap-4 mb-6 text-sm">
@@ -62,6 +65,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       <p class="text-slate-400 text-xs mb-5">Preencha as datas de cada etapa concluída. Deixe em branco se ainda não realizado.</p>
       <form id="quimbandeiroForm" class="space-y-4">
         <input type="hidden" id="modalFilhoId" />
+        <div id="filhoSelectRow" class="hidden">
+          <label class="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <i class="fa-solid fa-user text-red-600"></i> Filho da Casa
+          </label>
+          <select id="filhoSelect" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+            <option value="">Selecione um filho...</option>
+          </select>
+        </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-bold text-slate-700 flex items-center gap-2">
@@ -191,6 +202,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const openEditModal = (f) => {
       document.getElementById('modalFilhoId').value = f.id;
       document.getElementById('modalFilhoName').textContent = f.name;
+      document.getElementById('filhoSelectRow').classList.add('hidden');
       document.getElementById('qProbatorio').value = f.probatorio ? f.probatorio.split('T')[0] : '';
       document.getElementById('qLinkIniciacao').value = f.link_iniciacao || '';
       document.getElementById('qMaoBuzios').value = f.mao_buzios ? f.mao_buzios.split('T')[0] : '';
@@ -257,9 +269,46 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     document.getElementById('closeModal').addEventListener('click', () => toggleModal(modal, false));
     document.getElementById('cancelModal').addEventListener('click', () => toggleModal(modal, false));
-    document.getElementById('fabAction').addEventListener('click', () => {
-      quimbanceiroTable.scrollIntoView({ behavior: 'smooth' });
+
+    const openAddModal = async () => {
+      // Buscar filhos sem registro no quimbandeiro
+      const res = await fetch(`api/quimbandeiro.php?action=unregistered&t=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      const filhos = data.data || [];
+      const sel = document.getElementById('filhoSelect');
+      sel.innerHTML = '<option value="">Selecione um filho...</option>' +
+        filhos.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+
+      if (!filhos.length) {
+        alert('Todos os filhos já possuem registro no Quimbandeiro.');
+        return;
+      }
+
+      // Limpar campos
+      document.getElementById('modalFilhoId').value = '';
+      document.getElementById('modalFilhoName').textContent = 'Novo Registro';
+      document.getElementById('filhoSelectRow').classList.remove('hidden');
+      document.getElementById('qProbatorio').value = '';
+      document.getElementById('qLinkIniciacao').value = '';
+      document.getElementById('qMaoBuzios').value = '';
+      document.getElementById('qMaoFaca').value = '';
+      document.getElementById('qGrau1').value = '';
+      document.getElementById('qGrau2').value = '';
+      document.getElementById('qGrau3').value = '';
+      toggleModal(modal, true);
+    };
+
+    // Ao selecionar filho no select, preencher o hidden
+    document.getElementById('filhoSelect').addEventListener('change', function() {
+      document.getElementById('modalFilhoId').value = this.value;
+      const opt = this.options[this.selectedIndex];
+      if (opt && opt.value) {
+        document.getElementById('modalFilhoName').textContent = opt.textContent;
+      }
     });
+
+    document.getElementById('openAddModal').addEventListener('click', openAddModal);
+    document.getElementById('fabAction').addEventListener('click', openAddModal);
 
     document.getElementById('quimbandeiroForm').addEventListener('submit', (e) => {
       e.preventDefault();
