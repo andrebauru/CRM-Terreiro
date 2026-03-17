@@ -231,7 +231,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
     function formatBRLCents(cents) {
-      return '¥' + Math.round(cents / 100).toLocaleString('ja-JP');
+      return formatBRL(String(cents || 0));
     }
 
     function parseCurrency(str) {

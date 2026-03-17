@@ -247,7 +247,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const editReversed = document.getElementById('editReversed');
     let currentEditAttendanceId = null;
 
-    const formatBRLAmt = (v) => '¥' + Math.round(Number(v || 0) / 100).toLocaleString('ja-JP');
+    const formatBRLAmt = (v) => formatBRL(String(v || 0));
 
     const loadDashboard = async () => {
       const response = await fetch(`api/dashboard.php?t=${Date.now()}`, { cache: 'no-store' });

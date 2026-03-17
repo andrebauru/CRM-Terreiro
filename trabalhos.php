@@ -251,7 +251,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       el.innerHTML = catalogoCache.map(c => `
         <tr class="border-t border-slate-100">
           <td class="py-2 font-medium">${c.name}</td>
-          <td class="py-2 text-slate-500">¥${Math.round(Number(c.price || 0) / 100).toLocaleString('ja-JP')}</td>
+          <td class="py-2 text-slate-500">${formatBRL(String(c.price || 0))}</td>
           <td class="py-2 text-right">
             <button class="text-red-600 text-xs" data-cat-edit="${c.id}"><i class="fa-solid fa-pen"></i></button>
           </td>
@@ -312,7 +312,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const catPriceInput = document.getElementById('catPrice');
     catPriceInput.addEventListener('input', () => {
       const n = catPriceInput.value.replace(/\D+/g, '');
-      catPriceInput.value = n ? '¥' + Math.round(parseInt(n) / 100).toLocaleString('ja-JP') : '';
+      catPriceInput.value = n ? formatBRL(n) : '';
     });
 
     document.getElementById('saveCatForm').addEventListener('click', () => {
@@ -339,7 +339,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('catId').value = c.id;
         document.getElementById('catName').value = c.name;
         document.getElementById('catDesc').value = c.description || '';
-        document.getElementById('catPrice').value = c.price ? '¥' + Math.round(Number(c.price) / 100).toLocaleString('ja-JP') : '';
+        document.getElementById('catPrice').value = c.price ? formatBRL(String(c.price)) : '';
         document.getElementById('addCatalogoForm').classList.remove('hidden');
       }
     });

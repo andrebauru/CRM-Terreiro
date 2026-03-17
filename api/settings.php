@@ -21,6 +21,17 @@ try {
 
     if ($action === 'update') {
         $companyName = trim((string)($_POST['company_name'] ?? '')) ?: 'CRM Terreiro';
+        $currencyCode = trim((string)($_POST['currency_code'] ?? ''));
+        $currencySymbol = '';
+        if ($currencyCode === 'BRL') {
+            $currencySymbol = 'R$';
+        } elseif ($currencyCode === 'JPY') {
+            $currencySymbol = '¥';
+        }
+        $language = trim((string)($_POST['language'] ?? ''));
+        if (!in_array($language, ['pt', 'ja'], true)) {
+            $language = 'pt';
+        }
         $logoPath = null;
 
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
@@ -40,13 +51,26 @@ try {
             $logoPath = '../uploads/logo/' . $filename;
         }
 
-        if ($logoPath) {
-            $stmt = $pdo->prepare('UPDATE settings SET company_name = ?, logo_path = ? WHERE id = 1');
-            $stmt->execute([$companyName, $logoPath]);
-        } else {
-            $stmt = $pdo->prepare('UPDATE settings SET company_name = ? WHERE id = 1');
-            $stmt->execute([$companyName]);
+        $sql = 'UPDATE settings SET company_name = ?';
+        $params = [$companyName];
+
+        if ($currencyCode) {
+            $sql .= ', currency_code = ?, currency_symbol = ?';
+            $params[] = $currencyCode;
+            $params[] = $currencySymbol;
         }
+
+        $sql .= ', language = ?';
+        $params[] = $language;
+
+        if ($logoPath) {
+            $sql .= ', logo_path = ?';
+            $params[] = $logoPath;
+        }
+
+        $sql .= ' WHERE id = 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
 
         $stmt = $pdo->query('SELECT * FROM settings ORDER BY id ASC LIMIT 1');
         jsonResponse(['ok' => true, 'data' => $stmt->fetch()]);

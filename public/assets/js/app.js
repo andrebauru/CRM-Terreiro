@@ -1,28 +1,53 @@
-// Currency formatting (JPY - Iene Japonês)
+// CRM Terreiro — Global JS Utilities
+
+// Currency settings (loaded from API via loadBrand)
+let crmCurrency = { code: 'JPY', symbol: '¥', locale: 'ja-JP' };
+let crmLanguage = 'pt';
+
+// Currency formatting (supports JPY and BRL)
+// JPY: stores integer yen (¥150 = 150 in DB)
+// BRL: stores integer centavos (R$1,50 = 150 in DB)
 const formatBRL = (v) => {
-  const n = String(v || '').replace(/\D+/g, '');
+  const n = parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
   if (!n) return '';
-  return '¥' + Math.round(parseInt(n, 10) / 100).toLocaleString('ja-JP');
+  if (crmCurrency.code === 'BRL') {
+    return 'R$\u00a0' + (n / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return '¥' + n.toLocaleString('ja-JP');
 };
+
 const parseBRL = (v) => parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
+
 const fmtDate = (d) => d ? d.split('T')[0].split('-').reverse().join('/') : '—';
+
 const toggleModal = (el, show) => {
   el.classList.toggle('hidden', !show);
   el.classList.toggle('flex', show);
 };
 
-// Load brand name/logo from settings
+// Load brand name/logo/currency from settings
 const loadBrand = async () => {
   try {
     const response = await fetch('api/settings.php?action=get', { cache: 'no-store' });
     const data = await response.json();
-    if (data.ok && data.data?.company_name) {
-      document.querySelectorAll('#brandName').forEach(el => el.textContent = data.data.company_name);
-    }
-    if (data.ok && data.data?.logo_path) {
-      document.querySelectorAll('#brandLogo').forEach(el => {
-        el.innerHTML = `<img src="${data.data.logo_path}" class="h-10 w-10 rounded-xl object-cover" />`;
-      });
+    if (data.ok && data.data) {
+      const s = data.data;
+      if (s.company_name) {
+        document.querySelectorAll('#brandName').forEach(el => el.textContent = s.company_name);
+      }
+      if (s.logo_path) {
+        document.querySelectorAll('#brandLogo').forEach(el => {
+          el.innerHTML = `<img src="${s.logo_path}" class="h-10 w-10 rounded-xl object-cover" />`;
+        });
+      }
+      if (s.currency_code) {
+        crmCurrency.code = s.currency_code;
+        crmCurrency.symbol = s.currency_symbol || (s.currency_code === 'BRL' ? 'R$' : '¥');
+        crmCurrency.locale = s.currency_code === 'BRL' ? 'pt-BR' : 'ja-JP';
+      }
+      if (s.language) {
+        crmLanguage = s.language;
+      }
     }
   } catch (e) {}
 };

@@ -163,7 +163,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     let clientsCache = [];
     let currentAttendanceId = null;
 
-    const formatBRLAmount = (value) => '¥' + Math.round(Number(value || 0) / 100).toLocaleString('ja-JP');
+    const formatBRLAmount = (value) => formatBRL(String(value || 0));
 
     const loadBootstrap = async () => {
       const response = await fetch('api/attendances.php?action=bootstrap', { cache: 'no-store' });

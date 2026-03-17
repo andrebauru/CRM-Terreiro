@@ -26,6 +26,22 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <input id="logoInput" type="file" accept="image/*" class="mt-2 w-full" />
             <div class="mt-3" id="logoPreview"></div>
           </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-slate-700">Moeda</label>
+              <select id="currencyCode" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2">
+                <option value="JPY">¥ Iene Japonês (JPY)</option>
+                <option value="BRL">R$ Real Brasileiro (BRL)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-slate-700">Idioma</label>
+              <select id="language" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2">
+                <option value="pt">🇧🇷 Português</option>
+                <option value="ja">🇯🇵 日本語</option>
+              </select>
+            </div>
+          </div>
           <div class="flex gap-2">
             <button type="submit" class="px-4 py-2 rounded-xl bg-accent text-white">Salvar</button>
             <a href="api/backup.php" class="px-4 py-2 rounded-xl border border-slate-200">Backup SQL</a>
@@ -41,12 +57,16 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const companyName = document.getElementById('companyName');
     const logoInput = document.getElementById('logoInput');
     const logoPreview = document.getElementById('logoPreview');
+    const currencyCode = document.getElementById('currencyCode');
+    const language = document.getElementById('language');
 
     const loadSettings = async () => {
       const response = await fetch('api/settings.php?action=get', { cache: 'no-store' });
       const data = await response.json();
       if (!data.ok) return;
       companyName.value = data.data.company_name || 'CRM Terreiro';
+      currencyCode.value = data.data.currency_code || 'JPY';
+      language.value = data.data.language || 'pt';
       if (data.data.logo_path) {
         logoPreview.innerHTML = `<img src="${data.data.logo_path}" class="h-16 rounded-xl border border-slate-200" />`;
       }
@@ -57,6 +77,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const formData = new FormData();
       formData.append('action', 'update');
       formData.append('company_name', companyName.value);
+      formData.append('currency_code', currencyCode.value);
+      formData.append('language', language.value);
       if (logoInput.files.length) {
         formData.append('logo', logoInput.files[0]);
       }

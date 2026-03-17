@@ -1,19 +1,20 @@
 <?php
-// $activePage - current page identifier (string): 'dashboard', 'filhos', 'quimbandeiro',
-//   'mensalidades', 'clientes', 'trabalhos', 'financeiro', 'usuarios', 'atendimentos',
-//   'relatorios', 'configuracoes'
+// $activePage - current page identifier (string): 'dashboard', 'atendimentos',
+//   'trabalhos', 'clientes', 'filhos', 'quimbandeiro', 'mensalidades', 'giras',
+//   'servicos', 'financeiro', 'usuarios', 'relatorios', 'configuracoes'
 
 $navItems = [
   ['page' => 'dashboard',     'href' => 'dashboard.php',     'icon' => 'fa-chart-line',   'label' => 'Dashboard'],
+  ['page' => 'atendimentos',  'href' => 'atendimentos.php',  'icon' => 'fa-headset',      'label' => 'Atendimentos'],
+  ['page' => 'trabalhos',     'href' => 'trabalhos.php',     'icon' => 'fa-briefcase',    'label' => 'Trabalhos'],
+  ['page' => 'clientes',      'href' => 'clientes.php',      'icon' => 'fa-users',        'label' => 'Clientes'],
   ['page' => 'filhos',        'href' => 'filhos.php',        'icon' => 'fa-people-group', 'label' => 'Filhos'],
   ['page' => 'quimbandeiro',  'href' => 'quimbandeiro.php',  'icon' => 'fa-fire',         'label' => 'Quimbandeiro'],
   ['page' => 'mensalidades',  'href' => 'mensalidades.php',  'icon' => 'fa-coins',        'label' => 'Mensalidades'],
-  ['page' => 'clientes',      'href' => 'clientes.php',      'icon' => 'fa-users',        'label' => 'Clientes'],
+  ['page' => 'giras',         'href' => 'giras.php',         'icon' => 'fa-drum',         'label' => 'Registro de Giras'],
   ['page' => 'servicos',      'href' => 'servicos.php',      'icon' => 'fa-tags',         'label' => 'Serviços'],
-  ['page' => 'trabalhos',     'href' => 'trabalhos.php',     'icon' => 'fa-briefcase',    'label' => 'Trabalhos'],
   ['page' => 'financeiro',    'href' => 'financeiro.php',    'icon' => 'fa-wallet',       'label' => 'Financeiro'],
   ['page' => 'usuarios',      'href' => 'usuarios.php',      'icon' => 'fa-user-shield',  'label' => 'Usuários'],
-  ['page' => 'atendimentos',  'href' => 'atendimentos.php',  'icon' => 'fa-headset',      'label' => 'Atendimentos'],
   ['page' => 'relatorios',    'href' => 'relatorios.php',    'icon' => 'fa-file-lines',   'label' => 'Relatórios'],
   ['page' => 'configuracoes', 'href' => 'configuracoes.php', 'icon' => 'fa-gear',         'label' => 'Configurações'],
 ];
