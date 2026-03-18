@@ -1,8 +1,22 @@
 // CRM Terreiro — Global JS Utilities
 
-// Currency settings (loaded from API via loadBrand)
+// Currency settings — initialized synchronously from PHP-embedded data,
+// then refreshed asynchronously by loadBrand()
 let crmCurrency = { code: 'JPY', symbol: '¥', locale: 'ja-JP' };
 let crmLanguage = 'pt';
+
+// Hydrate from PHP-embedded settings (eliminates race condition)
+if (window.__crmSettings && typeof window.__crmSettings === 'object') {
+  if (window.__crmSettings.currency_code) {
+    crmCurrency.code   = window.__crmSettings.currency_code;
+    crmCurrency.symbol = window.__crmSettings.currency_symbol
+      || (window.__crmSettings.currency_code === 'BRL' ? 'R$' : '¥');
+    crmCurrency.locale = window.__crmSettings.currency_code === 'BRL' ? 'pt-BR' : 'ja-JP';
+  }
+  if (window.__crmSettings.language) {
+    crmLanguage = window.__crmSettings.language;
+  }
+}
 
 // Currency formatting (supports JPY and BRL)
 // JPY: stores integer yen (¥150 = 150 in DB)

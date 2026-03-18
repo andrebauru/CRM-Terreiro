@@ -250,14 +250,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     let currentDetalhe = null;
 
-    const formatBRLDisplay = (value) => '¥' + Math.round(Number(value || 0) / 100).toLocaleString('ja-JP');
+    const formatBRLDisplay = (value) => formatBRL(String(value || 0));
 
-    const formatBRLInput = (value) => {
-      const n = value.replace(/\D+/g, '');
-      if (!n) return '';
-      const cents = parseInt(n, 10);
-      return '¥' + Math.round(cents / 100).toLocaleString('ja-JP');
-    };
+    const formatBRLInput = (value) => formatBRL(value);
 
     document.getElementById('lValor').addEventListener('input', function () {
       this.value = formatBRLInput(this.value);
@@ -293,9 +288,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 </td>
                 <td class="py-3">${item.grade}</td>
                 <td class="py-3"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>Dia ${item.due_day}</span></td>
-                <td class="py-3 font-medium">¥${Math.round(Number(item.mensalidade_value || 0) / 100).toLocaleString('ja-JP')}</td>
+                <td class="py-3 font-medium">${item.isento_mensalidade ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatBRLDisplay(item.mensalidade_value)}</td>
                 <td class="py-3 text-right">
-                  ${item.paid
+                  ${item.isento_mensalidade
+                    ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold"><i class="fa-solid fa-hand"></i> Isento</span>'
+                    : item.paid
                     ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
                     : `<button class="text-red-700 font-bold text-xs px-3 py-1 rounded-lg bg-red-50 hover:bg-red-100" data-pay="${item.id}" onclick="event.stopPropagation()">Dar Baixa</button>`}
                 </td>
@@ -312,7 +309,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 <td class="py-3 font-medium">${item.name}</td>
                 <td class="py-3 text-slate-500">${item.descricao || '-'}</td>
                 <td class="py-3"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>${fmtDate(item.data_vencimento)}</span></td>
-                <td class="py-3 font-medium">¥${Math.round(Number(item.mensalidade_value || 0) / 100).toLocaleString('ja-JP')}</td>
+                <td class="py-3 font-medium">${formatBRLDisplay(item.mensalidade_value)}</td>
                 <td class="py-3 text-right">
                   ${item.paid
                     ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
@@ -393,7 +390,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('detalheBody').innerHTML = `
           <div class="flex justify-between"><span class="text-slate-500">Tipo:</span><span class="font-medium">Mensalidade Mensal</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Vencimento:</span><span class="font-medium flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>Dia ${row.dataset.day}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">¥${Math.round(val / 100).toLocaleString('ja-JP')}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">${formatBRLDisplay(val)}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Status:</span>
             ${row.dataset.paid === 'true'
               ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
@@ -424,7 +421,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <div class="flex justify-between"><span class="text-slate-500">Tipo:</span><span class="font-medium">Lançamento Extra</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Descrição:</span><span class="font-medium">${row.dataset.desc || '-'}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Vencimento:</span><span class="font-medium flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>${fmtDate(row.dataset.venc)}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">¥${Math.round(val / 100).toLocaleString('ja-JP')}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">${formatBRLDisplay(val)}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Status:</span>
             ${row.dataset.paid === 'true'
               ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'

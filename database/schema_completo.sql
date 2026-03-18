@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS filhos (
     saiu_at DATE NULL,
     mensalidade_value INT NOT NULL DEFAULT 0,
     due_day INT NOT NULL DEFAULT 5,
+    isento_mensalidade TINYINT(1) NOT NULL DEFAULT 0,
     notes_evolucao TEXT NULL,
     anotacoes TEXT NULL,
     entidade_frente VARCHAR(255) NULL,

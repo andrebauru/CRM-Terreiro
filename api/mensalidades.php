@@ -15,7 +15,7 @@ function ensureMonthlyCaixaMensalidades(PDO $pdo, string $monthStart): void
 {
     $monthDate = new DateTime($monthStart);
     $stmt = $pdo->query(
-        "SELECT id, name, mensalidade_value, due_day
+        "SELECT id, name, mensalidade_value, due_day, isento_mensalidade
          FROM filhos
          WHERE COALESCE(status, 'ativo') = 'ativo'
          ORDER BY id ASC"
@@ -23,6 +23,9 @@ function ensureMonthlyCaixaMensalidades(PDO $pdo, string $monthStart): void
     $filhos = $stmt->fetchAll();
 
     foreach ($filhos as $filho) {
+        // Skip filhos isentos de mensalidade
+        if ((int)$filho['isento_mensalidade'] === 1) continue;
+
         $dueDate = new DateTime($monthDate->format('Y-m-') . str_pad((string)$filho['due_day'], 2, '0', STR_PAD_LEFT));
         $insert = $pdo->prepare(
             "INSERT INTO caixa_movimentos (tipo, origem, referencia_id, mes, data_movimento, valor, status, descricao)
@@ -64,6 +67,7 @@ try {
         // Monthly auto from filhos
         $stmt = $pdo->prepare(
             "SELECT f.id, f.name, f.grade, f.phone, f.mensalidade_value, f.due_day,
+                    f.isento_mensalidade,
                     p.id AS payment_id, p.paid_month, p.paid_at
              FROM filhos f
              LEFT JOIN mensalidades_pagas p
@@ -88,6 +92,7 @@ try {
                 'phone'             => $row['phone'],
                 'mensalidade_value' => (int)$row['mensalidade_value'],
                 'due_day'           => (int)$row['due_day'],
+                'isento_mensalidade' => (int)$row['isento_mensalidade'],
                 'paid'              => $paid,
                 'overdue'           => $overdue,
             ];

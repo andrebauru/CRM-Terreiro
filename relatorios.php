@@ -102,7 +102,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const sourceFilter = document.getElementById('sourceFilter');
     const gradeFilter = document.getElementById('gradeFilter');
 
-    const formatBRLAmt = (value) => '¥' + Math.round(Number(value || 0) / 100).toLocaleString('ja-JP');
+    const formatBRLAmt = (value) => formatBRL(String(value || 0));
 
     const loadServices = async () => {
       const response = await fetch('api/reports.php?action=bootstrap', { cache: 'no-store' });

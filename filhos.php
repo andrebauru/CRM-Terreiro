@@ -118,13 +118,17 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-medium text-slate-700">Valor Mensalidade (¥)</label>
-            <input id="filhoMensalidade" data-mask="jpy" inputmode="numeric" placeholder="¥0" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
+            <label class="text-sm font-medium text-slate-700">Valor Mensalidade</label>
+            <input id="filhoMensalidade" data-mask="jpy" inputmode="numeric" placeholder="0" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
           </div>
           <div>
             <label class="text-sm font-medium text-slate-700">Dia de Vencimento</label>
             <input id="filhoDueDay" type="number" min="1" max="28" placeholder="5" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
           </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="filhoIsento" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500" />
+          <label for="filhoIsento" class="text-sm font-medium text-slate-700">Isento de mensalidade</label>
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Observações de Evolução Espiritual</label>
@@ -191,6 +195,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const filhoEntidadeFrente = document.getElementById('filhoEntidadeFrente');
     const filhoOrixaPai       = document.getElementById('filhoOrixaPai');
     const filhoOrixaMae       = document.getElementById('filhoOrixaMae');
+    const filhoIsento         = document.getElementById('filhoIsento');
     const saiuAtWrap          = document.getElementById('saiuAtWrap');
 
     let filhosCache = [];
@@ -211,6 +216,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       filhoSaiuAt.value        = '';
       filhoMensalidade.value   = '';
       filhoDueDay.value        = '5';
+      filhoIsento.checked      = false;
       filhoNotes.value         = '';
       filhoAnotacoes.value     = '';
       filhoEntidadeFrente.value = '';
@@ -252,11 +258,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 <span class="px-2 py-0.5 rounded-full text-xs font-bold ${gradeColor(filho.grade)}">${filho.grade}</span>
               </td>
               <td class="py-3 text-slate-500 text-xs">${entOrixas}</td>
-              <td class="py-3">${saiu ? '—' : '¥' + Math.round(Number(filho.mensalidade_value || 0) / 100).toLocaleString('ja-JP')}</td>
+              <td class="py-3">${saiu ? '—' : (parseInt(filho.isento_mensalidade) ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatBRL(String(filho.mensalidade_value || 0)))}</td>
               <td class="py-3">${filho.phone ? `<a href="${formatWhatsapp(filho.phone)}" class="text-red-600" target="_blank" onclick="event.stopPropagation()">${filho.phone}</a>` : '—'}</td>
               <td class="py-3 text-right">
-                <button class="text-red-600 hover:text-red-800 mr-3" data-edit="${filho.id}" onclick="event.stopPropagation()"><i class="fa-solid fa-pen"></i></button>
-                <button class="text-slate-400 hover:text-red-600" data-delete="${filho.id}" onclick="event.stopPropagation()"><i class="fa-solid fa-trash"></i></button>
+                <button class="text-red-600 hover:text-red-800 mr-3 btn-edit" data-edit="${filho.id}"><i class="fa-solid fa-pen"></i></button>
+                <button class="text-slate-400 hover:text-red-600 btn-delete" data-delete="${filho.id}"><i class="fa-solid fa-trash"></i></button>
               </td>
             </tr>`;
           }).join('')
@@ -319,6 +325,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       filhoSaiuAt.value          = filho.saiu_at || '';
       filhoMensalidade.value     = formatBRL(String(filho.mensalidade_value || ''));
       filhoDueDay.value          = filho.due_day || 5;
+      filhoIsento.checked        = parseInt(filho.isento_mensalidade) === 1;
       filhoNotes.value           = filho.notes_evolucao || '';
       filhoAnotacoes.value       = filho.anotacoes || '';
       filhoEntidadeFrente.value  = filho.entidade_frente || '';
@@ -330,8 +337,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     };
 
     filhosTable.addEventListener('click', (event) => {
-      const editId   = event.target.closest('[data-edit]')?.dataset.edit;
-      const deleteId = event.target.closest('[data-delete]')?.dataset.delete;
+      const editBtn   = event.target.closest('.btn-edit');
+      const deleteBtn = event.target.closest('.btn-delete');
+      const editId   = editBtn?.dataset.edit;
+      const deleteId = deleteBtn?.dataset.delete;
       const row      = event.target.closest('tr[data-id]');
 
       if (editId) {
@@ -372,7 +381,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           ${currentFilho.entidade_frente ? row2('Entidade de Frente', currentFilho.entidade_frente) : ''}
           ${currentFilho.orixa_pai ? row2('Orixá Pai', currentFilho.orixa_pai) : ''}
           ${currentFilho.orixa_mae ? row2('Orixá Mãe', currentFilho.orixa_mae) : ''}
-          ${row2('Mensalidade', saiu ? '— (inativo)' : '¥' + Math.round(Number(currentFilho.mensalidade_value || 0) / 100).toLocaleString('ja-JP'))}
+          ${row2('Mensalidade', saiu ? '— (inativo)' : (parseInt(currentFilho.isento_mensalidade) ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatBRL(String(currentFilho.mensalidade_value || 0))))}
           ${!saiu ? row2('Vencimento', `Dia ${currentFilho.due_day || 5}`) : ''}
           ${saiu && currentFilho.saiu_at ? row2('Saiu em', fmtDate(currentFilho.saiu_at)) : ''}
           ${currentFilho.email ? row2('Email', currentFilho.email) : ''}
@@ -409,6 +418,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         saiu_at:          filhoSaiuAt.value,
         mensalidade_value: parseBRL(filhoMensalidade.value),
         due_day:          filhoDueDay.value || 5,
+        isento_mensalidade: filhoIsento.checked ? 1 : 0,
         notes_evolucao:   filhoNotes.value,
         anotacoes:        filhoAnotacoes.value,
         entidade_frente:  filhoEntidadeFrente.value,

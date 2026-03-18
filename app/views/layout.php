@@ -17,7 +17,7 @@ if (isset($_GET['theme']) && ($_GET['theme'] === 'dark' || $_GET['theme'] === 'l
         'path' => '/',
         'httponly' => true,
         'samesite' => 'Lax',
-        'secure' => false,
+        'secure' => true,
     ]);
 } elseif (isset($_COOKIE['theme_preference']) && ($_COOKIE['theme_preference'] === 'theme-dark' || $_COOKIE['theme_preference'] === 'theme-light')) {
     $currentTheme = $_COOKIE['theme_preference'];
@@ -40,6 +40,7 @@ function isActive($page, $currentPage) {
 <!doctype html>
 <html lang="pt-BR">
 <head>
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <?php require_once BASE_PATH . '/app/views/partials/header.php'; ?>
 </head>
 <body class="layout-fluid <?= $currentTheme ?>">
@@ -152,6 +153,16 @@ function isActive($page, $currentPage) {
                                 <i class="bi bi-box-seam"></i>
                             </span>
                             <span class="nav-link-title">Serviços</span>
+                        </a>
+                    </li>
+
+                    <!-- Giras -->
+                    <li class="nav-item">
+                        <a class="nav-link <?= isActive('giras', $currentPage) ?>" href="<?= ROUTE_BASE ?>/giras.php">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                <i class="bi bi-vinyl"></i>
+                            </span>
+                            <span class="nav-link-title">Registro de Giras</span>
                         </a>
                     </li>
 

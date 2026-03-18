@@ -10,7 +10,7 @@ try {
     if ($action === 'list') {
         $stmt = $pdo->query(
             'SELECT id, name, email, phone, grade, grade_date, status, saiu_at,
-                    mensalidade_value, due_day, notes_evolucao, anotacoes,
+                    mensalidade_value, due_day, isento_mensalidade, notes_evolucao, anotacoes,
                     entidade_frente, orixa_pai, orixa_mae
              FROM filhos ORDER BY name ASC'
         );
@@ -25,6 +25,7 @@ try {
         $gradeDate   = trim((string)($_POST['grade_date'] ?? '')) ?: null;
         $menVal      = (int)($_POST['mensalidade_value'] ?? 0);
         $dueDay      = (int)($_POST['due_day'] ?? 5);
+        $isento      = (int)($_POST['isento_mensalidade'] ?? 0);
         $notesEv     = trim((string)($_POST['notes_evolucao'] ?? '')) ?: null;
         $anotacoes   = trim((string)($_POST['anotacoes'] ?? '')) ?: null;
         $entidade    = trim((string)($_POST['entidade_frente'] ?? '')) ?: null;
@@ -33,11 +34,11 @@ try {
 
         $stmt = $pdo->prepare(
             'INSERT INTO filhos (name, email, phone, grade, grade_date, mensalidade_value, due_day,
-                                 notes_evolucao, anotacoes, entidade_frente, orixa_pai, orixa_mae)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                                 isento_mensalidade, notes_evolucao, anotacoes, entidade_frente, orixa_pai, orixa_mae)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([$name, $email, $phone, $grade, $gradeDate, $menVal, $dueDay,
-                        $notesEv, $anotacoes, $entidade, $orixaPai, $orixaMae]);
+                        $isento, $notesEv, $anotacoes, $entidade, $orixaPai, $orixaMae]);
         jsonResponse(['ok' => true, 'id' => $pdo->lastInsertId()]);
     }
 
@@ -54,6 +55,7 @@ try {
         $saiuAt     = trim((string)($_POST['saiu_at'] ?? '')) ?: null;
         $menVal     = (int)($_POST['mensalidade_value'] ?? 0);
         $dueDay     = (int)($_POST['due_day'] ?? 5);
+        $isento     = (int)($_POST['isento_mensalidade'] ?? 0);
         $notesEv    = trim((string)($_POST['notes_evolucao'] ?? '')) ?: null;
         $anotacoes  = trim((string)($_POST['anotacoes'] ?? '')) ?: null;
         $entidade   = trim((string)($_POST['entidade_frente'] ?? '')) ?: null;
@@ -62,12 +64,12 @@ try {
 
         $stmt = $pdo->prepare(
             'UPDATE filhos SET name=?, email=?, phone=?, grade=?, grade_date=?, status=?, saiu_at=?,
-                    mensalidade_value=?, due_day=?, notes_evolucao=?, anotacoes=?,
+                    mensalidade_value=?, due_day=?, isento_mensalidade=?, notes_evolucao=?, anotacoes=?,
                     entidade_frente=?, orixa_pai=?, orixa_mae=?
              WHERE id=?'
         );
         $stmt->execute([$name, $email, $phone, $grade, $gradeDate, $status, $saiuAt,
-                        $menVal, $dueDay, $notesEv, $anotacoes, $entidade, $orixaPai, $orixaMae, $id]);
+                        $menVal, $dueDay, $isento, $notesEv, $anotacoes, $entidade, $orixaPai, $orixaMae, $id]);
         jsonResponse(['ok' => true]);
     }
 
