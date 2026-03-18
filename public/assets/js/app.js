@@ -1,7 +1,7 @@
 // CRM Terreiro — Global JS Utilities
 
-// Currency settings — initialized synchronously from PHP-embedded data,
-// then refreshed asynchronously by loadBrand()
+// Currency settings — initialized synchronously from PHP-embedded data.
+// loadBrand() only updates brand name/logo, NOT currency (prevents race conditions).
 let crmCurrency = { code: 'JPY', symbol: '¥', locale: 'ja-JP' };
 let crmLanguage = 'pt';
 
@@ -23,11 +23,21 @@ const crmSymbol = () => crmCurrency.symbol;
 // Helper: is current currency decimal-based (like BRL centavos)?
 const isCurrencyDecimal = () => crmCurrency.code === 'BRL';
 
+// Parse a raw value to integer — handles DB DECIMAL strings like "1500.00"
+// and formatted strings like "¥1,500" or "R$ 15,00"
+const _currInt = (v) => {
+  const raw = String(v || '');
+  // Plain numeric string (possibly from DECIMAL column): "1500" or "1500.00"
+  if (/^\d+(\.\d+)?$/.test(raw)) return Math.round(parseFloat(raw));
+  // Already formatted or has non-digit chars: strip and parse
+  return parseInt(raw.replace(/\D+/g, '') || '0', 10);
+};
+
 // Currency formatting (supports JPY, BRL, and any future currency)
 // JPY: stores integer yen (¥150 = 150 in DB)
 // BRL: stores integer centavos (R$1,50 = 150 in DB)
 const formatBRL = (v) => {
-  const n = parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
+  const n = _currInt(v);
   if (!n) return '';
   if (isCurrencyDecimal()) {
     return crmCurrency.symbol + '\u00a0' + (n / 100).toLocaleString(crmCurrency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -37,14 +47,14 @@ const formatBRL = (v) => {
 
 // Format with zero shown (for card displays that need to show "¥0" / "R$ 0,00")
 const formatBRLOrZero = (v) => {
-  const n = parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
+  const n = _currInt(v);
   if (isCurrencyDecimal()) {
     return crmCurrency.symbol + '\u00a0' + (n / 100).toLocaleString(crmCurrency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   return crmCurrency.symbol + n.toLocaleString(crmCurrency.locale);
 };
 
-const parseBRL = (v) => parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
+const parseBRL = (v) => _currInt(v);
 
 // Parse user input (formatted currency string) to integer for DB storage
 // BRL: "1.500,50" → 150050 (centavos)
@@ -66,7 +76,7 @@ const parseCurrencyInput = (str) => {
 // BRL: 150050 → "1500,50"
 // JPY: 1500 → "1500"
 const formatCurrencyInput = (value) => {
-  const n = parseInt(String(value || 0).replace(/\D+/g, '') || '0', 10);
+  const n = _currInt(value);
   if (isCurrencyDecimal()) {
     return (n / 100).toFixed(2).replace('.', ',');
   }
@@ -95,16 +105,10 @@ const loadBrand = async () => {
           el.innerHTML = `<img src="${s.logo_path}" class="h-10 w-10 rounded-xl object-cover" />`;
         });
       }
-      if (s.currency_code) {
-        crmCurrency.code = s.currency_code;
-        crmCurrency.symbol = s.currency_symbol || (s.currency_code === 'BRL' ? 'R$' : '¥');
-        crmCurrency.locale = s.currency_code === 'BRL' ? 'pt-BR' : 'ja-JP';
-      }
-      if (s.language) {
-        crmLanguage = s.language;
-        // Update HTML lang attribute dynamically
-        document.documentElement.lang = s.language === 'ja' ? 'ja' : 'pt-BR';
-      }
+      // Currency and language are hydrated synchronously from __crmSettings
+      // (set by PHP in tw-scripts.php).  We intentionally do NOT refresh them
+      // here to avoid a race condition where loadBrand() resolves AFTER the
+      // page has already rendered prices with the correct currency.
     }
   } catch (e) {}
 };

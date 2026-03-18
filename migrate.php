@@ -302,6 +302,7 @@ try {
         ['attendance_services',    'price',        'INT NOT NULL DEFAULT 0'],
         ['attendance_installments', 'amount',      'INT NOT NULL DEFAULT 0'],
         ['services',               'price',        'INT NOT NULL DEFAULT 0'],
+        ['trabalhos',              'price',        'INT NOT NULL DEFAULT 0'],
     ];
     foreach ($checks as [$tbl, $col, $def]) {
         $type = $pdo->query(

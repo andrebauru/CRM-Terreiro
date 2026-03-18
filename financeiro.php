@@ -374,7 +374,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalContaTitulo').textContent = id ? 'Editar Conta' : 'Nova Conta';
       document.getElementById('contaDescricao').value = descricao || '';
       document.getElementById('contaCategoria').value = categoria || '';
-      document.getElementById('contaValor').value = id ? formatCurrencyInput(valor) : '';
+      document.getElementById('contaValor').value = id ? formatBRL(String(valor)) : '';
       document.getElementById('contaVencimento').value = vencimento || new Date().toISOString().slice(0, 10);
       document.getElementById('modalConta').classList.remove('hidden');
     }
@@ -441,7 +441,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalEntradaTitulo').textContent = id ? 'Editar Entrada' : 'Nova Entrada';
       document.getElementById('entradaDescricao').value = descricao || '';
       document.getElementById('entradaOrigem').value = origem || 'manual';
-      document.getElementById('entradaValor').value = id ? formatCurrencyInput(valor) : '';
+      document.getElementById('entradaValor').value = id ? formatBRL(String(valor)) : '';
       document.getElementById('entradaData').value = data || new Date().toISOString().slice(0, 10);
       document.getElementById('modalEntrada').classList.remove('hidden');
     }
