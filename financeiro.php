@@ -238,6 +238,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       return parseCurrencyInput(str);
     }
 
+    // Real-time currency mask for value inputs
+    document.getElementById('contaValor').addEventListener('input', function () {
+      this.value = formatBRL(this.value);
+    });
+    document.getElementById('entradaValor').addEventListener('input', function () {
+      this.value = formatBRL(this.value);
+    });
+
     async function api(params) {
       const isGet = !params.method || params.method === 'GET';
       let url = 'api/financeiro.php?action=' + params.action;

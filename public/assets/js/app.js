@@ -9,8 +9,7 @@ let crmLanguage = 'pt';
 if (window.__crmSettings && typeof window.__crmSettings === 'object') {
   if (window.__crmSettings.currency_code) {
     crmCurrency.code   = window.__crmSettings.currency_code;
-    crmCurrency.symbol = window.__crmSettings.currency_symbol
-      || (window.__crmSettings.currency_code === 'BRL' ? 'R$' : '¥');
+    crmCurrency.symbol = window.__crmSettings.currency_symbol || (window.__crmSettings.currency_code === 'BRL' ? 'R$' : '¥');
     crmCurrency.locale = window.__crmSettings.currency_code === 'BRL' ? 'pt-BR' : 'ja-JP';
   }
   if (window.__crmSettings.language) {
@@ -21,25 +20,28 @@ if (window.__crmSettings && typeof window.__crmSettings === 'object') {
 // Helper: return current currency symbol (useful for templates)
 const crmSymbol = () => crmCurrency.symbol;
 
-// Currency formatting (supports JPY and BRL)
+// Helper: is current currency decimal-based (like BRL centavos)?
+const isCurrencyDecimal = () => crmCurrency.code === 'BRL';
+
+// Currency formatting (supports JPY, BRL, and any future currency)
 // JPY: stores integer yen (¥150 = 150 in DB)
 // BRL: stores integer centavos (R$1,50 = 150 in DB)
 const formatBRL = (v) => {
   const n = parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
   if (!n) return '';
-  if (crmCurrency.code === 'BRL') {
-    return 'R$\u00a0' + (n / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (isCurrencyDecimal()) {
+    return crmCurrency.symbol + '\u00a0' + (n / 100).toLocaleString(crmCurrency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-  return '¥' + n.toLocaleString('ja-JP');
+  return crmCurrency.symbol + n.toLocaleString(crmCurrency.locale);
 };
 
-// Format with zero shown (for card displays that need to show "¥0" / "R$ 0")
+// Format with zero shown (for card displays that need to show "¥0" / "R$ 0,00")
 const formatBRLOrZero = (v) => {
   const n = parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
-  if (crmCurrency.code === 'BRL') {
-    return 'R$\u00a0' + (n / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (isCurrencyDecimal()) {
+    return crmCurrency.symbol + '\u00a0' + (n / 100).toLocaleString(crmCurrency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-  return '¥' + n.toLocaleString('ja-JP');
+  return crmCurrency.symbol + n.toLocaleString(crmCurrency.locale);
 };
 
 const parseBRL = (v) => parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
@@ -50,7 +52,7 @@ const parseBRL = (v) => parseInt(String(v || '').replace(/\D+/g, '') || '0', 10)
 const parseCurrencyInput = (str) => {
   if (!str) return 0;
   const clean = String(str).replace(/[^\d,\.]/g, '');
-  if (crmCurrency.code === 'BRL') {
+  if (isCurrencyDecimal()) {
     if (clean.includes(',')) {
       return Math.round(parseFloat(clean.replace(/\./g, '').replace(',', '.')) * 100);
     }
@@ -65,7 +67,7 @@ const parseCurrencyInput = (str) => {
 // JPY: 1500 → "1500"
 const formatCurrencyInput = (value) => {
   const n = parseInt(String(value || 0).replace(/\D+/g, '') || '0', 10);
-  if (crmCurrency.code === 'BRL') {
+  if (isCurrencyDecimal()) {
     return (n / 100).toFixed(2).replace('.', ',');
   }
   return String(n);

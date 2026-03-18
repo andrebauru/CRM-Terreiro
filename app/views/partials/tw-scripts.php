@@ -15,4 +15,4 @@ if (!isset($_crmSettings) || empty($_crmSettings)) {
 }
 ?>
 <script>window.__crmSettings = <?= json_encode($_crmSettings ?: new stdClass(), JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
-<script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js" defer></script>
+<script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js?v=<?= @filemtime((defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3)) . '/public/assets/js/app.js') ?: time() ?>"></script>
