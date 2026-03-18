@@ -202,9 +202,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <label class="flex items-center gap-2 text-sm"><input id="editDelinquent" type="checkbox" /> Inadimplente</label>
           <label class="flex items-center gap-2 text-sm"><input id="editReversed" type="checkbox" /> Trabalho Revertido</label>
         </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button id="cancelEditModal" class="px-4 py-2 rounded-xl border border-slate-200">Cancelar</button>
-          <button id="saveEditModal" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold">Salvar</button>
+        <div class="flex justify-between gap-2 pt-2">
+          <button id="deleteEditModal" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100">
+            <i class="fa-solid fa-trash mr-1"></i>Excluir
+          </button>
+          <div class="flex gap-2">
+            <button id="cancelEditModal" class="px-4 py-2 rounded-xl border border-slate-200">Cancelar</button>
+            <button id="saveEditModal" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold">Salvar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -245,9 +250,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const editNotes = document.getElementById('editNotes');
     const editDelinquent = document.getElementById('editDelinquent');
     const editReversed = document.getElementById('editReversed');
+    const deleteEditModal = document.getElementById('deleteEditModal');
     let currentEditAttendanceId = null;
 
-    const formatBRLAmt = (v) => formatBRL(String(v || 0));
+    const formatBRLAmt = (v) => formatBRLOrZero(String(v || 0));
 
     const loadDashboard = async () => {
       const response = await fetch(`api/dashboard.php?t=${Date.now()}`, { cache: 'no-store' });
@@ -416,6 +422,19 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const response = await fetch('api/attendances.php', { method: 'POST', body: payload });
       const data = await response.json();
       if (!data.ok) { alert(data.message || 'Erro ao salvar'); return; }
+      toggleEditModal(false);
+      loadDashboard();
+    });
+
+    deleteEditModal.addEventListener('click', async () => {
+      if (!currentEditAttendanceId) return;
+      if (!confirm('Tem certeza que deseja excluir este atendimento? Esta ação não pode ser desfeita.')) return;
+      const payload = new URLSearchParams();
+      payload.append('action', 'delete');
+      payload.append('attendance_id', currentEditAttendanceId);
+      const response = await fetch('api/attendances.php', { method: 'POST', body: payload });
+      const data = await response.json();
+      if (!data.ok) { alert(data.message || 'Erro ao excluir'); return; }
       toggleEditModal(false);
       loadDashboard();
     });

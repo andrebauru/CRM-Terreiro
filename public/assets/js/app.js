@@ -44,6 +44,33 @@ const formatBRLOrZero = (v) => {
 
 const parseBRL = (v) => parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
 
+// Parse user input (formatted currency string) to integer for DB storage
+// BRL: "1.500,50" → 150050 (centavos)
+// JPY: "1,500" → 1500 (yen)
+const parseCurrencyInput = (str) => {
+  if (!str) return 0;
+  const clean = String(str).replace(/[^\d,\.]/g, '');
+  if (crmCurrency.code === 'BRL') {
+    if (clean.includes(',')) {
+      return Math.round(parseFloat(clean.replace(/\./g, '').replace(',', '.')) * 100);
+    }
+    return Math.round(parseFloat(clean || '0') * 100);
+  }
+  // JPY: integer only
+  return parseInt(clean.replace(/[,\.]/g, '') || '0', 10);
+};
+
+// Format integer from DB back to input field value
+// BRL: 150050 → "1500,50"
+// JPY: 1500 → "1500"
+const formatCurrencyInput = (value) => {
+  const n = parseInt(String(value || 0).replace(/\D+/g, '') || '0', 10);
+  if (crmCurrency.code === 'BRL') {
+    return (n / 100).toFixed(2).replace('.', ',');
+  }
+  return String(n);
+};
+
 const fmtDate = (d) => d ? d.split('T')[0].split('-').reverse().join('/') : '—';
 
 const toggleModal = (el, show) => {

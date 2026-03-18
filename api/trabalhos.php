@@ -66,6 +66,26 @@ try {
         jsonResponse(['ok' => true]);
     }
 
+    // Delete catálogo entry
+    if ($action === 'delete_catalogo') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
+        }
+        // Check if any trabalho_realizacoes reference this entry
+        $checkStmt = $pdo->prepare('SELECT COUNT(*) FROM trabalho_realizacoes WHERE trabalho_id = ?');
+        $checkStmt->execute([$id]);
+        if ((int)$checkStmt->fetchColumn() > 0) {
+            // Soft delete: just deactivate
+            $stmt = $pdo->prepare('UPDATE trabalhos SET is_active = 0 WHERE id = ?');
+            $stmt->execute([$id]);
+        } else {
+            $stmt = $pdo->prepare('DELETE FROM trabalhos WHERE id = ?');
+            $stmt->execute([$id]);
+        }
+        jsonResponse(['ok' => true]);
+    }
+
     // Create realização
     if ($action === 'create') {
         $trabalhoId = (int)($_POST['trabalho_id'] ?? 0);

@@ -231,16 +231,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
     function formatBRLCents(cents) {
-      return formatBRL(String(cents || 0));
+      return formatBRLOrZero(String(cents || 0));
     }
 
     function parseCurrency(str) {
-      if (!str) return 0;
-      const clean = String(str).replace(/[^\d,\.]/g, '');
-      if (clean.includes(',')) {
-        return Math.round(parseFloat(clean.replace(/\./g, '').replace(',', '.')) * 100);
-      }
-      return Math.round(parseFloat(clean) * 100);
+      return parseCurrencyInput(str);
     }
 
     async function api(params) {
@@ -371,7 +366,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalContaTitulo').textContent = id ? 'Editar Conta' : 'Nova Conta';
       document.getElementById('contaDescricao').value = descricao || '';
       document.getElementById('contaCategoria').value = categoria || '';
-      document.getElementById('contaValor').value = id ? (valor / 100).toFixed(2).replace('.', ',') : '';
+      document.getElementById('contaValor').value = id ? formatCurrencyInput(valor) : '';
       document.getElementById('contaVencimento').value = vencimento || new Date().toISOString().slice(0, 10);
       document.getElementById('modalConta').classList.remove('hidden');
     }
@@ -438,7 +433,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalEntradaTitulo').textContent = id ? 'Editar Entrada' : 'Nova Entrada';
       document.getElementById('entradaDescricao').value = descricao || '';
       document.getElementById('entradaOrigem').value = origem || 'manual';
-      document.getElementById('entradaValor').value = id ? (valor / 100).toFixed(2).replace('.', ',') : '';
+      document.getElementById('entradaValor').value = id ? formatCurrencyInput(valor) : '';
       document.getElementById('entradaData').value = data || new Date().toISOString().slice(0, 10);
       document.getElementById('modalEntrada').classList.remove('hidden');
     }

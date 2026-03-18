@@ -250,7 +250,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     let currentDetalhe = null;
 
-    const formatBRLDisplay = (value) => formatBRL(String(value || 0));
+    const formatBRLDisplay = (value) => formatBRLOrZero(String(value || 0));
 
     const formatBRLInput = (value) => formatBRL(value);
 

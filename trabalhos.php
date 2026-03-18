@@ -253,7 +253,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <td class="py-2 font-medium">${c.name}</td>
           <td class="py-2 text-slate-500">${formatBRL(String(c.price || 0))}</td>
           <td class="py-2 text-right">
-            <button class="text-red-600 text-xs" data-cat-edit="${c.id}"><i class="fa-solid fa-pen"></i></button>
+            <button class="text-red-600 text-xs mr-2" data-cat-edit="${c.id}"><i class="fa-solid fa-pen"></i></button>
+            <button class="text-slate-400 hover:text-red-600 text-xs" data-cat-delete="${c.id}"><i class="fa-solid fa-trash"></i></button>
           </td>
         </tr>
       `).join('');
@@ -333,6 +334,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     document.getElementById('catalogoTable').addEventListener('click', (e) => {
       const editId = e.target.closest('[data-cat-edit]')?.dataset.catEdit;
+      const deleteId = e.target.closest('[data-cat-delete]')?.dataset.catDelete;
       if (editId) {
         const c = catalogoCache.find(x => String(x.id) === editId);
         if (!c) return;
@@ -341,6 +343,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('catDesc').value = c.description || '';
         document.getElementById('catPrice').value = c.price ? formatBRL(String(c.price)) : '';
         document.getElementById('addCatalogoForm').classList.remove('hidden');
+      }
+      if (deleteId) {
+        if (!confirm('Excluir este item do catálogo?')) return;
+        fetch('api/trabalhos.php', { method: 'POST', body: new URLSearchParams({ action: 'delete_catalogo', id: deleteId }) })
+          .then(() => {
+            catalogoCache = [];
+            loadCatalogo();
+          });
       }
     });
 

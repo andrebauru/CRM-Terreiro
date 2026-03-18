@@ -195,6 +195,19 @@ try {
         jsonResponse(['ok' => true]);
     }
 
+    if ($action === 'delete') {
+        $attendanceId = (int)($_POST['attendance_id'] ?? 0);
+        if ($attendanceId <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'Atendimento inválido'], 422);
+        }
+        $pdo->beginTransaction();
+        $pdo->prepare('DELETE FROM attendance_installments WHERE attendance_id = ?')->execute([$attendanceId]);
+        $pdo->prepare('DELETE FROM attendance_services WHERE attendance_id = ?')->execute([$attendanceId]);
+        $pdo->prepare('DELETE FROM attendances WHERE id = ?')->execute([$attendanceId]);
+        $pdo->commit();
+        jsonResponse(['ok' => true]);
+    }
+
     if ($action === 'upload_receipt') {
         $installmentId = (int)($_POST['installment_id'] ?? 0);
         if ($installmentId <= 0 || !isset($_FILES['receipt'])) {
