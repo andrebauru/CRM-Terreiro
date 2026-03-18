@@ -121,7 +121,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <input type="hidden" id="catId" />
         <input id="catName" placeholder="Nome do trabalho *" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
         <textarea id="catDesc" placeholder="Descrição (opcional)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" rows="2"></textarea>
-        <input id="catPrice" data-mask="jpy" placeholder="Preço (ex: ¥150)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+        <input id="catPrice" data-mask="currency" placeholder="Preço (ex: <?= $_crmCurrSymbol ?>150)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
         <div class="flex justify-end gap-2">
           <button id="cancelCatForm" type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 text-sm">Cancelar</button>
           <button id="saveCatForm" type="button" class="px-3 py-1.5 rounded-lg bg-red-700 text-white text-sm font-bold hover:bg-red-800">Salvar</button>

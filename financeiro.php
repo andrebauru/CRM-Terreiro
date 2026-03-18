@@ -22,34 +22,34 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       <div id="dashCards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Entradas (mês)</p>
-          <p id="cardEntradas" class="text-2xl font-black text-green-600 mt-1">¥0</p>
+          <p id="cardEntradas" class="text-2xl font-black text-green-600 mt-1"><?= $_crmCurrSymbol ?>0</p>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Saídas (mês)</p>
-          <p id="cardSaidas" class="text-2xl font-black text-red-600 mt-1">¥0</p>
+          <p id="cardSaidas" class="text-2xl font-black text-red-600 mt-1"><?= $_crmCurrSymbol ?>0</p>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Saldo</p>
-          <p id="cardSaldo" class="text-2xl font-black text-slate-700 mt-1">¥0</p>
+          <p id="cardSaldo" class="text-2xl font-black text-slate-700 mt-1"><?= $_crmCurrSymbol ?>0</p>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Crédito Casa</p>
-          <p id="cardCredito" class="text-2xl font-black text-amber-500 mt-1">¥0</p>
+          <p id="cardCredito" class="text-2xl font-black text-amber-500 mt-1"><?= $_crmCurrSymbol ?>0</p>
         </div>
       </div>
 
       <div class="grid grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Mensalidades Pagas</p>
-          <p id="cardMensPagas" class="text-xl font-bold text-green-600 mt-1">¥0</p>
+          <p id="cardMensPagas" class="text-xl font-bold text-green-600 mt-1"><?= $_crmCurrSymbol ?>0</p>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Mensalidades Pendentes</p>
-          <p id="cardMensPend" class="text-xl font-bold text-amber-500 mt-1">¥0</p>
+          <p id="cardMensPend" class="text-xl font-bold text-amber-500 mt-1"><?= $_crmCurrSymbol ?>0</p>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Contas Pendentes</p>
-          <p id="cardContasPend" class="text-xl font-bold text-red-600 mt-1">0 — ¥0</p>
+          <p id="cardContasPend" class="text-xl font-bold text-red-600 mt-1">0 — <?= $_crmCurrSymbol ?>0</p>
         </div>
       </div>
 
@@ -159,8 +159,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-semibold text-slate-600 mb-1">Valor (¥) *</label>
-            <input id="contaValor" type="text" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="¥0" />
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Valor (<?= $_crmCurrSymbol ?>) *</label>
+            <input id="contaValor" type="text" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="<?= $_crmCurrSymbol ?>0" />
           </div>
           <div>
             <label class="block text-sm font-semibold text-slate-600 mb-1">Categoria</label>
@@ -194,8 +194,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-semibold text-slate-600 mb-1">Valor (¥) *</label>
-            <input id="entradaValor" type="text" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="¥0" />
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Valor (<?= $_crmCurrSymbol ?>) *</label>
+            <input id="entradaValor" type="text" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="<?= $_crmCurrSymbol ?>0" />
           </div>
           <div>
             <label class="block text-sm font-semibold text-slate-600 mb-1">Origem</label>

@@ -85,7 +85,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             </tbody>
           </table>
         </div>
-        <div class="mt-4 text-right text-lg font-semibold" id="totalSum">Total: ¥0</div>
+        <div class="mt-4 text-right text-lg font-semibold" id="totalSum">Total: <?= $_crmCurrSymbol ?>0</div>
       </section>
     </main>
   </div>

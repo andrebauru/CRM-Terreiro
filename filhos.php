@@ -119,7 +119,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-slate-700">Valor Mensalidade</label>
-            <input id="filhoMensalidade" data-mask="jpy" inputmode="numeric" placeholder="0" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
+            <input id="filhoMensalidade" data-mask="currency" inputmode="numeric" placeholder="0" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
           </div>
           <div>
             <label class="text-sm font-medium text-slate-700">Dia de Vencimento</label>

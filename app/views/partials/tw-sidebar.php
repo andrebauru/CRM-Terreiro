@@ -20,15 +20,15 @@ $navItems = [
 ];
 $active = $activePage ?? '';
 ?>
-<aside class="w-64 bg-black border-r border-red-900 p-6 flex flex-col">
-  <div class="flex items-center gap-3">
+<aside class="w-64 bg-black border-r border-red-900 p-6 flex flex-col min-h-screen max-h-screen overflow-hidden">
+  <div class="flex items-center gap-3 shrink-0">
     <div id="brandLogo" class="h-10 w-10 rounded-xl bg-red-900 flex items-center justify-center text-red-400 font-black">CT</div>
     <div>
       <div class="text-xl font-black text-red-600" id="brandName">CRM Terreiro</div>
       <p class="text-gray-500 text-sm mt-1">SaaS Premium</p>
     </div>
   </div>
-  <nav class="mt-8 space-y-1 flex-1">
+  <nav class="mt-8 space-y-1 flex-1 overflow-y-auto scrollbar-thin">
     <?php foreach ($navItems as $item): ?>
       <?php $isActive = ($active === $item['page']); ?>
       <a href="<?= htmlspecialchars($item['href']) ?>"

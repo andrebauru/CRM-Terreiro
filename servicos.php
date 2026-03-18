@@ -55,8 +55,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <input id="serviceName" required class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
         </div>
         <div>
-          <label class="text-sm font-medium text-slate-700">Preço (¥)</label>
-          <input id="servicePrice" data-mask="jpy" inputmode="numeric" placeholder="¥0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
+          <label class="text-sm font-medium text-slate-700">Preço (<?= $_crmCurrSymbol ?>)</label>
+          <input id="servicePrice" data-mask="currency" inputmode="numeric" placeholder="<?= $_crmCurrSymbol ?>0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Descrição</label>
@@ -118,7 +118,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const html = rows.map((service) => `
         <tr class="border-t border-slate-100">
           <td class="py-3">${service.name}</td>
-          <td class="py-3">¥${Math.round(Number(service.price || 0) / 100).toLocaleString('ja-JP')}</td>
+          <td class="py-3">${formatBRL(String(service.price || 0))}</td>
           <td class="py-3">${service.is_active == 1 ? 'Ativo' : 'Inativo'}</td>
           <td class="py-3 text-right">
             <button class="text-accent" data-edit="${service.id}">Editar</button>

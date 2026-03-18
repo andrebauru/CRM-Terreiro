@@ -91,7 +91,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (data.data.logo_path) {
         logoPreview.innerHTML = `<img src="${data.data.logo_path}" class="h-16 rounded-xl border border-slate-200" />`;
       }
-      alert('Configurações salvas!');
+      alert('Configurações salvas! A página será recarregada para aplicar as alterações.');
+      location.reload();
     });
 
     loadSettings();

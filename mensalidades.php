@@ -112,19 +112,19 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Saldo inicial</div>
-            <div class="text-lg font-bold" id="caixaSaldoInicial">¥0</div>
+            <div class="text-lg font-bold" id="caixaSaldoInicial"><?= $_crmCurrSymbol ?>0</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Entradas (realizado)</div>
-            <div class="text-lg font-bold text-emerald-600" id="caixaEntradas">¥0</div>
+            <div class="text-lg font-bold text-emerald-600" id="caixaEntradas"><?= $_crmCurrSymbol ?>0</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Saídas (realizado)</div>
-            <div class="text-lg font-bold text-rose-600" id="caixaSaidas">¥0</div>
+            <div class="text-lg font-bold text-rose-600" id="caixaSaidas"><?= $_crmCurrSymbol ?>0</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <div class="text-xs text-slate-500">Saldo final</div>
-            <div class="text-lg font-bold" id="caixaSaldoFinal">¥0</div>
+            <div class="text-lg font-bold" id="caixaSaldoFinal"><?= $_crmCurrSymbol ?>0</div>
           </div>
         </div>
         <section class="bg-white/90 backdrop-blur border border-slate-200 rounded-3xl p-6 shadow-xl shadow-slate-200/40">
@@ -171,7 +171,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Valor</label>
-          <input id="lValor" data-mask="jpy" inputmode="numeric" placeholder="¥0" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
+          <input id="lValor" data-mask="currency" inputmode="numeric" placeholder="<?= $_crmCurrSymbol ?>0" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Data de Vencimento</label>
@@ -219,7 +219,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Valor</label>
-          <input id="contaValor" data-mask="jpy" inputmode="numeric" placeholder="¥0" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
+          <input id="contaValor" data-mask="currency" inputmode="numeric" placeholder="<?= $_crmCurrSymbol ?>0" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Data de Vencimento</label>

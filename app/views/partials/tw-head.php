@@ -8,11 +8,27 @@ if (!defined('BASE_URL')) {
     require_once BASE_PATH . '/app/config.php';
 }
 
+// ── Load CRM settings from DB (currency, language, brand) ──
+// Available as $_crmSettings, $_crmCurrSymbol, $_crmCurrCode, $_crmLang
+// in ALL legacy pages that include tw-head.php
+$_crmSettings = [];
+try {
+    require_once BASE_PATH . '/db.php';
+    $_pdo = db();
+    $_stmt = $_pdo->query('SELECT currency_code, currency_symbol, language, company_name, logo_path FROM settings LIMIT 1');
+    $_crmSettings = $_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+} catch (Throwable $e) {
+    $_crmSettings = [];
+}
+$_crmCurrCode   = $_crmSettings['currency_code']   ?? 'JPY';
+$_crmCurrSymbol = $_crmSettings['currency_symbol']  ?? '¥';
+$_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
+
 // $pageTitle - page title (string)
 // $extraHead - optional extra head content (string)
 ?>
 <!doctype html>
-<html lang="pt-BR">
+<html lang="<?= $_crmLang ?>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

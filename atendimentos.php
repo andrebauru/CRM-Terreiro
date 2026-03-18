@@ -48,7 +48,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                 <div class="flex items-center justify-between">
                   <span class="text-sm text-slate-500">Total</span>
-                  <span class="text-xl font-semibold" id="totalAmount">¥0</span>
+                  <span class="text-xl font-semibold" id="totalAmount"><?= $_crmCurrSymbol ?>0</span>
                 </div>
                 <div class="mt-4 flex gap-4">
                   <label class="flex items-center gap-2 text-sm"><input type="radio" name="paymentType" value="cash" checked /> À Vista</label>

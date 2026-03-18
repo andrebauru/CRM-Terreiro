@@ -18,12 +18,24 @@ if (window.__crmSettings && typeof window.__crmSettings === 'object') {
   }
 }
 
+// Helper: return current currency symbol (useful for templates)
+const crmSymbol = () => crmCurrency.symbol;
+
 // Currency formatting (supports JPY and BRL)
 // JPY: stores integer yen (¥150 = 150 in DB)
 // BRL: stores integer centavos (R$1,50 = 150 in DB)
 const formatBRL = (v) => {
   const n = parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
   if (!n) return '';
+  if (crmCurrency.code === 'BRL') {
+    return 'R$\u00a0' + (n / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return '¥' + n.toLocaleString('ja-JP');
+};
+
+// Format with zero shown (for card displays that need to show "¥0" / "R$ 0")
+const formatBRLOrZero = (v) => {
+  const n = parseInt(String(v || '').replace(/\D+/g, '') || '0', 10);
   if (crmCurrency.code === 'BRL') {
     return 'R$\u00a0' + (n / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
@@ -61,6 +73,8 @@ const loadBrand = async () => {
       }
       if (s.language) {
         crmLanguage = s.language;
+        // Update HTML lang attribute dynamically
+        document.documentElement.lang = s.language === 'ja' ? 'ja' : 'pt-BR';
       }
     }
   } catch (e) {}
