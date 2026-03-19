@@ -41,7 +41,7 @@ define('DB_CHARSET', $_ENV['DB_CHARSET'] ?? 'utf8mb4');
 
 // Application settings
 define('APP_NAME', $_ENV['APP_NAME'] ?? 'CRM Terreiro');
-define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
+define('APP_ENV', $_ENV['APP_ENV'] ?? 'production');
 
 // Dynamic BASE_URL - detecta corretamente o caminho base
 // Detecta HTTPS via header direto ou X-Forwarded-Proto (reverse proxy / load balancer)

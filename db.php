@@ -28,6 +28,18 @@ function loadEnv(string $path): void
 
 loadEnv(__DIR__ . '/.env');
 
+// ── SECURITY: Suppress error display in production ──
+// Legacy pages (*.php) bypass index.php, so error settings must be applied here too.
+$_appEnv = $_ENV['APP_ENV'] ?? 'production';
+ini_set('display_errors', $_appEnv === 'development' ? '1' : '0');
+ini_set('log_errors', '1');
+error_reporting(E_ALL);
+if (!ini_get('error_log')) {
+    $logDir = __DIR__ . '/storage/logs';
+    if (!is_dir($logDir)) @mkdir($logDir, 0777, true);
+    ini_set('error_log', $logDir . '/php_errors.log');
+}
+
 /**
  * Inicia sessão com configuração segura de cookies.
  * secure=false garante que cookies funcionam em HTTP (dev local).
@@ -95,6 +107,19 @@ function requireField(string $key, string $message = 'Campo obrigatório'): stri
         jsonResponse(['ok' => false, 'message' => $message], 422);
     }
     return $value;
+}
+
+/**
+ * Returns a safe JSON error response.
+ * In production, hides the real error message to avoid leaking internal details.
+ * Always logs the real error.
+ */
+function safeJsonError(Throwable $e, int $status = 500): void
+{
+    error_log('[API Error] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    $appEnv = $_ENV['APP_ENV'] ?? 'production';
+    $message = ($appEnv === 'development') ? $e->getMessage() : 'Erro interno do servidor';
+    jsonResponse(['ok' => false, 'message' => $message], $status);
 }
 
 function ensureColumn(PDO $pdo, string $table, string $column, string $definition): void

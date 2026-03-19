@@ -47,5 +47,8 @@ try {
     echo $sql;
 } catch (Throwable $e) {
     http_response_code(500);
-    echo 'Erro ao gerar backup: ' . $e->getMessage();
+    header('Content-Type: application/json; charset=utf-8');
+    error_log('[Backup Error] ' . $e->getMessage());
+    $appEnv = $_ENV['APP_ENV'] ?? 'production';
+    echo json_encode(['ok' => false, 'message' => $appEnv === 'development' ? $e->getMessage() : 'Erro ao gerar backup']);
 }

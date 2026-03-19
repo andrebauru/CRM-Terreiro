@@ -34,7 +34,7 @@ if ($action === 'register') {
         $stmt->execute([$name, $email, $phone, $hash, 'user', 0]);
         jsonResponse(['ok' => true, 'message' => 'Cadastro realizado! Aguarde a ativação pelo administrador.']);
     } catch (Throwable $e) {
-        jsonResponse(['ok' => false, 'message' => $e->getMessage()], 500);
+        safeJsonError($e);
     }
 }
 
@@ -125,5 +125,5 @@ try {
 
     jsonResponse(['ok' => false, 'message' => 'Ação inválida'], 400);
 } catch (Throwable $e) {
-    jsonResponse(['ok' => false, 'message' => $e->getMessage()], 500);
+    safeJsonError($e);
 }

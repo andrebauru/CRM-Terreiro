@@ -168,5 +168,5 @@ try {
         'calendar_events' => $calendarEvents,
     ]);
 } catch (Throwable $e) {
-    jsonResponse(['ok' => false, 'message' => $e->getMessage()], 500);
+    safeJsonError($e);
 }

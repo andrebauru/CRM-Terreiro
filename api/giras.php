@@ -174,5 +174,5 @@ try {
 
     jsonResponse(['ok' => false, 'message' => 'Ação inválida'], 400);
 } catch (Throwable $e) {
-    jsonResponse(['ok' => false, 'message' => $e->getMessage()], 500);
+    safeJsonError($e);
 }

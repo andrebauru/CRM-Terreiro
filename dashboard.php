@@ -367,7 +367,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         events: formattedEvents,
         datesSet: (info) => {
           const currentStart = info.view.currentStart;
-          const monthParam = currentStart.toISOString().slice(0, 10);
+          // Use local date to avoid UTC timezone shift (e.g. JST midnight → previous day in UTC)
+          const y = currentStart.getFullYear();
+          const m = String(currentStart.getMonth() + 1).padStart(2, '0');
+          const d = String(currentStart.getDate()).padStart(2, '0');
+          const monthParam = `${y}-${m}-${d}`;
           fetch(`api/dashboard.php?action=calendar&month=${monthParam}`, { cache: 'no-store' })
             .then((res) => res.json())
             .then((data) => {
