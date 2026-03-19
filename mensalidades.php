@@ -8,8 +8,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <!-- MAIN -->
-    <main class="flex-1 p-8">
-      <header class="flex items-center justify-between mb-8">
+    <main class="flex-1 p-4 pt-16 md:p-8">
+      <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Mensalidades</h1>
           <p class="text-slate-500">Controle de pagamentos recorrentes</p>

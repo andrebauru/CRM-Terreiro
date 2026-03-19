@@ -11,7 +11,7 @@ function buildCalendarEvents(PDO $pdo, string $monthStart, string $monthEnd): ar
     $events = [];
 
     $filhosStmt = $pdo->prepare(
-        "SELECT id, name, due_day FROM filhos WHERE COALESCE(status, 'ativo') = 'ativo'"
+        "SELECT id, name, due_day FROM filhos WHERE COALESCE(status, 'ativo') = 'ativo' AND isento_mensalidade = 0"
     );
     $filhosStmt->execute();
     foreach ($filhosStmt->fetchAll() as $filho) {
@@ -93,7 +93,9 @@ try {
         $mensalidadesStmt = $pdo->prepare(
                 "SELECT COALESCE(SUM(f.mensalidade_value),0)
                  FROM filhos f
-                 WHERE NOT EXISTS (
+                 WHERE f.isento_mensalidade = 0
+                   AND COALESCE(f.status, 'ativo') = 'ativo'
+                   AND NOT EXISTS (
                      SELECT 1 FROM mensalidades_pagas mp
                      WHERE mp.filho_id = f.id AND mp.paid_month = ?
                  )"

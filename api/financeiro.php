@@ -33,6 +33,7 @@ function ensureMonthlyMensalidades(PDO $pdo, string $monthStart): void
         "SELECT id, name, mensalidade_value, due_day
          FROM filhos
          WHERE COALESCE(status, 'ativo') = 'ativo'
+           AND isento_mensalidade = 0
          ORDER BY id ASC"
     );
     $filhos = $stmt->fetchAll();

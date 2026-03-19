@@ -81,7 +81,8 @@ try {
         $data = [];
         foreach ($rows as $row) {
             $dueDate = new DateTime($today->format('Y-m') . '-' . str_pad((string)$row['due_day'], 2, '0', STR_PAD_LEFT));
-            $paid = !empty($row['payment_id']);
+            $isento = (int)$row['isento_mensalidade'] === 1;
+            $paid = !empty($row['payment_id']) || $isento;
             $overdue = !$paid && $today > $dueDate;
 
             $data[] = [

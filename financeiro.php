@@ -7,8 +7,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   <div class="min-h-screen flex">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
-    <main class="flex-1 p-8 overflow-y-auto">
-      <div class="flex items-center justify-between mb-6">
+    <main class="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 class="text-2xl font-bold">Financeiro</h1>
           <p class="text-slate-500">Controle de caixa, contas e entradas</p>
@@ -19,7 +19,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
       </div>
 
-      <div id="dashCards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div id="dashCards" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Entradas (mês)</p>
           <p id="cardEntradas" class="text-2xl font-black text-green-600 mt-1"><?= $_crmCurrSymbol ?>0</p>
@@ -38,7 +38,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide">Mensalidades Pagas</p>
           <p id="cardMensPagas" class="text-xl font-bold text-green-600 mt-1"><?= $_crmCurrSymbol ?>0</p>
@@ -53,7 +53,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
       </div>
 
-      <div class="flex gap-1 mb-4 border-b border-slate-200">
+      <div class="flex flex-wrap gap-1 mb-4 border-b border-slate-200">
         <button onclick="showTab('caixa')"    id="tab-caixa"    class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Caixa</button>
         <button onclick="showTab('contas')"   id="tab-contas"   class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Contas a Pagar</button>
         <button onclick="showTab('entradas')" id="tab-entradas" class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Entradas</button>
@@ -61,9 +61,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       </div>
 
       <section id="pane-caixa" class="tab-pane hidden">
-        <div id="caixaSummary" class="grid grid-cols-3 gap-4 mb-4"></div>
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <table class="w-full text-sm">
+        <div id="caixaSummary" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4"></div>
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table class="w-full text-sm min-w-[600px]">
             <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
               <tr>
                 <th class="px-4 py-3 text-left">Data</th>
@@ -84,8 +84,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <i class="fa-solid fa-plus mr-1"></i> Nova Conta
           </button>
         </div>
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <table class="w-full text-sm">
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table class="w-full text-sm min-w-[700px]">
             <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
               <tr>
                 <th class="px-4 py-3 text-left">Descrição</th>
@@ -107,8 +107,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <i class="fa-solid fa-plus mr-1"></i> Nova Entrada
           </button>
         </div>
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <table class="w-full text-sm">
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table class="w-full text-sm min-w-[700px]">
             <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
               <tr>
                 <th class="px-4 py-3 text-left">Descrição</th>
@@ -126,8 +126,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
       <section id="pane-credito" class="tab-pane hidden">
         <p class="text-sm text-slate-500 mb-3">10% de cada entrada é automaticamente reservado como Crédito Casa.</p>
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <table class="w-full text-sm">
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table class="w-full text-sm min-w-[600px]">
             <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
               <tr>
                 <th class="px-4 py-3 text-left">Data</th>

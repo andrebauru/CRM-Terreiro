@@ -8,13 +8,13 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <!-- MAIN -->
-    <main class="flex-1 p-8">
-      <header class="flex items-center justify-between mb-8">
+    <main class="flex-1 p-4 pt-16 md:p-8">
+      <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Registro de Giras</h1>
           <p class="text-slate-500">Campanhas de giras nas redes sociais</p>
         </div>
-        <div class="flex gap-3">
+        <div class="flex flex-wrap gap-3">
           <button id="openTiposModal" class="px-4 py-2 rounded-xl border border-red-600 text-red-600 font-bold hover:bg-red-50">
             <i class="fa-solid fa-list mr-2"></i>Tipos de Gira
           </button>
@@ -25,7 +25,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       </header>
 
       <!-- FILTROS POR PLATAFORMA -->
-      <div class="flex gap-3 mb-6">
+      <div class="flex flex-wrap gap-3 mb-6">
         <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold bg-black text-white">Todas</button>
         <button data-filter="Facebook" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-200 text-slate-600">
           <i class="fa-brands fa-facebook mr-1"></i>Facebook

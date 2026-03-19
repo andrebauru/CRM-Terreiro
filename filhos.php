@@ -8,8 +8,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <!-- MAIN -->
-    <main class="flex-1 p-8">
-      <header class="flex items-center justify-between mb-6">
+    <main class="flex-1 p-4 pt-16 md:p-8">
+      <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Filhos da Casa</h1>
           <p class="text-slate-500">Gestão de cadastro e grau hierárquico</p>
@@ -68,7 +68,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <label class="text-sm font-medium text-slate-700">Nome</label>
           <input id="filhoName" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-slate-700">Email</label>
             <input id="filhoEmail" type="email" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
@@ -78,7 +78,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <input id="filhoPhone" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-slate-700">Grau Espiritual</label>
             <select id="filhoGrade" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
@@ -106,7 +106,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <label class="text-sm font-medium text-slate-700">Entidade de Frente</label>
           <input id="filhoEntidadeFrente" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Ex: Exu Veludo" />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-slate-700">Orixá Pai</label>
             <input id="filhoOrixaPai" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Ex: Ogum" />
@@ -116,7 +116,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <input id="filhoOrixaMae" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Ex: Iemanjá" />
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-slate-700">Valor Mensalidade</label>
             <input id="filhoMensalidade" data-mask="currency" inputmode="numeric" placeholder="0" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />

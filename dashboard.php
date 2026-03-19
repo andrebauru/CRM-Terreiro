@@ -12,8 +12,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   <div class="min-h-screen flex">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
-    <main class="flex-1 p-8">
-      <header class="flex items-center justify-between mb-8">
+    <main class="flex-1 p-4 pt-16 md:p-8">
+      <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Dashboard</h1>
           <p class="text-slate-500">Visão geral do terreiro</p>
@@ -360,9 +360,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       }
       calendarInstance = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        height: 520,
+        height: 'auto',
         locale: 'pt-br',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridWeek' },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
         events: formattedEvents,
         datesSet: (info) => {
           const currentStart = info.view.currentStart;
@@ -382,15 +382,17 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const loadMensalidades = async () => {
       const response = await fetch(`api/mensalidades.php?action=list&t=${Date.now()}`, { cache: 'no-store' });
       const data = await response.json();
-      const rows = (data.data || []).slice(0, 6).map((item) => {
-        const statusLabel = item.paid ? 'Pago' : item.overdue ? 'Atraso' : 'Em dia';
-        const statusClass = item.paid ? 'text-emerald-600' : item.overdue ? 'text-red-600' : 'text-amber-600';
+      const rows = (data.data || []).filter(i => i.type === 'mensal').slice(0, 6).map((item) => {
+        const isento = item.isento_mensalidade == 1;
+        const statusLabel = isento ? 'Isento' : item.paid ? 'Pago' : item.overdue ? 'Atraso' : 'Em dia';
+        const statusClass = isento ? 'text-blue-600' : item.paid ? 'text-emerald-600' : item.overdue ? 'text-red-600' : 'text-amber-600';
+        const rowBg = isento ? 'bg-blue-50' : item.overdue ? 'bg-[#ffcccc]' : item.paid ? 'bg-emerald-50' : '';
         return `
-          <tr class="border-t border-slate-100 ${item.overdue ? 'bg-[#ffcccc]' : item.paid ? 'bg-emerald-50' : ''}">
+          <tr class="border-t border-slate-100 ${rowBg}">
             <td class="py-3">${item.name}</td>
             <td class="py-3">${item.grade}</td>
             <td class="py-3">Dia ${item.due_day}</td>
-            <td class="py-3 text-right"><span class="${statusClass}">${statusLabel}</span></td>
+            <td class="py-3 text-right"><span class="${statusClass} font-semibold">${statusLabel}</span></td>
           </tr>`;
       });
       mensalidadesTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="4">Nenhum registro.</td></tr>';
