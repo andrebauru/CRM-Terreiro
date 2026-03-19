@@ -36,7 +36,12 @@ try {
 
     // List catálogo de trabalhos
     if ($action === 'list_catalogo') {
-        $stmt = $pdo->query('SELECT id, name, description, price, is_active FROM trabalhos WHERE is_active = 1 ORDER BY name ASC');
+        $stmt = $pdo->query(
+            "SELECT id, name, description, price, is_active, 'trabalho' AS tipo FROM trabalhos WHERE is_active = 1
+             UNION ALL
+             SELECT id, name, description, price, is_active, 'servico' AS tipo FROM services WHERE is_active = 1
+             ORDER BY name ASC"
+        );
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
 

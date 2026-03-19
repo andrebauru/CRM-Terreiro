@@ -93,12 +93,25 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                     <th class="text-left pb-3">Serviços</th>
                     <th class="text-left pb-3">Pagamento</th>
                     <th class="text-right pb-3">Total</th>
+                    <th class="text-right pb-3">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="attendancesTable">
-                  <tr><td class="py-3" colspan="5">Carregando...</td></tr>
+                  <tr><td class="py-3" colspan="6">Carregando...</td></tr>
                 </tbody>
               </table>
+            </div>
+            <!-- Paginação -->
+            <div id="paginationControls" class="flex items-center justify-between pt-4 border-t border-slate-100 mt-4">
+              <span id="paginationInfo" class="text-xs text-slate-400"></span>
+              <div class="flex gap-2">
+                <button id="prevPage" class="px-3 py-1 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40" disabled>
+                  <i class="fa-solid fa-chevron-left mr-1"></i>Anterior
+                </button>
+                <button id="nextPage" class="px-3 py-1 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40" disabled>
+                  Próximo<i class="fa-solid fa-chevron-right ml-1"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -114,23 +127,42 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <div id="editModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
-    <div class="bg-white rounded-3xl w-full max-w-xl p-6 border border-slate-200">
+    <div class="bg-white rounded-3xl w-full max-w-xl p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Editar Atendimento</h2>
         <button id="closeEditModal" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-3">
-        <div class="text-sm text-slate-500">Cliente</div>
-        <div id="editClient" class="font-semibold"></div>
-        <div class="text-sm text-slate-500">Serviços</div>
-        <div id="editServices" class="text-sm"></div>
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-slate-700">Cliente</label>
+            <select id="editClientSelect" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></select>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-700">Data do Atendimento</label>
+            <input id="editDataAtendimento" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-sm font-medium text-slate-700">Serviços</label>
+            <span class="text-xs text-slate-500" id="editServicesCount">0 selecionados</span>
+          </div>
+          <div id="editServicesList" class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-slate-100 rounded-xl p-2"></div>
+        </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Anotações</label>
-          <textarea id="editNotes" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" rows="3"></textarea>
+          <textarea id="editNotes" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" rows="2"></textarea>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <label class="flex items-center gap-2 text-sm"><input id="editDelinquent" type="checkbox" /> Inadimplente</label>
           <label class="flex items-center gap-2 text-sm"><input id="editReversed" type="checkbox" /> Reverter Trabalho</label>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Total</span>
+            <span class="font-semibold" id="editTotalAmount"><?= $_crmCurrSymbol ?>0</span>
+          </div>
         </div>
         <div class="flex justify-between gap-2 pt-2">
           <button id="deleteEditModal" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100">
@@ -138,7 +170,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </button>
           <div class="flex gap-2">
             <button id="cancelEditModal" class="px-4 py-2 rounded-xl border border-slate-200">Cancelar</button>
-            <button id="saveEditModal" class="px-4 py-2 rounded-xl bg-accent text-white">Salvar</button>
+            <button id="saveEditModal" class="px-4 py-2 rounded-xl bg-accent text-white font-bold">Salvar</button>
           </div>
         </div>
       </div>
@@ -165,16 +197,22 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const closeEditModal = document.getElementById('closeEditModal');
     const cancelEditModal = document.getElementById('cancelEditModal');
     const saveEditModal = document.getElementById('saveEditModal');
-    const editClient = document.getElementById('editClient');
-    const editServices = document.getElementById('editServices');
     const editNotes = document.getElementById('editNotes');
     const editDelinquent = document.getElementById('editDelinquent');
     const editReversed = document.getElementById('editReversed');
     const deleteEditModal = document.getElementById('deleteEditModal');
+    const editClientSelect = document.getElementById('editClientSelect');
+    const editDataAtendimento = document.getElementById('editDataAtendimento');
+    const editServicesList = document.getElementById('editServicesList');
+    const editServicesCount = document.getElementById('editServicesCount');
+    const editTotalAmount = document.getElementById('editTotalAmount');
     let currentEditAttendanceId = null;
     let servicesCache = [];
     let clientsCache = [];
     let currentAttendanceId = null;
+    let allAttendances = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 15;
 
     const formatBRLAmount = (value) => formatBRLOrZero(String(value || 0));
 
@@ -216,30 +254,53 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     };
 
     const loadAttendances = async () => {
-      attendancesTable.innerHTML = '<tr><td class="py-3" colspan="4">Carregando...</td></tr>';
+      attendancesTable.innerHTML = '<tr><td class="py-3" colspan="6">Carregando...</td></tr>';
       const response = await fetch(`api/attendances.php?action=list&t=${Date.now()}`, { cache: 'no-store' });
       const data = await response.json();
-      const rows = (data.data || []).map((attendance) => `
+      allAttendances = data.data || [];
+      currentPage = 1;
+      renderAttendancesPage();
+    };
+
+    const renderAttendancesPage = () => {
+      const total = allAttendances.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const page = allAttendances.slice(start, start + PAGE_SIZE);
+
+      const rows = page.map((attendance) => `
         <tr class="border-t border-slate-100 ${attendance.is_delinquent == 1 ? 'bg-red-50' : ''}" data-attendance="${attendance.id}">
           <td class="py-3">
-            <button class="text-accent" data-client-history="${attendance.client_id}">${attendance.client_name}</button>
+            <button class="text-accent text-sm" data-client-history="${attendance.client_id}">${attendance.client_name}</button>
           </td>
           <td class="py-3 text-slate-500 text-xs">${attendance.data_atendimento ? fmtDate(attendance.data_atendimento) : fmtDate(attendance.created_at?.split(' ')[0])}</td>
-          <td class="py-3">${attendance.services || '-'}</td>
-          <td class="py-3">
+          <td class="py-3 text-xs">${attendance.services || '-'}</td>
+          <td class="py-3 text-xs">
             ${attendance.payment_type === 'cash' ? 'À Vista' : 'Parcelado'}
-            ${attendance.is_reversed == 1 ? '<span class="ml-2 text-xs text-amber-600">Revertido</span>' : ''}
+            ${attendance.is_reversed == 1 ? '<span class="ml-1 text-xs text-amber-600">Revertido</span>' : ''}
           </td>
           <td class="py-3 text-right">
-            <div class="flex items-center justify-end gap-3">
-              <button class="text-sm text-slate-500" data-installments="${attendance.id}">Parcelas</button>
-              <span class="font-semibold">${formatBRLAmount(attendance.total_amount)}</span>
-            </div>
+            <button class="text-xs text-slate-500 mr-1" data-installments="${attendance.id}">Parcelas</button>
+            <span class="font-semibold">${formatBRLAmount(attendance.total_amount)}</span>
+          </td>
+          <td class="py-3 text-right">
+            <button class="text-accent text-xs font-bold mr-2" data-edit-attendance="${attendance.id}"><i class="fa-solid fa-pen"></i> Editar</button>
           </td>
         </tr>
       `);
-      attendancesTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="5">Nenhum atendimento.</td></tr>';
+      attendancesTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="6">Nenhum atendimento.</td></tr>';
+
+      // Pagination controls
+      document.getElementById('paginationInfo').textContent = total > 0
+        ? `${start + 1}-${Math.min(start + PAGE_SIZE, total)} de ${total}`
+        : '';
+      document.getElementById('prevPage').disabled = currentPage <= 1;
+      document.getElementById('nextPage').disabled = currentPage >= totalPages;
     };
+
+    document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderAttendancesPage(); } });
+    document.getElementById('nextPage').addEventListener('click', () => { currentPage++; renderAttendancesPage(); });
 
     const loadInstallments = async (attendanceId) => {
       currentAttendanceId = attendanceId;
@@ -331,10 +392,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     };
 
     attendancesTable.addEventListener('click', (event) => {
-      const row = event.target.closest('tr[data-attendance]');
-      if (row && !event.target.hasAttribute('data-installments') && !event.target.hasAttribute('data-client-history')) {
-        openEditModal(row.getAttribute('data-attendance'));
-      }
+      const editBtn = event.target.closest('[data-edit-attendance]');
+      if (editBtn) { openEditModal(editBtn.dataset.editAttendance); return; }
       const attendanceId = event.target.getAttribute('data-installments');
       const clientId = event.target.getAttribute('data-client-history');
       if (attendanceId) loadInstallments(attendanceId);
@@ -348,19 +407,54 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const response = await fetch(`api/attendances.php?action=detail&attendance_id=${attendanceId}`, { cache: 'no-store' });
       const data = await response.json();
       if (!data.ok) { alert(data.message || 'Erro ao carregar atendimento'); return; }
-      editClient.textContent = data.attendance.client_name || '-';
-      editServices.textContent = (data.services || []).map((s) => s.name).join(', ') || '-';
-      editNotes.value = data.attendance.notes || '';
-      editDelinquent.checked = data.attendance.is_delinquent == 1;
-      editReversed.checked = data.attendance.is_reversed == 1;
+      const att = data.attendance;
+      const selServiceIds = (data.services || []).map(s => String(s.id));
+
+      // Populate client select
+      editClientSelect.innerHTML = clientsCache.map(c =>
+        `<option value="${c.id}" ${c.id == att.client_id ? 'selected' : ''}>${c.name}</option>`
+      ).join('');
+
+      // Populate date
+      editDataAtendimento.value = att.data_atendimento || '';
+
+      // Populate services checkboxes
+      editServicesList.innerHTML = servicesCache.map(s => `
+        <label class="flex items-center gap-2 border border-slate-200 rounded-lg px-2 py-1.5 text-xs">
+          <input type="checkbox" value="${s.id}" data-price="${s.price}" class="edit-service-check" ${selServiceIds.includes(String(s.id)) ? 'checked' : ''} />
+          <span class="flex-1">${s.name}</span>
+          <span class="text-slate-400">${formatBRLAmount(s.price)}</span>
+        </label>
+      `).join('');
+      updateEditTotal();
+
+      editNotes.value = att.notes || '';
+      editDelinquent.checked = att.is_delinquent == 1;
+      editReversed.checked = att.is_reversed == 1;
       toggleEditModal(true);
     };
 
+    const updateEditTotal = () => {
+      const checks = editServicesList.querySelectorAll('.edit-service-check:checked');
+      const total = Array.from(checks).reduce((sum, input) => sum + Number(input.dataset.price || 0), 0);
+      editTotalAmount.textContent = formatBRLAmount(total);
+      editServicesCount.textContent = `${checks.length} selecionados`;
+    };
+
+    editServicesList.addEventListener('change', (e) => {
+      if (e.target.classList.contains('edit-service-check')) updateEditTotal();
+    });
+
     saveEditModal.addEventListener('click', async () => {
       if (!currentEditAttendanceId) return;
+      const selectedServices = Array.from(editServicesList.querySelectorAll('.edit-service-check:checked')).map(i => i.value);
+      if (selectedServices.length === 0) { alert('Selecione pelo menos um serviço.'); return; }
       const payload = new URLSearchParams();
       payload.append('action', 'update');
       payload.append('attendance_id', currentEditAttendanceId);
+      payload.append('client_id', editClientSelect.value);
+      payload.append('data_atendimento', editDataAtendimento.value);
+      selectedServices.forEach(id => payload.append('service_ids[]', id));
       payload.append('notes', editNotes.value);
       payload.append('is_delinquent', editDelinquent.checked ? '1' : '0');
       payload.append('is_reversed', editReversed.checked ? '1' : '0');

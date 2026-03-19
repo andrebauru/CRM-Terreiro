@@ -44,8 +44,7 @@ try {
              LEFT JOIN attendance_services ats ON ats.attendance_id = a.id
              LEFT JOIN services s ON s.id = ats.service_id
              GROUP BY a.id
-             ORDER BY a.id DESC
-             LIMIT 20"
+             ORDER BY a.id DESC"
         );
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
@@ -57,7 +56,7 @@ try {
         }
         $stmt = $pdo->prepare(
             "SELECT a.id, a.client_id, a.notes, a.total_amount, a.payment_type, a.is_delinquent, a.is_reversed,
-                    c.name AS client_name
+                    a.data_atendimento, c.name AS client_name
              FROM attendances a
              JOIN clients c ON c.id = a.client_id
              WHERE a.id = ?"
@@ -190,9 +189,51 @@ try {
         $notes = trim((string)($_POST['notes'] ?? '')) ?: null;
         $isDelinquent = (int)($_POST['is_delinquent'] ?? 0);
         $isReversed = (int)($_POST['is_reversed'] ?? 0);
+        $clientId = isset($_POST['client_id']) ? (int)$_POST['client_id'] : null;
+        $dataAtendimento = trim((string)($_POST['data_atendimento'] ?? '')) ?: null;
+        $serviceIds = $_POST['service_ids'] ?? null;
 
-        $stmt = $pdo->prepare('UPDATE attendances SET notes = ?, is_delinquent = ?, is_reversed = ? WHERE id = ?');
-        $stmt->execute([$notes, $isDelinquent, $isReversed, $attendanceId]);
+        // Base update
+        $sql = 'UPDATE attendances SET notes = ?, is_delinquent = ?, is_reversed = ?';
+        $params = [$notes, $isDelinquent, $isReversed];
+
+        if ($clientId) {
+            $sql .= ', client_id = ?';
+            $params[] = $clientId;
+        }
+        if ($dataAtendimento) {
+            $sql .= ', data_atendimento = ?';
+            $params[] = $dataAtendimento;
+        }
+
+        // Recalculate total if services changed
+        if (is_array($serviceIds) && count($serviceIds) > 0) {
+            $placeholders = implode(',', array_fill(0, count($serviceIds), '?'));
+            $servicesStmt = $pdo->prepare("SELECT id, price FROM services WHERE id IN ($placeholders)");
+            $servicesStmt->execute($serviceIds);
+            $services = $servicesStmt->fetchAll();
+            $total = array_reduce($services, fn($sum, $srv) => $sum + (int)$srv['price'], 0);
+
+            $sql .= ', total_amount = ?';
+            $params[] = $total;
+        }
+
+        $sql .= ' WHERE id = ?';
+        $params[] = $attendanceId;
+
+        $pdo->beginTransaction();
+        $pdo->prepare($sql)->execute($params);
+
+        // Update attendance_services if provided
+        if (is_array($serviceIds) && count($serviceIds) > 0) {
+            $pdo->prepare('DELETE FROM attendance_services WHERE attendance_id = ?')->execute([$attendanceId]);
+            $insertService = $pdo->prepare('INSERT INTO attendance_services (attendance_id, service_id, price) VALUES (?, ?, ?)');
+            foreach ($services as $service) {
+                $insertService->execute([$attendanceId, $service['id'], $service['price']]);
+            }
+        }
+
+        $pdo->commit();
         jsonResponse(['ok' => true]);
     }
 

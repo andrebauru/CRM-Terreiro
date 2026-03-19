@@ -329,8 +329,20 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       }
       const sel = document.getElementById('trabalhoTipoId');
       const cur = sel.value;
-      sel.innerHTML = '<option value="">Selecione...</option>' +
-        catalogoCache.map(c => `<option value="${c.id}" ${cur == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const trabalhos = catalogoCache.filter(c => c.tipo === 'trabalho' || !c.tipo);
+      const servicos = catalogoCache.filter(c => c.tipo === 'servico');
+      let html = '<option value="">Selecione...</option>';
+      if (trabalhos.length) {
+        html += '<optgroup label="Trabalhos">';
+        html += trabalhos.map(c => `<option value="${c.id}" ${cur == c.id ? 'selected' : ''}>${c.name} — ${formatBRL(String(Math.round(parseFloat(c.price) || 0)))}</option>`).join('');
+        html += '</optgroup>';
+      }
+      if (servicos.length) {
+        html += '<optgroup label="Serviços">';
+        html += servicos.map(c => `<option value="${c.id}" data-tipo="servico" ${cur == c.id ? 'selected' : ''}>${c.name} — ${formatBRL(String(Math.round(parseFloat(c.price) || 0)))}</option>`).join('');
+        html += '</optgroup>';
+      }
+      sel.innerHTML = html;
     };
 
     const openNewModal = () => {
