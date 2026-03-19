@@ -77,6 +77,30 @@ class AuthController extends BaseController
             exit();
         }
 
+        // ── BRUTE FORCE PROTECTION ──
+        try {
+            $pdo = \db();
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            // Clean old attempts (older than 15 minutes)
+            $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)")->execute();
+            // Count recent attempts from this IP
+            $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM login_attempts WHERE ip_address = ? AND attempted_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)");
+            $stmtCount->execute([$ip]);
+            $attemptCount = (int)$stmtCount->fetchColumn();
+            if ($attemptCount >= 10) {
+                $msg = 'Muitas tentativas de login. Aguarde 15 minutos antes de tentar novamente.';
+                if ($isApi) {
+                    $this->json(['message' => $msg], 429);
+                } else {
+                    Session::flash('error', $msg);
+                    $this->redirect('login');
+                }
+                exit();
+            }
+        } catch (\Throwable $e) {
+            // If table doesn't exist yet, just continue
+        }
+
         $user = $this->userModel->findByEmail($email);
 
         if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
@@ -91,11 +115,19 @@ class AuthController extends BaseController
                 exit();
             }
 
+            // Clear login attempts on success
+            try {
+                $pdo = \db();
+                $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                $pdo->prepare("DELETE FROM login_attempts WHERE ip_address = ?")->execute([$ip]);
+            } catch (\Throwable $e) { /* ignore */ }
+
             // Authentication successful
             session_regenerate_id(true);
             Session::set('user_id', $user['id']);
             Session::set('user_name', $user['name']);
             Session::set('user_role', $user['role']);
+            Session::set('user_allowed_pages', $user['allowed_pages'] ?? null);
             ForgeLogger::logAction('Usuário ' . $user['email'] . ' fez login.'); // Log login
 
             if ($isApi) {
@@ -106,6 +138,14 @@ class AuthController extends BaseController
             }
             exit();
         } else {
+            // Record failed attempt
+            try {
+                $pdo = \db();
+                $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                $stmtInsert = $pdo->prepare("INSERT INTO login_attempts (ip_address, email) VALUES (?, ?)");
+                $stmtInsert->execute([$ip, $email]);
+            } catch (\Throwable $e) { /* ignore */ }
+
             // Authentication failed
             if ($isApi) {
                 $this->json(['message' => 'Email ou senha inválidos.'], 401);

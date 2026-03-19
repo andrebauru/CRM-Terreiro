@@ -27,6 +27,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <tr>
                 <th class="text-left pb-3">Nome</th>
                 <th class="text-left pb-3">Email</th>
+                <th class="text-left pb-3">Telefone</th>
                 <th class="text-left pb-3">Perfil</th>
                 <th class="text-left pb-3">Status</th>
                 <th class="text-right pb-3">Ações</th>
@@ -34,7 +35,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             </thead>
             <tbody id="usersTable">
               <tr>
-                <td class="py-3" colspan="5">Carregando...</td>
+                <td class="py-3" colspan="6">Carregando...</td>
               </tr>
             </tbody>
           </table>
@@ -44,7 +45,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
-    <div class="bg-white rounded-2xl w-full max-w-lg p-6 border border-slate-200">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="modalTitle">Novo Usuário</h2>
         <button id="closeModal" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
@@ -58,6 +59,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div>
           <label class="text-sm font-medium text-slate-700">Email</label>
           <input id="userEmail" type="email" required class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Telefone</label>
+          <input id="userPhone" type="tel" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="(00) 00000-0000" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Perfil</label>
@@ -77,6 +82,37 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div>
           <label class="text-sm font-medium text-slate-700">Senha (opcional)</label>
           <input id="userPassword" type="password" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="Deixe vazio para manter" />
+        </div>
+        <div id="allowedPagesSection">
+          <label class="text-sm font-medium text-slate-700 block mb-2">Páginas Permitidas <span class="text-slate-400 text-xs">(admin vê tudo)</span></label>
+          <div id="allowedPagesGrid" class="grid grid-cols-2 gap-2">
+            <?php
+            $allPages = [
+              'atendimentos' => 'Atendimentos',
+              'gastos' => 'Gastos',
+              'trabalhos' => 'Trabalhos',
+              'clientes' => 'Clientes',
+              'filhos' => 'Filhos',
+              'quimbandeiro' => 'Quimbandeiro',
+              'mensalidades' => 'Mensalidades',
+              'giras' => 'Registro de Giras',
+              'servicos' => 'Serviços',
+              'financeiro' => 'Financeiro',
+              'usuarios' => 'Usuários',
+              'relatorios' => 'Relatórios',
+              'configuracoes' => 'Configurações',
+            ];
+            foreach ($allPages as $pageKey => $pageLabel): ?>
+              <label class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-100">
+                <input type="checkbox" class="page-check rounded border-slate-300" value="<?= $pageKey ?>" />
+                <?= htmlspecialchars($pageLabel) ?>
+              </label>
+            <?php endforeach; ?>
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button type="button" onclick="checkAllPages(true)" class="text-xs text-blue-600 hover:underline">Marcar todos</button>
+            <button type="button" onclick="checkAllPages(false)" class="text-xs text-blue-600 hover:underline">Desmarcar todos</button>
+          </div>
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" id="cancelModal" class="px-4 py-2 rounded-lg border border-slate-200">Cancelar</button>
@@ -100,6 +136,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const userId = document.getElementById('userId');
     const userName = document.getElementById('userName');
     const userEmail = document.getElementById('userEmail');
+    const userPhone = document.getElementById('userPhone');
     const userRole = document.getElementById('userRole');
     const userActive = document.getElementById('userActive');
     const userPassword = document.getElementById('userPassword');
@@ -108,17 +145,36 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     const openFn = (show) => toggleModal(modal, show);
 
+    function checkAllPages(checked) {
+      document.querySelectorAll('.page-check').forEach(cb => cb.checked = checked);
+    }
+
+    function getSelectedPages() {
+      return Array.from(document.querySelectorAll('.page-check:checked')).map(cb => cb.value).join(',');
+    }
+
+    function setSelectedPages(csv) {
+      document.querySelectorAll('.page-check').forEach(cb => cb.checked = false);
+      if (!csv) return;
+      const pages = csv.split(',').map(s => s.trim());
+      document.querySelectorAll('.page-check').forEach(cb => {
+        if (pages.includes(cb.value)) cb.checked = true;
+      });
+    }
+
     const resetForm = () => {
       userId.value = '';
       userName.value = '';
       userEmail.value = '';
+      userPhone.value = '';
       userRole.value = 'staff';
       userActive.value = '1';
       userPassword.value = '';
+      checkAllPages(false);
     };
 
     const loadUsers = async () => {
-      usersTable.innerHTML = '<tr><td class="py-3" colspan="5">Carregando...</td></tr>';
+      usersTable.innerHTML = '<tr><td class="py-3" colspan="6">Carregando...</td></tr>';
       const response = await fetch(`api/users.php?action=list&t=${Date.now()}`, { cache: 'no-store' });
       const data = await response.json();
       usersCache = data.data || [];
@@ -130,6 +186,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <tr class="border-t border-slate-100">
           <td class="py-3">${user.name}</td>
           <td class="py-3">${user.email}</td>
+          <td class="py-3 text-slate-500 text-xs">${user.phone || '-'}</td>
           <td class="py-3">${user.role}</td>
           <td class="py-3">${user.is_active == 1 ? 'Ativo' : 'Inativo'}</td>
           <td class="py-3 text-right">
@@ -138,7 +195,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </td>
         </tr>
       `).join('');
-      usersTable.innerHTML = html || '<tr><td class="py-3" colspan="5">Nenhum usuário encontrado.</td></tr>';
+      usersTable.innerHTML = html || '<tr><td class="py-3" colspan="6">Nenhum usuário encontrado.</td></tr>';
     };
 
     openModal.addEventListener('click', () => {
@@ -163,9 +220,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         userId.value = user.id;
         userName.value = user.name || '';
         userEmail.value = user.email || '';
+        userPhone.value = user.phone || '';
         userRole.value = user.role || 'staff';
         userActive.value = String(user.is_active ?? 1);
         userPassword.value = '';
+        setSelectedPages(user.allowed_pages || '');
         modalTitle.textContent = 'Editar Usuário';
         openFn(true);
       }
@@ -186,9 +245,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         id: userId.value,
         name: userName.value,
         email: userEmail.value,
+        phone: userPhone.value,
         role: userRole.value,
         is_active: userActive.value,
         password: userPassword.value,
+        allowed_pages: getSelectedPages(),
       });
       fetch('api/users.php', { method: 'POST', body: payload })
         .then(() => {

@@ -21,16 +21,16 @@ $csrfToken = Session::generateCsrfToken();
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --primary-light: rgba(99, 102, 241, 0.1);
-            --bg-dark: #0f172a;
-            --bg-card: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
+            --primary-color: #dc2626;
+            --primary-hover: #b91c1c;
+            --primary-light: rgba(220, 38, 38, 0.08);
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
             --text-muted: #64748b;
-            --border-color: #334155;
-            --input-bg: #0f172a;
+            --border-color: #e2e8f0;
+            --input-bg: #f8fafc;
             --success-color: #10b981;
             --error-color: #ef4444;
         }
@@ -43,17 +43,17 @@ $csrfToken = Session::generateCsrfToken();
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-dark);
+            background: var(--bg-page);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        /* Background Pattern */
+        /* Background Pattern - Subtle warm dots */
         body::before {
             content: '';
             position: absolute;
@@ -62,9 +62,8 @@ $csrfToken = Session::generateCsrfToken();
             right: 0;
             bottom: 0;
             background:
-                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+                radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(220, 38, 38, 0.04) 0%, transparent 50%);
             pointer-events: none;
         }
 
@@ -82,7 +81,7 @@ $csrfToken = Session::generateCsrfToken();
         .shape {
             position: absolute;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.06), rgba(239, 68, 68, 0.04));
             animation: float 20s infinite ease-in-out;
         }
 
@@ -127,9 +126,9 @@ $csrfToken = Session::generateCsrfToken();
             border-radius: 24px;
             padding: 48px 40px;
             box-shadow:
-                0 25px 50px -12px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
+                0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 10px 30px -5px rgba(0, 0, 0, 0.08),
+                0 0 0 1px var(--border-color);
         }
 
         .logo-container {
@@ -141,7 +140,7 @@ $csrfToken = Session::generateCsrfToken();
             width: 120px;
             height: 120px;
             object-fit: contain;
-            filter: drop-shadow(0 4px 20px rgba(99, 102, 241, 0.3));
+            filter: drop-shadow(0 4px 12px rgba(220, 38, 38, 0.15));
             transition: transform 0.3s ease;
         }
 
@@ -177,15 +176,15 @@ $csrfToken = Session::generateCsrfToken();
         }
 
         .alert-success {
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #34d399;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            color: #059669;
         }
 
         .alert-danger {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #f87171;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #dc2626;
         }
 
         .alert i {
@@ -193,7 +192,7 @@ $csrfToken = Session::generateCsrfToken();
         }
 
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .form-label {
@@ -238,6 +237,7 @@ $csrfToken = Session::generateCsrfToken();
         .form-control:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 4px var(--primary-light);
+            background: #fff;
         }
 
         .form-control:focus + i,
@@ -270,7 +270,7 @@ $csrfToken = Session::generateCsrfToken();
             font-weight: 600;
             font-family: inherit;
             color: white;
-            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
             border: none;
             border-radius: 12px;
             cursor: pointer;
@@ -296,7 +296,7 @@ $csrfToken = Session::generateCsrfToken();
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.5);
+            box-shadow: 0 10px 40px -10px rgba(220, 38, 38, 0.4);
         }
 
         .btn-login:hover::before {
@@ -313,8 +313,8 @@ $csrfToken = Session::generateCsrfToken();
 
         .footer-text {
             text-align: center;
-            margin-top: 32px;
-            padding-top: 24px;
+            margin-top: 28px;
+            padding-top: 20px;
             border-top: 1px solid var(--border-color);
         }
 
@@ -325,7 +325,27 @@ $csrfToken = Session::generateCsrfToken();
 
         .footer-text .brand {
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: 600;
+        }
+
+        /* Register info box */
+        .register-info {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.5;
+        }
+
+        .register-info i {
+            margin-top: 2px;
+            flex-shrink: 0;
         }
 
         /* Animations */
@@ -510,6 +530,13 @@ $csrfToken = Session::generateCsrfToken();
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">Telefone</label>
+                    <div class="input-wrapper">
+                        <input type="tel" name="reg_phone" class="form-control" placeholder="(00) 00000-0000">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Senha (mín. 6 caracteres)</label>
                     <div class="input-wrapper">
                         <input type="password" name="reg_password" class="form-control" placeholder="Crie uma senha" minlength="6" required>
@@ -522,9 +549,10 @@ $csrfToken = Session::generateCsrfToken();
                 </button>
             </form>
             <div class="footer-text">
-                <p style="margin-bottom: 10px; font-size: 12px; color: var(--text-muted);">
-                    <i class="bi bi-info-circle"></i> Sua conta ficará inativa até o administrador ativar. Você terá acesso apenas ao módulo Financeiro.
-                </p>
+                <div class="register-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>Sua conta ficará <strong>inativa</strong> até o administrador ativá-la. Após a ativação, você terá acesso ao módulo Financeiro.</span>
+                </div>
                 <p>
                     <a href="#" onclick="toggleRegister(event)" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
                         Já tem conta? Faça login
@@ -586,11 +614,12 @@ $csrfToken = Session::generateCsrfToken();
             alert.style.display = 'none';
             const name = this.querySelector('[name="reg_name"]').value.trim();
             const email = this.querySelector('[name="reg_email"]').value.trim();
+            const phone = this.querySelector('[name="reg_phone"]').value.trim();
             const password = this.querySelector('[name="reg_password"]').value;
             try {
                 const res = await fetch('api/users.php', {
                     method: 'POST',
-                    body: new URLSearchParams({ action: 'register', name, email, password })
+                    body: new URLSearchParams({ action: 'register', name, email, phone, password })
                 });
                 const data = await res.json();
                 alert.style.display = 'flex';

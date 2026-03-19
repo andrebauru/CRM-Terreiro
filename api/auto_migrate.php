@@ -37,6 +37,20 @@ function runAutoMigrate(PDO $pdo): void
                 $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('admin','staff','user') NOT NULL DEFAULT 'staff'");
             }
         } catch (Throwable $e) { /* ignore */ }
+        ensureColumn($pdo, 'users', 'phone', "VARCHAR(50) NULL AFTER email");
+        ensureColumn($pdo, 'users', 'allowed_pages', "TEXT NULL AFTER is_active");
+
+        // ── login_attempts (brute force protection) ──
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS login_attempts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                ip_address VARCHAR(45) NOT NULL,
+                email VARCHAR(255) NULL,
+                attempted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_ip (ip_address),
+                INDEX idx_attempted (attempted_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
 
         // ── settings ──
         $pdo->exec("

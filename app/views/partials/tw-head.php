@@ -14,6 +14,37 @@ if (session_status() === PHP_SESSION_NONE) {
     safeSessionStart();
 }
 
+// ── SECURITY: Prevent access after logout (browser back button) ──
+// Send HTTP headers that prevent caching of authenticated pages
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+header('Expires: Sat, 01 Jan 2000 00:00:00 GMT');
+
+// ── SECURITY: Session check - redirect to login if not authenticated ──
+$_currentUserId = (int)($_SESSION['user_id'] ?? 0);
+if ($_currentUserId <= 0) {
+    // Allow auto_migrate to run before redirecting
+    // But redirect unauthenticated users to login
+    $loginUrl = (defined('ROUTE_BASE') ? ROUTE_BASE : '') . '/login';
+    header('Location: ' . $loginUrl);
+    exit;
+}
+
+// ── SECURITY: Page access control ──
+// Check if user has permission to access this page
+$_userAllowedPages = $_SESSION['user_allowed_pages'] ?? null;
+$_userRole = $_SESSION['user_role'] ?? 'user';
+if ($_userRole !== 'admin' && $_userAllowedPages !== null && $_userAllowedPages !== '') {
+    $__allowedList = array_map('trim', explode(',', $_userAllowedPages));
+    $__currentPage = $activePage ?? '';
+    // dashboard is always allowed
+    if ($__currentPage !== '' && $__currentPage !== 'dashboard' && !in_array($__currentPage, $__allowedList)) {
+        header('Location: dashboard.php');
+        exit;
+    }
+}
+
 // ── Load CRM settings from DB (currency, language, brand) ──
 // Available as $_crmSettings, $_crmCurrSymbol, $_crmCurrCode, $_crmLang
 // in ALL legacy pages that include tw-head.php

@@ -1,11 +1,12 @@
 <?php
 // $activePage - current page identifier (string): 'dashboard', 'atendimentos',
 //   'trabalhos', 'clientes', 'filhos', 'quimbandeiro', 'mensalidades', 'giras',
-//   'servicos', 'financeiro', 'usuarios', 'relatorios', 'configuracoes'
+//   'servicos', 'financeiro', 'gastos', 'usuarios', 'relatorios', 'configuracoes'
 
 $navItems = [
   ['page' => 'dashboard',     'href' => 'dashboard.php',     'icon' => 'fa-chart-line',   'label' => 'Dashboard'],
   ['page' => 'atendimentos',  'href' => 'atendimentos.php',  'icon' => 'fa-headset',      'label' => 'Atendimentos'],
+  ['page' => 'gastos',        'href' => 'gastos.php',        'icon' => 'fa-money-bill-wave', 'label' => 'Gastos'],
   ['page' => 'trabalhos',     'href' => 'trabalhos.php',     'icon' => 'fa-briefcase',    'label' => 'Trabalhos'],
   ['page' => 'clientes',      'href' => 'clientes.php',      'icon' => 'fa-users',        'label' => 'Clientes'],
   ['page' => 'filhos',        'href' => 'filhos.php',        'icon' => 'fa-people-group', 'label' => 'Filhos'],
@@ -20,10 +21,20 @@ $navItems = [
 ];
 $active = $activePage ?? '';
 
-// Restrição de sidebar para role 'user': só vê Financeiro
+// Filtragem de sidebar: admin vê tudo, outros filtram por allowed_pages
 $userRole = $_SESSION['user_role'] ?? 'admin';
-if ($userRole === 'user') {
-    $navItems = array_filter($navItems, fn($item) => in_array($item['page'], ['financeiro', 'dashboard']));
+$userAllowedPages = $_SESSION['user_allowed_pages'] ?? null;
+
+if ($userRole === 'admin') {
+    // Admin vê tudo
+} elseif ($userAllowedPages !== null && $userAllowedPages !== '') {
+    // Usuário com páginas configuradas pelo admin
+    $allowedList = array_map('trim', explode(',', $userAllowedPages));
+    $allowedList[] = 'dashboard'; // dashboard sempre acessível
+    $navItems = array_filter($navItems, fn($item) => in_array($item['page'], $allowedList));
+} elseif ($userRole === 'user') {
+    // Fallback para role 'user' sem páginas configuradas: só financeiro + dashboard
+    $navItems = array_filter($navItems, fn($item) => in_array($item['page'], ['financeiro', 'dashboard', 'gastos']));
 }
 ?>
 <!-- Mobile hamburger button (fixed, visible only on small screens) -->

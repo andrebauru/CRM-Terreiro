@@ -28,9 +28,10 @@ if ($action === 'register') {
         if ($check->fetch()) {
             jsonResponse(['ok' => false, 'message' => 'Este email já está cadastrado'], 422);
         }
+        $phone = trim((string)($_POST['phone'] ?? ''));
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare('INSERT INTO users (name, email, password, role, is_active) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$name, $email, $hash, 'user', 0]);
+        $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, password, role, is_active) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$name, $email, $phone, $hash, 'user', 0]);
         jsonResponse(['ok' => true, 'message' => 'Cadastro realizado! Aguarde a ativação pelo administrador.']);
     } catch (Throwable $e) {
         jsonResponse(['ok' => false, 'message' => $e->getMessage()], 500);
@@ -49,11 +50,11 @@ try {
 
     if ($action === 'list') {
         if ($currentUserRole !== 'admin') {
-            $stmt = $pdo->prepare('SELECT id, name, email, role, is_active FROM users WHERE id = ?');
+            $stmt = $pdo->prepare('SELECT id, name, email, phone, role, is_active, allowed_pages FROM users WHERE id = ?');
             $stmt->execute([$currentUserId]);
             jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
         }
-        $stmt = $pdo->query('SELECT id, name, email, role, is_active FROM users ORDER BY id DESC');
+        $stmt = $pdo->query('SELECT id, name, email, phone, role, is_active, allowed_pages FROM users ORDER BY id DESC');
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
 
@@ -63,13 +64,15 @@ try {
         }
         $name = requireField('name', 'Nome obrigatório');
         $email = requireField('email', 'Email obrigatório');
+        $phone = trim((string)($_POST['phone'] ?? ''));
         $role = $_POST['role'] ?? 'staff';
         $isActive = (int)($_POST['is_active'] ?? 1);
+        $allowedPages = trim((string)($_POST['allowed_pages'] ?? ''));
         $password = $_POST['password'] ?? '123456';
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
-        $stmt = $pdo->prepare('INSERT INTO users (name, email, password, role, is_active) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$name, $email, $hash, $role, $isActive]);
+        $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, password, role, is_active, allowed_pages) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$name, $email, $phone, $hash, $role, $isActive, $allowedPages ?: null]);
         jsonResponse(['ok' => true, 'id' => $pdo->lastInsertId()]);
     }
 
@@ -83,22 +86,25 @@ try {
         }
         $name = requireField('name', 'Nome obrigatório');
         $email = requireField('email', 'Email obrigatório');
+        $phone = trim((string)($_POST['phone'] ?? ''));
         $role = $_POST['role'] ?? 'staff';
         $isActive = (int)($_POST['is_active'] ?? 1);
+        $allowedPages = trim((string)($_POST['allowed_pages'] ?? ''));
         $password = trim((string)($_POST['password'] ?? ''));
 
         if ($currentUserRole !== 'admin') {
             $role = 'staff';
             $isActive = 1;
+            $allowedPages = '';
         }
 
         if ($password !== '') {
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, is_active = ?, password = ? WHERE id = ?');
-            $stmt->execute([$name, $email, $role, $isActive, $hash, $id]);
+            $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, phone = ?, role = ?, is_active = ?, allowed_pages = ?, password = ? WHERE id = ?');
+            $stmt->execute([$name, $email, $phone, $role, $isActive, $allowedPages ?: null, $hash, $id]);
         } else {
-            $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, is_active = ? WHERE id = ?');
-            $stmt->execute([$name, $email, $role, $isActive, $id]);
+            $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, phone = ?, role = ?, is_active = ?, allowed_pages = ? WHERE id = ?');
+            $stmt->execute([$name, $email, $phone, $role, $isActive, $allowedPages ?: null, $id]);
         }
 
         jsonResponse(['ok' => true]);
