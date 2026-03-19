@@ -48,6 +48,48 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </div>
         </form>
       </section>
+
+      <!-- Logs de prints/cópias -->
+      <section class="bg-white border border-amber-200 rounded-2xl p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-amber-700">Logs de Prints/Cópias</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-slate-500">
+              <tr>
+                <th class="text-left pb-3">Usuário</th>
+                <th class="text-left pb-3">Evento</th>
+                <th class="text-left pb-3">Página</th>
+                <th class="text-left pb-3">IP</th>
+                <th class="text-left pb-3">Data</th>
+                <th class="text-left pb-3">User Agent</th>
+              </tr>
+            </thead>
+            <tbody id="logsEventosTable">
+              <tr><td class="py-3" colspan="6">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <script>
+        async function loadLogsEventos() {
+          const response = await fetch('api/settings.php?action=get_logs_eventos');
+          const data = await response.json();
+          const rows = (data.data || []).map(log => `
+            <tr class="border-t border-slate-100">
+              <td class="py-3">${log.user_name || '-'}</td>
+              <td class="py-3">${log.event}</td>
+              <td class="py-3">${log.page}</td>
+              <td class="py-3">${log.ip}</td>
+              <td class="py-3">${log.created_at}</td>
+              <td class="py-3 text-xs">${log.user_agent ? log.user_agent.slice(0,40)+'...' : '-'}</td>
+            </tr>
+          `).join('');
+          document.getElementById('logsEventosTable').innerHTML = rows || '<tr><td class="py-3" colspan="6">Nenhum log encontrado.</td></tr>';
+        }
+        document.addEventListener('DOMContentLoaded', loadLogsEventos);
+      </script>
     </main>
   </div>
 

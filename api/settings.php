@@ -15,6 +15,33 @@ try {
         $pdo->exec("INSERT INTO settings (company_name) VALUES ('CRM Terreiro')");
     }
 
+    // Endpoint para registrar prints/cópias
+    if ($action === 'log_event') {
+        $event = trim((string)($_POST['event'] ?? ''));
+        $page = trim((string)($_POST['page'] ?? ''));
+        $userAgent = trim((string)($_POST['user_agent'] ?? ''));
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $pdo->exec("CREATE TABLE IF NOT EXISTS logs_eventos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NULL,
+            event VARCHAR(50) NOT NULL,
+            page VARCHAR(50) NULL,
+            user_agent TEXT NULL,
+            ip VARCHAR(45) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $stmt = $pdo->prepare("INSERT INTO logs_eventos (user_id, event, page, user_agent, ip) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$userId, $event, $page, $userAgent, $ip]);
+        jsonResponse(['ok' => true]);
+    }
+
+    // Endpoint para retornar logs de prints/cópias
+    if ($action === 'get_logs_eventos') {
+        $stmt = $pdo->query("SELECT l.*, u.name AS user_name FROM logs_eventos l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.id DESC LIMIT 100");
+        jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+    }
+
     if ($action === 'get') {
         $stmt = $pdo->query('SELECT * FROM settings ORDER BY id ASC LIMIT 1');
         jsonResponse(['ok' => true, 'data' => $stmt->fetch()]);
