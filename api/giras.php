@@ -21,7 +21,7 @@ try {
         CREATE TABLE IF NOT EXISTS giras (
             id INT AUTO_INCREMENT PRIMARY KEY,
             tipo_gira_id INT NOT NULL,
-            plataforma ENUM('Facebook','Instagram','TikTok') NOT NULL DEFAULT 'Instagram',
+            plataforma VARCHAR(255) NOT NULL DEFAULT 'Instagram',
             foto_path VARCHAR(512) NULL,
             data_postagem DATE NULL,
             data_realizacao DATE NOT NULL,
@@ -31,6 +31,14 @@ try {
             FOREIGN KEY (tipo_gira_id) REFERENCES tipos_gira(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    // Migrate ENUM → VARCHAR if needed
+    try {
+        $colInfo = $pdo->query("SHOW COLUMNS FROM giras WHERE Field = 'plataforma'")->fetch();
+        if ($colInfo && stripos($colInfo['Type'], 'enum') !== false) {
+            $pdo->exec("ALTER TABLE giras MODIFY COLUMN plataforma VARCHAR(255) NOT NULL DEFAULT 'Instagram'");
+        }
+    } catch (Throwable $e) { /* ignore */ }
 
     // ── LIST GIRAS ──
     if ($action === 'list') {
@@ -75,6 +83,8 @@ try {
     if ($action === 'create') {
         $tipoId = (int)($_POST['tipo_gira_id'] ?? 0);
         $plataforma = trim((string)($_POST['plataforma'] ?? 'Instagram'));
+        // Accept comma-separated platforms from multi-select
+        if (empty($plataforma)) $plataforma = 'Instagram';
         $dataPostagem = trim((string)($_POST['data_postagem'] ?? '')) ?: null;
         $dataRealizacao = trim((string)($_POST['data_realizacao'] ?? ''));
         $descricao = trim((string)($_POST['descricao'] ?? '')) ?: null;
@@ -110,6 +120,7 @@ try {
         $id = (int)($_POST['id'] ?? 0);
         $tipoId = (int)($_POST['tipo_gira_id'] ?? 0);
         $plataforma = trim((string)($_POST['plataforma'] ?? 'Instagram'));
+        if (empty($plataforma)) $plataforma = 'Instagram';
         $dataPostagem = trim((string)($_POST['data_postagem'] ?? '')) ?: null;
         $dataRealizacao = trim((string)($_POST['data_realizacao'] ?? ''));
         $descricao = trim((string)($_POST['descricao'] ?? '')) ?: null;

@@ -36,6 +36,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <button data-filter="TikTok" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-200 text-slate-600">
           <i class="fa-brands fa-tiktok mr-1"></i>TikTok
         </button>
+        <button data-filter="YouTube" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-200 text-slate-600">
+          <i class="fa-brands fa-youtube mr-1"></i>YouTube
+        </button>
       </div>
 
       <!-- CARDS GRID -->
@@ -66,12 +69,25 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </select>
         </div>
         <div>
-          <label class="text-sm font-medium text-slate-700">Plataforma *</label>
-          <select id="giraPlataforma" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2">
-            <option value="Facebook"><i class="fa-brands fa-facebook"></i> Facebook</option>
-            <option value="Instagram" selected>Instagram</option>
-            <option value="TikTok">TikTok</option>
-          </select>
+          <label class="text-sm font-medium text-slate-700">Plataformas *</label>
+          <div id="giraPlataformas" class="mt-2 flex flex-wrap gap-3">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="plataforma" value="Facebook" class="accent-blue-600 w-4 h-4" />
+              <i class="fa-brands fa-facebook text-blue-600"></i> Facebook
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="plataforma" value="Instagram" checked class="accent-pink-500 w-4 h-4" />
+              <i class="fa-brands fa-instagram text-pink-500"></i> Instagram
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="plataforma" value="TikTok" class="accent-black w-4 h-4" />
+              <i class="fa-brands fa-tiktok"></i> TikTok
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="plataforma" value="YouTube" class="accent-red-600 w-4 h-4" />
+              <i class="fa-brands fa-youtube text-red-600"></i> YouTube
+            </label>
+          </div>
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Data de Realização *</label>
@@ -146,6 +162,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     </div>
   </div>
 
+  <!-- LIGHTBOX (expand image) -->
+  <div id="lightbox" class="fixed inset-0 hidden items-center justify-center bg-black/80 z-50 p-4 cursor-pointer" onclick="this.classList.add('hidden');this.classList.remove('flex')">
+    <img id="lightboxImg" class="max-w-full max-h-[90vh] rounded-2xl shadow-2xl object-contain" />
+  </div>
+
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
     const girasGrid = document.getElementById('girasGrid');
@@ -163,14 +184,41 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (p === 'Facebook') return '<i class="fa-brands fa-facebook text-blue-600"></i>';
       if (p === 'Instagram') return '<i class="fa-brands fa-instagram text-pink-500"></i>';
       if (p === 'TikTok') return '<i class="fa-brands fa-tiktok text-black"></i>';
+      if (p === 'YouTube') return '<i class="fa-brands fa-youtube text-red-600"></i>';
       return '<i class="fa-solid fa-globe text-slate-400"></i>';
     };
 
     const platformBg = (p) => {
-      if (p === 'Facebook') return 'border-blue-200 bg-blue-50/50';
-      if (p === 'Instagram') return 'border-pink-200 bg-pink-50/50';
-      if (p === 'TikTok') return 'border-slate-300 bg-slate-50/50';
+      const first = p.split(',')[0].trim();
+      if (first === 'Facebook') return 'border-blue-200 bg-blue-50/50';
+      if (first === 'Instagram') return 'border-pink-200 bg-pink-50/50';
+      if (first === 'TikTok') return 'border-slate-300 bg-slate-50/50';
+      if (first === 'YouTube') return 'border-red-200 bg-red-50/50';
       return 'border-slate-200';
+    };
+
+    // Multi-platform badges helper
+    const platformBadges = (p) => {
+      return (p || '').split(',').map(x => x.trim()).filter(Boolean)
+        .map(x => `<span class="inline-flex items-center gap-1 text-xs">${platformIcon(x)} ${x}</span>`).join(' ');
+    };
+
+    // Helper: check if a gira matches the filter (supports multi-platform)
+    const matchesPlatformFilter = (giraPlataforma, filter) => {
+      if (filter === 'all') return true;
+      return (giraPlataforma || '').split(',').map(x => x.trim()).includes(filter);
+    };
+
+    // ── Helper: get selected platforms from checkboxes ──
+    const getSelectedPlatforms = () => {
+      return Array.from(document.querySelectorAll('#giraPlataformas input[name="plataforma"]:checked'))
+        .map(cb => cb.value).join(',');
+    };
+    const setSelectedPlatforms = (val) => {
+      const arr = (val || '').split(',').map(x => x.trim());
+      document.querySelectorAll('#giraPlataformas input[name="plataforma"]').forEach(cb => {
+        cb.checked = arr.includes(cb.value);
+      });
     };
 
     // ── Filter buttons ──
@@ -202,7 +250,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     // ── Render cards ──
     const renderGiras = () => {
-      const rows = girasCache.filter(r => currentFilter === 'all' || r.plataforma === currentFilter);
+      const rows = girasCache.filter(r => matchesPlatformFilter(r.plataforma, currentFilter));
       if (!rows.length) {
         girasGrid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-12">Nenhuma gira registrada.</div>';
         return;
@@ -210,13 +258,13 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       girasGrid.innerHTML = rows.map(g => `
         <div class="bg-white/90 backdrop-blur border ${platformBg(g.plataforma)} rounded-2xl shadow-lg shadow-slate-200/40 overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" data-id="${g.id}">
           ${g.foto_path
-            ? `<img src="${g.foto_path}" class="w-full h-48 object-cover" />`
-            : `<div class="w-full h-48 bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center text-red-300 text-5xl"><i class="fa-solid fa-drum"></i></div>`
+            ? `<div class="p-3 flex justify-center"><img src="${g.foto_path}" class="h-20 w-20 object-cover rounded-xl cursor-zoom-in gira-thumb" data-full="${g.foto_path}" /></div>`
+            : `<div class="p-3 flex justify-center"><div class="h-20 w-20 bg-gradient-to-br from-red-100 to-red-50 rounded-xl flex items-center justify-center text-red-300 text-3xl"><i class="fa-solid fa-drum"></i></div></div>`
           }
-          <div class="p-4 space-y-2">
+          <div class="p-4 pt-0 space-y-2">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm">${g.tipo_gira_nome}</span>
-              <span class="text-lg">${platformIcon(g.plataforma)}</span>
+              <span class="flex gap-1 text-lg">${(g.plataforma || '').split(',').map(x => platformIcon(x.trim())).join('')}</span>
             </div>
             <div class="flex items-center gap-4 text-xs text-slate-500">
               <span><i class="fa-solid fa-calendar text-red-400 mr-1"></i>Gira: ${fmtDate(g.data_realizacao)}</span>
@@ -256,7 +304,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     // ── Open new modal ──
     const openNewModal = async () => {
       document.getElementById('giraId').value = '';
-      document.getElementById('giraPlataforma').value = 'Instagram';
+      setSelectedPlatforms('Instagram');
       document.getElementById('giraDataRealizacao').value = new Date().toISOString().split('T')[0];
       document.getElementById('giraDataPostagem').value = '';
       document.getElementById('giraDescricao').value = '';
@@ -289,12 +337,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     // ── Save gira ──
     document.getElementById('giraForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const plataformas = getSelectedPlatforms();
+      if (!plataformas) { alert('Selecione pelo menos uma plataforma'); return; }
       const id = document.getElementById('giraId').value;
       const formData = new FormData();
       formData.append('action', id ? 'update' : 'create');
       if (id) formData.append('id', id);
       formData.append('tipo_gira_id', document.getElementById('giraTipo').value);
-      formData.append('plataforma', document.getElementById('giraPlataforma').value);
+      formData.append('plataforma', plataformas);
       formData.append('data_realizacao', document.getElementById('giraDataRealizacao').value);
       formData.append('data_postagem', document.getElementById('giraDataPostagem').value);
       formData.append('descricao', document.getElementById('giraDescricao').value);
@@ -348,8 +398,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       currentDetalheId = g.id;
       document.getElementById('detalheTitle').textContent = g.tipo_gira_nome;
       document.getElementById('detalheBody').innerHTML = `
-        ${g.foto_path ? `<img src="${g.foto_path}" class="w-full rounded-xl border border-slate-200 mb-3" />` : ''}
-        <div class="flex justify-between"><span class="text-slate-500">Plataforma:</span> <span class="font-medium">${platformIcon(g.plataforma)} ${g.plataforma}</span></div>
+        ${g.foto_path ? `<div class="flex justify-center mb-3"><img src="${g.foto_path}" class="h-24 w-24 object-cover rounded-xl cursor-zoom-in border border-slate-200 gira-thumb" data-full="${g.foto_path}" /></div>` : ''}
+        <div class="flex justify-between"><span class="text-slate-500">Plataformas:</span> <span class="font-medium flex gap-2">${platformBadges(g.plataforma)}</span></div>
         <div class="flex justify-between"><span class="text-slate-500">Data da Gira:</span> <span class="font-medium"><i class="fa-regular fa-calendar text-red-500 mr-1"></i>${fmtDate(g.data_realizacao)}</span></div>
         ${g.data_postagem ? `<div class="flex justify-between"><span class="text-slate-500">Data da Postagem:</span> <span class="font-medium">${fmtDate(g.data_postagem)}</span></div>` : ''}
         ${g.descricao ? `<div class="pt-2 border-t border-slate-100"><p class="text-slate-500 mb-1">Descrição:</p><p>${g.descricao}</p></div>` : ''}
@@ -372,7 +422,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const g = girasCache.find(x => String(x.id) === String(currentDetalheId));
       if (!g) return;
       document.getElementById('giraId').value = g.id;
-      document.getElementById('giraPlataforma').value = g.plataforma;
+      setSelectedPlatforms(g.plataforma);
       document.getElementById('giraDataRealizacao').value = g.data_realizacao;
       document.getElementById('giraDataPostagem').value = g.data_postagem || '';
       document.getElementById('giraDescricao').value = g.descricao || '';
@@ -398,6 +448,18 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     // ── Init ──
     loadTipos().then(() => loadGiras());
+
+    // ── Lightbox: click thumbnail → expand image ──
+    document.addEventListener('click', (e) => {
+      const thumb = e.target.closest('.gira-thumb');
+      if (thumb) {
+        e.stopPropagation();
+        const lb = document.getElementById('lightbox');
+        document.getElementById('lightboxImg').src = thumb.dataset.full || thumb.src;
+        lb.classList.remove('hidden');
+        lb.classList.add('flex');
+      }
+    });
   </script>
 </body>
 </html>
