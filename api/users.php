@@ -10,6 +10,33 @@ if (session_status() === PHP_SESSION_NONE) {
     safeSessionStart();
 }
 
+// ── REGISTER (self-registration, no auth needed) ──
+if ($action === 'register') {
+    try {
+        $pdo = db();
+        $name = trim((string)($_POST['name'] ?? ''));
+        $email = trim((string)($_POST['email'] ?? ''));
+        $password = trim((string)($_POST['password'] ?? ''));
+        if ($name === '' || $email === '' || $password === '') {
+            jsonResponse(['ok' => false, 'message' => 'Nome, email e senha são obrigatórios'], 422);
+        }
+        if (strlen($password) < 6) {
+            jsonResponse(['ok' => false, 'message' => 'Senha deve ter pelo menos 6 caracteres'], 422);
+        }
+        $check = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+        $check->execute([$email]);
+        if ($check->fetch()) {
+            jsonResponse(['ok' => false, 'message' => 'Este email já está cadastrado'], 422);
+        }
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare('INSERT INTO users (name, email, password, role, is_active) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$name, $email, $hash, 'user', 0]);
+        jsonResponse(['ok' => true, 'message' => 'Cadastro realizado! Aguarde a ativação pelo administrador.']);
+    } catch (Throwable $e) {
+        jsonResponse(['ok' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
 $currentUserId = (int)($_SESSION['user_id'] ?? 0);
 $currentUserRole = (string)($_SESSION['user_role'] ?? '');
 

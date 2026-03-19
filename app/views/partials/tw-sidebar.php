@@ -19,6 +19,12 @@ $navItems = [
   ['page' => 'configuracoes', 'href' => 'configuracoes.php', 'icon' => 'fa-gear',         'label' => 'Configurações'],
 ];
 $active = $activePage ?? '';
+
+// Restrição de sidebar para role 'user': só vê Financeiro
+$userRole = $_SESSION['user_role'] ?? 'admin';
+if ($userRole === 'user') {
+    $navItems = array_filter($navItems, fn($item) => in_array($item['page'], ['financeiro', 'dashboard']));
+}
 ?>
 <!-- Mobile hamburger button (fixed, visible only on small screens) -->
 <button id="sidebarOpen" class="md:hidden fixed top-4 left-4 z-50 h-10 w-10 rounded-xl bg-black text-red-500 flex items-center justify-center shadow-lg">

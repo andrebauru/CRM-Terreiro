@@ -345,6 +345,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       return [...events, ...moonEvents].map((evt) => {
         if (evt.type === 'trabalho') return { title: evt.title, date: evt.date, color: '#2563eb' };
         if (evt.type === 'mensalidade') return { title: evt.title, date: evt.date, color: '#10b981' };
+        if (evt.type === 'conta_pagar') return { title: evt.title, date: evt.date, color: evt.status === 'Pago' ? '#6b7280' : '#dc2626' };
         return evt;
       });
     };

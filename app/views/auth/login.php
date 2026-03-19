@@ -475,7 +475,61 @@ $csrfToken = Session::generateCsrfToken();
 
             <!-- Footer -->
             <div class="footer-text">
+                <p style="margin-bottom: 10px;">
+                    <a href="#" onclick="toggleRegister(event)" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                        Não tem conta? Cadastre-se
+                    </a>
+                </p>
                 <p><span class="brand"><?= htmlspecialchars(APP_NAME) ?></span> &mdash; Sistema de Gestão</p>
+            </div>
+        </div>
+
+        <!-- Registration Card (hidden by default) -->
+        <div class="login-card" id="registerCard" style="display: none;">
+            <div class="logo-container">
+                <img src="<?= BASE_URL ?>/static/logo-quimbanda.png" alt="<?= htmlspecialchars(APP_NAME) ?>">
+            </div>
+            <div class="login-title">
+                <h1>Criar Conta</h1>
+                <p>Preencha os dados para se cadastrar</p>
+            </div>
+            <div id="registerAlert" style="display:none;" class="alert"></div>
+            <form autocomplete="off" id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Nome completo</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="reg_name" class="form-control" placeholder="Seu nome" required>
+                        <i class="bi bi-person"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <div class="input-wrapper">
+                        <input type="email" name="reg_email" class="form-control" placeholder="seu@email.com" required>
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Senha (mín. 6 caracteres)</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="reg_password" class="form-control" placeholder="Crie uma senha" minlength="6" required>
+                        <i class="bi bi-lock"></i>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <span class="btn-text">Cadastrar</span>
+                    <i class="bi bi-person-plus"></i>
+                </button>
+            </form>
+            <div class="footer-text">
+                <p style="margin-bottom: 10px; font-size: 12px; color: var(--text-muted);">
+                    <i class="bi bi-info-circle"></i> Sua conta ficará inativa até o administrador ativar. Você terá acesso apenas ao módulo Financeiro.
+                </p>
+                <p>
+                    <a href="#" onclick="toggleRegister(event)" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                        Já tem conta? Faça login
+                    </a>
+                </p>
             </div>
         </div>
     </div>
@@ -508,6 +562,50 @@ $csrfToken = Session::generateCsrfToken();
             const emailInput = document.querySelector('input[name="email"]');
             if (emailInput && !emailInput.value) {
                 emailInput.focus();
+            }
+        });
+
+        // Toggle between login and register
+        function toggleRegister(e) {
+            e.preventDefault();
+            const loginCard = document.querySelector('.login-card:not(#registerCard)');
+            const registerCard = document.getElementById('registerCard');
+            if (registerCard.style.display === 'none') {
+                loginCard.style.display = 'none';
+                registerCard.style.display = '';
+            } else {
+                registerCard.style.display = 'none';
+                loginCard.style.display = '';
+            }
+        }
+
+        // Registration form submit
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const alert = document.getElementById('registerAlert');
+            alert.style.display = 'none';
+            const name = this.querySelector('[name="reg_name"]').value.trim();
+            const email = this.querySelector('[name="reg_email"]').value.trim();
+            const password = this.querySelector('[name="reg_password"]').value;
+            try {
+                const res = await fetch('api/users.php', {
+                    method: 'POST',
+                    body: new URLSearchParams({ action: 'register', name, email, password })
+                });
+                const data = await res.json();
+                alert.style.display = 'flex';
+                if (data.ok) {
+                    alert.className = 'alert alert-success';
+                    alert.innerHTML = '<i class="bi bi-check-circle-fill"></i><span>' + data.message + '</span>';
+                    this.reset();
+                } else {
+                    alert.className = 'alert alert-danger';
+                    alert.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i><span>' + (data.message || 'Erro ao cadastrar') + '</span>';
+                }
+            } catch (err) {
+                alert.style.display = 'flex';
+                alert.className = 'alert alert-danger';
+                alert.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i><span>Erro de conexão</span>';
             }
         });
     </script>

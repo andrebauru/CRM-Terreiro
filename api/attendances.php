@@ -36,7 +36,7 @@ try {
 
     if ($action === 'list') {
         $stmt = $pdo->query(
-            "SELECT a.id, a.client_id, a.total_amount, a.payment_type, a.is_delinquent, a.is_reversed, a.created_at,
+            "SELECT a.id, a.client_id, a.data_atendimento, a.total_amount, a.payment_type, a.is_delinquent, a.is_reversed, a.created_at,
                 c.name AS client_name, c.phone AS client_phone,
                     GROUP_CONCAT(s.name SEPARATOR ', ') AS services
              FROM attendances a
@@ -125,6 +125,7 @@ try {
         $paymentType = $_POST['payment_type'] ?? 'cash';
         $isDelinquent = (int)($_POST['is_delinquent'] ?? 0);
         $isReversed = (int)($_POST['is_reversed'] ?? 0);
+        $dataAtendimento = trim((string)($_POST['data_atendimento'] ?? '')) ?: date('Y-m-d');
 
         $placeholders = implode(',', array_fill(0, count($serviceIds), '?'));
         $servicesStmt = $pdo->prepare("SELECT id, name, price FROM services WHERE id IN ($placeholders)");
@@ -137,8 +138,8 @@ try {
         $total = array_reduce($services, fn($sum, $srv) => $sum + (int)$srv['price'], 0);
 
         $pdo->beginTransaction();
-        $insertAttendance = $pdo->prepare('INSERT INTO attendances (client_id, notes, total_amount, payment_type, is_delinquent, is_reversed) VALUES (?, ?, ?, ?, ?, ?)');
-        $insertAttendance->execute([$clientId, $notes, $total, $paymentType, $isDelinquent, $isReversed]);
+        $insertAttendance = $pdo->prepare('INSERT INTO attendances (client_id, data_atendimento, notes, total_amount, payment_type, is_delinquent, is_reversed) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $insertAttendance->execute([$clientId, $dataAtendimento, $notes, $total, $paymentType, $isDelinquent, $isReversed]);
         $attendanceId = (int)$pdo->lastInsertId();
 
         $insertService = $pdo->prepare('INSERT INTO attendance_services (attendance_id, service_id, price) VALUES (?, ?, ?)');

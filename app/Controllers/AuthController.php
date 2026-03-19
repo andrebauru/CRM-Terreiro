@@ -80,6 +80,17 @@ class AuthController extends BaseController
         $user = $this->userModel->findByEmail($email);
 
         if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
+            // Check if user is active
+            if (isset($user['is_active']) && (int)$user['is_active'] === 0) {
+                if ($isApi) {
+                    $this->json(['message' => 'Sua conta está inativa. Aguarde a ativação pelo administrador.'], 403);
+                } else {
+                    Session::flash('error', 'Sua conta está inativa. Aguarde a ativação pelo administrador.');
+                    $this->redirect('login');
+                }
+                exit();
+            }
+
             // Authentication successful
             session_regenerate_id(true);
             Session::set('user_id', $user['id']);

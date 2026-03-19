@@ -63,7 +63,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <label class="text-sm font-medium text-slate-700">Perfil</label>
           <select id="userRole" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2">
             <option value="admin">Administrador</option>
-            <option value="staff">Usuário</option>
+            <option value="staff">Equipe</option>
+            <option value="user">Usuário (só Financeiro)</option>
           </select>
         </div>
         <div>

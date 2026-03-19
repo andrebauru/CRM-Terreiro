@@ -42,7 +42,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       </div>
 
       <!-- CARDS GRID -->
-      <section id="girasGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section id="girasGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto" style="max-height: calc(100vh - 250px);">
         <div class="col-span-full text-center text-slate-400 py-12">Carregando...</div>
       </section>
     </main>
@@ -256,21 +256,21 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         return;
       }
       girasGrid.innerHTML = rows.map(g => `
-        <div class="bg-white/90 backdrop-blur border ${platformBg(g.plataforma)} rounded-2xl shadow-lg shadow-slate-200/40 overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" data-id="${g.id}">
+        <div class="bg-white/90 backdrop-blur border ${platformBg(g.plataforma)} rounded-xl shadow-md shadow-slate-200/40 overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" data-id="${g.id}">
           ${g.foto_path
-            ? `<div class="p-3 flex justify-center"><img src="${g.foto_path}" class="h-20 w-20 object-cover rounded-xl cursor-zoom-in gira-thumb" data-full="${g.foto_path}" /></div>`
-            : `<div class="p-3 flex justify-center"><div class="h-20 w-20 bg-gradient-to-br from-red-100 to-red-50 rounded-xl flex items-center justify-center text-red-300 text-3xl"><i class="fa-solid fa-drum"></i></div></div>`
+            ? `<div class="p-2 flex justify-center"><img src="${g.foto_path}" class="h-14 w-14 object-cover rounded-lg cursor-zoom-in gira-thumb" data-full="${g.foto_path}" /></div>`
+            : `<div class="p-2 flex justify-center"><div class="h-14 w-14 bg-gradient-to-br from-red-100 to-red-50 rounded-lg flex items-center justify-center text-red-300 text-xl"><i class="fa-solid fa-drum"></i></div></div>`
           }
-          <div class="p-4 pt-0 space-y-2">
+          <div class="px-3 pb-3 pt-0 space-y-1">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-sm">${g.tipo_gira_nome}</span>
-              <span class="flex gap-1 text-lg">${(g.plataforma || '').split(',').map(x => platformIcon(x.trim())).join('')}</span>
+              <span class="font-bold text-xs truncate">${g.tipo_gira_nome}</span>
+              <span class="flex gap-0.5 text-sm">${(g.plataforma || '').split(',').map(x => platformIcon(x.trim())).join('')}</span>
             </div>
-            <div class="flex items-center gap-4 text-xs text-slate-500">
-              <span><i class="fa-solid fa-calendar text-red-400 mr-1"></i>Gira: ${fmtDate(g.data_realizacao)}</span>
-              ${g.data_postagem ? `<span><i class="fa-solid fa-share text-blue-400 mr-1"></i>Post: ${fmtDate(g.data_postagem)}</span>` : ''}
+            <div class="flex items-center gap-2 text-[10px] text-slate-500">
+              <span><i class="fa-solid fa-calendar text-red-400 mr-0.5"></i>${fmtDate(g.data_realizacao)}</span>
+              ${g.data_postagem ? `<span><i class="fa-solid fa-share text-blue-400 mr-0.5"></i>${fmtDate(g.data_postagem)}</span>` : ''}
             </div>
-            ${g.descricao ? `<p class="text-xs text-slate-400 line-clamp-2">${g.descricao}</p>` : ''}
+            ${g.descricao ? `<p class="text-[10px] text-slate-400 line-clamp-1">${g.descricao}</p>` : ''}
           </div>
         </div>
       `).join('');

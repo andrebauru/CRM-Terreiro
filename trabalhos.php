@@ -75,7 +75,17 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Cliente / Consulente</label>
-          <input id="trabalhoCliente" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Nome do cliente (opcional)" />
+          <div class="relative">
+            <input id="trabalhoCliente" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Digite para buscar cliente..." autocomplete="off" />
+            <input type="hidden" id="trabalhoClienteId" />
+            <div id="clienteAutocomplete" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto hidden"></div>
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Vincular a Atendimento (opcional)</label>
+          <select id="trabalhoAtendimentoId" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2">
+            <option value="">Nenhum</option>
+          </select>
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Data de Realização</label>
@@ -172,8 +182,59 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     let trabalhosCache = [];
     let catalogoCache = [];
+    let clientesCache = [];
     let currentFilter = 'all';
     let currentDetalheId = null;
+
+    // ── Load clients for autocomplete ──
+    const loadClientes = async () => {
+      if (clientesCache.length) return;
+      try {
+        const res = await fetch('api/attendances.php?action=bootstrap', { cache: 'no-store' });
+        const data = await res.json();
+        clientesCache = data.clients || [];
+      } catch (e) { clientesCache = []; }
+    };
+
+    // ── Client autocomplete ──
+    const clienteInput = document.getElementById('trabalhoCliente');
+    const clienteIdInput = document.getElementById('trabalhoClienteId');
+    const autocompleteEl = document.getElementById('clienteAutocomplete');
+    const atendimentoSelect = document.getElementById('trabalhoAtendimentoId');
+
+    clienteInput.addEventListener('input', () => {
+      const term = clienteInput.value.toLowerCase().trim();
+      clienteIdInput.value = '';
+      if (term.length < 1) { autocompleteEl.classList.add('hidden'); return; }
+      const matches = clientesCache.filter(c => c.name.toLowerCase().includes(term)).slice(0, 10);
+      if (!matches.length) { autocompleteEl.classList.add('hidden'); return; }
+      autocompleteEl.innerHTML = matches.map(c => `
+        <div class="px-3 py-2 hover:bg-slate-100 cursor-pointer text-sm" data-id="${c.id}" data-name="${c.name}">${c.name}</div>
+      `).join('');
+      autocompleteEl.classList.remove('hidden');
+    });
+
+    autocompleteEl.addEventListener('click', async (e) => {
+      const item = e.target.closest('[data-id]');
+      if (!item) return;
+      clienteInput.value = item.dataset.name;
+      clienteIdInput.value = item.dataset.id;
+      autocompleteEl.classList.add('hidden');
+      // Load attendances for this client
+      try {
+        const res = await fetch(`api/attendances.php?action=history&client_id=${item.dataset.id}`, { cache: 'no-store' });
+        const data = await res.json();
+        const atts = data.data || [];
+        atendimentoSelect.innerHTML = '<option value="">Nenhum</option>' +
+          atts.map(a => `<option value="${a.id}">${a.services || 'Atendimento'} — ${formatBRLOrZero(String(a.total_amount))}</option>`).join('');
+      } catch (e) { /* ignore */ }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!autocompleteEl.contains(e.target) && e.target !== clienteInput) {
+        autocompleteEl.classList.add('hidden');
+      }
+    });
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -275,6 +336,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const openNewModal = () => {
       document.getElementById('trabalhoId').value = '';
       document.getElementById('trabalhoCliente').value = '';
+      document.getElementById('trabalhoClienteId').value = '';
+      document.getElementById('trabalhoAtendimentoId').innerHTML = '<option value="">Nenhum</option>';
       document.getElementById('trabalhoData').value = new Date().toISOString().split('T')[0];
       document.getElementById('trabalhoStatus').value = 'Pendente';
       document.getElementById('trabalhoNovaData').value = '';
@@ -282,6 +345,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('novaDataRow').classList.add('hidden');
       document.getElementById('modalTitle').textContent = 'Novo Trabalho';
       loadCatalogoSelect();
+      loadClientes();
       toggleModal(modal, true);
     };
 
@@ -447,6 +511,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         id,
         trabalho_id: document.getElementById('trabalhoTipoId').value,
         cliente_nome: document.getElementById('trabalhoCliente').value,
+        client_id: document.getElementById('trabalhoClienteId').value || '',
+        attendance_id: document.getElementById('trabalhoAtendimentoId').value || '',
         data_realizacao: document.getElementById('trabalhoData').value,
         status,
         nova_data: novaData,

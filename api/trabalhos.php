@@ -107,13 +107,15 @@ try {
             jsonResponse(['ok' => false, 'message' => 'Trabalho não encontrado'], 404);
         }
         $clienteNome = trim((string)($_POST['cliente_nome'] ?? '')) ?: null;
+        $clientId = ((int)($_POST['client_id'] ?? 0)) ?: null;
+        $attendanceId = ((int)($_POST['attendance_id'] ?? 0)) ?: null;
         $dataRealizacao = $_POST['data_realizacao'] ?? date('Y-m-d');
         $status = $_POST['status'] ?? 'Pendente';
         $novaData = trim((string)($_POST['nova_data'] ?? '')) ?: null;
         $obs = trim((string)($_POST['observacoes'] ?? '')) ?: null;
 
-        $stmt = $pdo->prepare('INSERT INTO trabalho_realizacoes (trabalho_id, cliente_nome, data_realizacao, status, nova_data, observacoes) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$trabalhoId, $clienteNome, $dataRealizacao, $status, $novaData, $obs]);
+        $stmt = $pdo->prepare('INSERT INTO trabalho_realizacoes (trabalho_id, attendance_id, cliente_nome, client_id, data_realizacao, status, nova_data, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$trabalhoId, $attendanceId, $clienteNome, $clientId, $dataRealizacao, $status, $novaData, $obs]);
         $newId = (int)$pdo->lastInsertId();
 
         if ($status === 'Realizado') {
@@ -150,13 +152,15 @@ try {
             jsonResponse(['ok' => false, 'message' => 'Trabalho não encontrado'], 404);
         }
         $clienteNome = trim((string)($_POST['cliente_nome'] ?? '')) ?: null;
+        $clientId = ((int)($_POST['client_id'] ?? 0)) ?: null;
+        $attendanceId = ((int)($_POST['attendance_id'] ?? 0)) ?: null;
         $dataRealizacao = $_POST['data_realizacao'] ?? date('Y-m-d');
         $status = $_POST['status'] ?? 'Pendente';
         $novaData = trim((string)($_POST['nova_data'] ?? '')) ?: null;
         $obs = trim((string)($_POST['observacoes'] ?? '')) ?: null;
 
-        $stmt = $pdo->prepare('UPDATE trabalho_realizacoes SET trabalho_id = ?, cliente_nome = ?, data_realizacao = ?, status = ?, nova_data = ?, observacoes = ? WHERE id = ?');
-        $stmt->execute([$trabalhoId, $clienteNome, $dataRealizacao, $status, $novaData, $obs, $id]);
+        $stmt = $pdo->prepare('UPDATE trabalho_realizacoes SET trabalho_id = ?, attendance_id = ?, cliente_nome = ?, client_id = ?, data_realizacao = ?, status = ?, nova_data = ?, observacoes = ? WHERE id = ?');
+        $stmt->execute([$trabalhoId, $attendanceId, $clienteNome, $clientId, $dataRealizacao, $status, $novaData, $obs, $id]);
 
         $pdo->prepare("DELETE FROM caixa_movimentos WHERE origem = 'trabalho' AND referencia_id = ?")
             ->execute([$id]);

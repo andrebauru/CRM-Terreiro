@@ -24,14 +24,20 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <div class="bg-white/90 backdrop-blur border border-slate-200 rounded-3xl p-6 shadow-xl shadow-slate-200/40">
             <h2 class="text-lg font-semibold mb-4">Cadastro de Atendimento</h2>
             <form id="attendanceForm" class="space-y-4">
-              <div>
-                <label class="text-sm font-medium text-slate-700">Cliente</label>
-                <div class="flex flex-col gap-2">
-                  <select id="clientSelect" class="rounded-xl border border-slate-200 px-3 py-2"></select>
-                  <div class="flex items-center justify-between">
-                    <a id="whatsappLink" class="text-sm text-accent hidden" target="_blank">Abrir WhatsApp</a>
-                    <button id="goServices" type="button" class="text-sm text-slate-500">Ir para serviços</button>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-medium text-slate-700">Cliente</label>
+                  <div class="flex flex-col gap-2">
+                    <select id="clientSelect" class="rounded-xl border border-slate-200 px-3 py-2"></select>
+                    <div class="flex items-center justify-between">
+                      <a id="whatsappLink" class="text-sm text-accent hidden" target="_blank">Abrir WhatsApp</a>
+                      <button id="goServices" type="button" class="text-sm text-slate-500">Ir para serviços</button>
+                    </div>
                   </div>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-slate-700">Data do Atendimento</label>
+                  <input id="dataAtendimento" type="date" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
                 </div>
               </div>
               <div>
@@ -83,13 +89,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 <thead class="text-slate-500">
                   <tr>
                     <th class="text-left pb-3">Cliente</th>
+                    <th class="text-left pb-3">Data</th>
                     <th class="text-left pb-3">Serviços</th>
                     <th class="text-left pb-3">Pagamento</th>
                     <th class="text-right pb-3">Total</th>
                   </tr>
                 </thead>
                 <tbody id="attendancesTable">
-                  <tr><td class="py-3" colspan="4">Carregando...</td></tr>
+                  <tr><td class="py-3" colspan="5">Carregando...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -217,6 +224,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <td class="py-3">
             <button class="text-accent" data-client-history="${attendance.client_id}">${attendance.client_name}</button>
           </td>
+          <td class="py-3 text-slate-500 text-xs">${attendance.data_atendimento ? fmtDate(attendance.data_atendimento) : fmtDate(attendance.created_at?.split(' ')[0])}</td>
           <td class="py-3">${attendance.services || '-'}</td>
           <td class="py-3">
             ${attendance.payment_type === 'cash' ? 'À Vista' : 'Parcelado'}
@@ -230,7 +238,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </td>
         </tr>
       `);
-      attendancesTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="4">Nenhum atendimento.</td></tr>';
+      attendancesTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="5">Nenhum atendimento.</td></tr>';
     };
 
     const loadInstallments = async (attendanceId) => {
@@ -284,6 +292,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const formData = new URLSearchParams();
       formData.append('action', 'create');
       formData.append('client_id', clientSelect.value);
+      formData.append('data_atendimento', document.getElementById('dataAtendimento').value);
       selectedServices.forEach((id) => formData.append('service_ids[]', id));
       formData.append('notes', document.getElementById('notes').value);
       const paymentType = document.querySelector('input[name="paymentType"]:checked').value;
@@ -405,6 +414,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     loadBootstrap();
     loadAttendances();
+
+    // Set default date to today
+    document.getElementById('dataAtendimento').value = new Date().toISOString().split('T')[0];
 
     const urlParams = new URLSearchParams(window.location.search);
     const clientIdParam = urlParams.get('client_id');

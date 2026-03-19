@@ -8,17 +8,30 @@ if (!defined('BASE_URL')) {
     require_once BASE_PATH . '/app/config.php';
 }
 
+// ── Ensure session is active (same cookie as MVC login) ──
+require_once BASE_PATH . '/db.php';
+if (session_status() === PHP_SESSION_NONE) {
+    safeSessionStart();
+}
+
 // ── Load CRM settings from DB (currency, language, brand) ──
 // Available as $_crmSettings, $_crmCurrSymbol, $_crmCurrCode, $_crmLang
 // in ALL legacy pages that include tw-head.php
 $_crmSettings = [];
 try {
-    require_once BASE_PATH . '/db.php';
     $_pdo = db();
     $_stmt = $_pdo->query('SELECT currency_code, currency_symbol, language, company_name, logo_path FROM settings LIMIT 1');
     $_crmSettings = $_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 } catch (Throwable $e) {
     $_crmSettings = [];
+}
+
+// ── Auto-migration: cria tabelas/colunas que faltam (1x por sessão) ──
+try {
+    require_once BASE_PATH . '/api/auto_migrate.php';
+    runAutoMigrate($_pdo ?? db());
+} catch (Throwable $e) {
+    error_log('[tw-head] AutoMigrate error: ' . $e->getMessage());
 }
 $_crmCurrCode   = $_crmSettings['currency_code']   ?? 'JPY';
 $_crmCurrSymbol = $_crmSettings['currency_symbol']  ?? '¥';

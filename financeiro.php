@@ -79,21 +79,27 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       </section>
 
       <section id="pane-contas" class="tab-pane hidden">
-        <div class="flex justify-end mb-3">
+        <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+          <button onclick="carryOverContas()" class="px-3 py-2 rounded-lg bg-amber-100 text-amber-700 font-bold hover:bg-amber-200 text-sm" title="Mover contas vencidas para o próximo mês">
+            <i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> Carry-over Vencidas
+          </button>
           <button onclick="openContaModal()" class="px-4 py-2 rounded-lg bg-red-700 text-white font-bold hover:bg-red-800 text-sm">
             <i class="fa-solid fa-plus mr-1"></i> Nova Conta
           </button>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
-          <table class="w-full text-sm min-w-[700px]">
+          <table class="w-full text-sm min-w-[900px]">
             <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
               <tr>
-                <th class="px-4 py-3 text-left">Descrição</th>
-                <th class="px-4 py-3 text-left">Categoria</th>
-                <th class="px-4 py-3 text-left">Vencimento</th>
-                <th class="px-4 py-3 text-left">Status</th>
-                <th class="px-4 py-3 text-right">Valor</th>
-                <th class="px-4 py-3"></th>
+                <th class="px-3 py-3 text-left">Descrição</th>
+                <th class="px-3 py-3 text-left">Fornecedor</th>
+                <th class="px-3 py-3 text-left">Categoria</th>
+                <th class="px-3 py-3 text-left">Vencimento</th>
+                <th class="px-3 py-3 text-left">Parcela</th>
+                <th class="px-3 py-3 text-left">Status</th>
+                <th class="px-3 py-3 text-right">Valor</th>
+                <th class="px-3 py-3 text-right">Pago</th>
+                <th class="px-3 py-3"></th>
               </tr>
             </thead>
             <tbody id="contasBody" class="divide-y divide-slate-100"></tbody>
@@ -146,7 +152,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
   <!-- MODAL CONTA A PAGAR -->
   <div id="modalConta" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between p-6 border-b border-slate-100">
         <h2 id="modalContaTitulo" class="text-lg font-bold">Nova Conta</h2>
         <button onclick="closeContaModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -164,18 +170,71 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </div>
           <div>
             <label class="block text-sm font-semibold text-slate-600 mb-1">Categoria</label>
-            <input id="contaCategoria" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Ex: Serviço" />
+            <div class="flex gap-1">
+              <select id="contaCategoria" class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm">
+                <option value="">Selecione...</option>
+              </select>
+              <button type="button" onclick="openCategoriaModal()" class="px-2 py-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 text-sm" title="Gerenciar categorias">
+                <i class="fa-solid fa-gear"></i>
+              </button>
+            </div>
           </div>
         </div>
-        <div>
-          <label class="block text-sm font-semibold text-slate-600 mb-1">Vencimento *</label>
-          <input id="contaVencimento" type="date" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Fornecedor</label>
+            <input id="contaFornecedor" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Nome do fornecedor" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Vencimento *</label>
+            <input id="contaVencimento" type="date" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Recorrência</label>
+            <select id="contaRecorrencia" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+              <option value="nenhuma">Nenhuma</option>
+              <option value="mensal">Mensal</option>
+              <option value="bimestral">Bimestral</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="semestral">Semestral</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Parcelamento</label>
+            <div class="flex gap-1">
+              <input id="contaParcelaNum" type="number" min="0" placeholder="Parcela" class="w-1/2 border border-slate-200 rounded-lg px-2 py-2 text-sm" />
+              <span class="self-center text-slate-400 text-sm">/</span>
+              <input id="contaParcelaTotal" type="number" min="0" placeholder="Total" class="w-1/2 border border-slate-200 rounded-lg px-2 py-2 text-sm" />
+            </div>
+          </div>
         </div>
         <div class="flex gap-3 pt-2">
           <button type="submit" class="flex-1 py-2 rounded-lg bg-red-700 text-white font-bold hover:bg-red-800">Salvar</button>
           <button type="button" onclick="closeContaModal()" class="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 font-bold hover:bg-slate-200">Cancelar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL CATEGORIAS -->
+  <div id="modalCategoria" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+      <div class="flex items-center justify-between p-6 border-b border-slate-100">
+        <h2 class="text-lg font-bold">Categorias</h2>
+        <button onclick="closeCategoriaModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div class="p-6">
+        <div class="flex gap-2 mb-4">
+          <input id="novaCategoriaInput" placeholder="Nova categoria..." class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+          <button onclick="addCategoria()" class="px-4 py-2 rounded-lg bg-red-700 text-white font-bold text-sm hover:bg-red-800">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        <div id="categoriasLista" class="max-h-48 overflow-y-auto space-y-1"></div>
+      </div>
     </div>
   </div>
 
@@ -347,35 +406,58 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (!d.ok) return;
       const body = document.getElementById('contasBody');
       body.innerHTML = d.data.length === 0
-        ? '<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">Nenhuma conta cadastrada</td></tr>'
-        : d.data.map(c => `
-          <tr class="hover:bg-slate-50">
-            <td class="px-4 py-3 font-medium">${c.descricao}</td>
-            <td class="px-4 py-3 text-slate-500">${c.categoria || '-'}</td>
-            <td class="px-4 py-3">${c.data_vencimento}</td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status === 'Pago' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                ${c.status}
-              </span>
+        ? '<tr><td colspan="9" class="px-4 py-6 text-center text-slate-400">Nenhuma conta cadastrada</td></tr>'
+        : d.data.map(c => {
+          const parcelaStr = (c.parcela_num && c.parcela_total) ? `${c.parcela_num}/${c.parcela_total}` : '-';
+          const statusCls = c.status === 'Pago' ? 'bg-green-100 text-green-700'
+            : (c.status === 'Vencido' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700');
+          const valorPago = c.valor_pago ? formatBRLCents(c.valor_pago) : '-';
+          return `<tr class="hover:bg-slate-50">
+            <td class="px-3 py-3 font-medium">${c.descricao}</td>
+            <td class="px-3 py-3 text-slate-500 text-xs">${c.fornecedor || '-'}</td>
+            <td class="px-3 py-3 text-slate-500 text-xs">${c.categoria || '-'}</td>
+            <td class="px-3 py-3 text-xs">${c.data_vencimento}</td>
+            <td class="px-3 py-3 text-xs">${parcelaStr}</td>
+            <td class="px-3 py-3">
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusCls}">${c.status}</span>
             </td>
-            <td class="px-4 py-3 text-right font-semibold">${formatBRLCents(c.valor)}</td>
-            <td class="px-4 py-3 text-right">
-              <div class="flex gap-1 justify-end">
+            <td class="px-3 py-3 text-right font-semibold">${formatBRLCents(c.valor)}</td>
+            <td class="px-3 py-3 text-right text-green-600 text-xs">${valorPago}</td>
+            <td class="px-3 py-3 text-right">
+              <div class="flex gap-1 justify-end flex-wrap">
                 ${c.status !== 'Pago' ? `<button onclick="pagarConta(${c.id})" class="px-2 py-1 rounded text-xs bg-green-100 text-green-700 font-bold hover:bg-green-200">Pagar</button>` : ''}
-                <button onclick="openContaModal(${c.id},'${esc(c.descricao)}','${c.categoria||''}',${c.valor},'${c.data_vencimento}')" class="px-2 py-1 rounded text-xs bg-slate-100 text-slate-600 font-bold hover:bg-slate-200">Editar</button>
+                <button onclick="editConta(${c.id})" class="px-2 py-1 rounded text-xs bg-slate-100 text-slate-600 font-bold hover:bg-slate-200">Editar</button>
                 <button onclick="deleteConta(${c.id})" class="px-2 py-1 rounded text-xs bg-red-100 text-red-600 font-bold hover:bg-red-200">Excluir</button>
               </div>
             </td>
-          </tr>`).join('');
+          </tr>`;
+        }).join('');
+      // cache for editConta
+      window._contasCache = d.data;
     }
 
-    function openContaModal(id, descricao, categoria, valor, vencimento) {
-      document.getElementById('contaId').value = id || '';
-      document.getElementById('modalContaTitulo').textContent = id ? 'Editar Conta' : 'Nova Conta';
-      document.getElementById('contaDescricao').value = descricao || '';
-      document.getElementById('contaCategoria').value = categoria || '';
-      document.getElementById('contaValor').value = id ? formatBRL(String(valor)) : '';
-      document.getElementById('contaVencimento').value = vencimento || new Date().toISOString().slice(0, 10);
+    function editConta(id) {
+      const c = (window._contasCache || []).find(x => x.id == id);
+      if (!c) return;
+      openContaModal();
+      document.getElementById('contaId').value = c.id;
+      document.getElementById('modalContaTitulo').textContent = 'Editar Conta';
+      document.getElementById('contaDescricao').value = c.descricao || '';
+      document.getElementById('contaCategoria').value = c.categoria || '';
+      document.getElementById('contaValor').value = formatBRL(String(c.valor));
+      document.getElementById('contaFornecedor').value = c.fornecedor || '';
+      document.getElementById('contaVencimento').value = c.data_vencimento || '';
+      document.getElementById('contaRecorrencia').value = c.recorrencia || 'nenhuma';
+      document.getElementById('contaParcelaNum').value = c.parcela_num || '';
+      document.getElementById('contaParcelaTotal').value = c.parcela_total || '';
+    }
+
+    function openContaModal() {
+      loadCategorias();
+      document.getElementById('contaId').value = '';
+      document.getElementById('modalContaTitulo').textContent = 'Nova Conta';
+      document.getElementById('formConta').reset();
+      document.getElementById('contaVencimento').value = new Date().toISOString().slice(0, 10);
       document.getElementById('modalConta').classList.remove('hidden');
     }
 
@@ -392,7 +474,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const valor = parseCurrency(document.getElementById('contaValor').value);
       const categoria = document.getElementById('contaCategoria').value;
       const vencimento = document.getElementById('contaVencimento').value;
-      const body = { descricao, valor, categoria, data_vencimento: vencimento };
+      const fornecedor = document.getElementById('contaFornecedor').value;
+      const recorrencia = document.getElementById('contaRecorrencia').value;
+      const parcela_num = document.getElementById('contaParcelaNum').value || 0;
+      const parcela_total = document.getElementById('contaParcelaTotal').value || 0;
+      const body = { descricao, valor, categoria, data_vencimento: vencimento, fornecedor, recorrencia, parcela_num, parcela_total };
       if (id) body.id = id;
       const d = await api({ action, method: 'POST', body });
       if (d.ok) { toast('Conta salva!'); closeContaModal(); loadContas(); loadDashboard(); }
@@ -400,10 +486,71 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     }
 
     async function pagarConta(id) {
-      if (!confirm('Marcar como pago?')) return;
-      const d = await api({ action: 'pay_conta', method: 'POST', body: { id } });
+      const valorStr = prompt('Valor pago (deixe em branco para valor total):');
+      if (valorStr === null) return;
+      const body = { id };
+      if (valorStr.trim()) body.valor_pago = parseCurrency(valorStr);
+      const d = await api({ action: 'pay_conta', method: 'POST', body });
       if (d.ok) { toast('Pago!'); loadContas(); loadDashboard(); if (currentTab === 'caixa') loadCaixa(); }
       else toast(d.message || 'Erro', false);
+    }
+
+    /* ── Categorias ───────────────────────────── */
+    async function loadCategorias() {
+      const d = await api({ action: 'list_categorias' });
+      if (!d.ok) return;
+      const sel = document.getElementById('contaCategoria');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Selecione...</option>';
+      d.data.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.nome;
+        o.textContent = c.nome;
+        sel.appendChild(o);
+      });
+      if (prev) sel.value = prev;
+      // Update the categorias list modal too
+      const lista = document.getElementById('categoriasLista');
+      if (lista) {
+        lista.innerHTML = d.data.map(c => `
+          <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg text-sm">
+            <span>${c.nome}</span>
+            <button onclick="deleteCategoria(${c.id})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>
+          </div>`).join('');
+      }
+    }
+
+    function openCategoriaModal() {
+      loadCategorias();
+      document.getElementById('modalCategoria').classList.remove('hidden');
+    }
+
+    function closeCategoriaModal() {
+      document.getElementById('modalCategoria').classList.add('hidden');
+    }
+
+    async function addCategoria() {
+      const nome = document.getElementById('novaCategoriaInput').value.trim();
+      if (!nome) return;
+      const d = await api({ action: 'create_categoria', method: 'POST', body: { nome } });
+      if (d.ok) { document.getElementById('novaCategoriaInput').value = ''; loadCategorias(); toast('Categoria criada!'); }
+      else toast(d.message || 'Erro', false);
+    }
+
+    async function deleteCategoria(id) {
+      if (!confirm('Excluir esta categoria?')) return;
+      const d = await api({ action: 'delete_categoria', method: 'POST', body: { id } });
+      if (d.ok) { loadCategorias(); toast('Categoria excluída'); }
+      else toast(d.message || 'Erro', false);
+    }
+
+    async function carryOverContas() {
+      if (!confirm('Mover todas as contas vencidas não-pagas para o próximo mês?')) return;
+      const d = await api({ action: 'carry_over', method: 'POST' });
+      if (d.ok) {
+        toast(`${d.carried || 0} conta(s) movidas para o próximo mês`);
+        loadContas(); loadDashboard();
+      } else toast(d.message || 'Erro', false);
     }
 
     async function deleteConta(id) {

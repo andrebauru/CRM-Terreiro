@@ -133,36 +133,89 @@ try {
     }
 
     // ── CONTAS A PAGAR ─────────────────────────────────────────────────────
+    // Carry over: marca contas vencidas e não-pagas como 'Vencido'
+    $pdo->exec(
+        "UPDATE contas_pagar SET status = 'Vencido'
+         WHERE status = 'Pendente' AND data_vencimento < CURDATE()"
+    );
+
     if ($action === 'list_contas') {
         $stmt = $pdo->query(
-            "SELECT id, descricao, categoria, valor, data_vencimento, status, data_pagamento
+            "SELECT id, descricao, categoria, valor, data_vencimento, status,
+                    data_pagamento, fornecedor, recorrencia,
+                    parcela_num, parcela_total, parcela_grupo_id, valor_pago, mes_referencia
              FROM contas_pagar
-             ORDER BY data_vencimento DESC, id DESC"
+             ORDER BY FIELD(status,'Pendente','Vencido','Pago'), data_vencimento ASC, id DESC"
         );
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
 
     if ($action === 'create_conta') {
-        $descricao  = requireField('descricao', 'Descrição obrigatória');
-        $valor      = (int)($_POST['valor'] ?? 0);
-        $dataVenc   = $_POST['data_vencimento'] ?? date('Y-m-d');
-        $categoria  = trim($_POST['categoria'] ?? '') ?: null;
-        $pdo->prepare(
-            'INSERT INTO contas_pagar (descricao, valor, categoria, data_vencimento) VALUES (?, ?, ?, ?)'
-        )->execute([$descricao, $valor, $categoria, $dataVenc]);
-        jsonResponse(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
+        $descricao   = requireField('descricao', 'Descrição obrigatória');
+        $valor       = (int)($_POST['valor'] ?? 0);
+        $dataVenc    = $_POST['data_vencimento'] ?? date('Y-m-d');
+        $categoria   = trim($_POST['categoria'] ?? '') ?: null;
+        $fornecedor  = trim($_POST['fornecedor'] ?? '') ?: null;
+        $recorrencia = trim($_POST['recorrencia'] ?? 'nenhuma');
+        $parcelaNum  = (int)($_POST['parcela_num'] ?? 0);
+        $parcelaTotal= (int)($_POST['parcela_total'] ?? 0);
+
+        if ($parcelaTotal > 1 && $parcelaNum === 0) {
+            // Cria todas as parcelas de uma vez
+            $grupoId = date('YmdHis') . rand(100, 999);
+            $valorParcela = (int)round($valor / $parcelaTotal);
+            for ($i = 1; $i <= $parcelaTotal; $i++) {
+                $dt = (new DateTime($dataVenc))->modify('+' . ($i - 1) . ' months')->format('Y-m-d');
+                $mesRef = substr($dt, 0, 7);
+                $pdo->prepare(
+                    'INSERT INTO contas_pagar (descricao, valor, categoria, data_vencimento, fornecedor, recorrencia, parcela_num, parcela_total, parcela_grupo_id, mes_referencia)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([$descricao, $valorParcela, $categoria, $dt, $fornecedor, $recorrencia, $i, $parcelaTotal, $grupoId, $mesRef]);
+            }
+            jsonResponse(['ok' => true, 'parcelas' => $parcelaTotal]);
+        } else {
+            $mesRef = substr($dataVenc, 0, 7);
+            $pdo->prepare(
+                'INSERT INTO contas_pagar (descricao, valor, categoria, data_vencimento, fornecedor, recorrencia, parcela_num, parcela_total, mes_referencia)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            )->execute([$descricao, $valor, $categoria, $dataVenc, $fornecedor, $recorrencia, $parcelaNum ?: null, $parcelaTotal ?: null, $mesRef]);
+
+            $contaId = (int)$pdo->lastInsertId();
+
+            // Gerar recorrência futura (até 12 meses) se não for parcela
+            if ($recorrencia !== 'nenhuma' && $parcelaTotal <= 1) {
+                $meses = ['mensal' => 1, 'bimestral' => 2, 'trimestral' => 3, 'semestral' => 6, 'anual' => 12];
+                $step = $meses[$recorrencia] ?? 0;
+                if ($step > 0) {
+                    for ($m = $step; $m <= 12; $m += $step) {
+                        $dt = (new DateTime($dataVenc))->modify("+{$m} months")->format('Y-m-d');
+                        $mesRef2 = substr($dt, 0, 7);
+                        $pdo->prepare(
+                            'INSERT INTO contas_pagar (descricao, valor, categoria, data_vencimento, fornecedor, recorrencia, mes_referencia)
+                             VALUES (?, ?, ?, ?, ?, ?, ?)'
+                        )->execute([$descricao, $valor, $categoria, $dt, $fornecedor, $recorrencia, $mesRef2]);
+                    }
+                }
+            }
+
+            jsonResponse(['ok' => true, 'id' => $contaId]);
+        }
     }
 
     if ($action === 'update_conta') {
         $id = (int)($_POST['id'] ?? 0);
         if ($id <= 0) jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
-        $descricao = requireField('descricao', 'Descrição obrigatória');
-        $valor     = (int)($_POST['valor'] ?? 0);
-        $dataVenc  = $_POST['data_vencimento'] ?? date('Y-m-d');
-        $categoria = trim($_POST['categoria'] ?? '') ?: null;
+        $descricao   = requireField('descricao', 'Descrição obrigatória');
+        $valor       = (int)($_POST['valor'] ?? 0);
+        $dataVenc    = $_POST['data_vencimento'] ?? date('Y-m-d');
+        $categoria   = trim($_POST['categoria'] ?? '') ?: null;
+        $fornecedor  = trim($_POST['fornecedor'] ?? '') ?: null;
+        $recorrencia = trim($_POST['recorrencia'] ?? 'nenhuma');
+        $parcelaNum  = (int)($_POST['parcela_num'] ?? 0) ?: null;
+        $parcelaTotal= (int)($_POST['parcela_total'] ?? 0) ?: null;
         $pdo->prepare(
-            'UPDATE contas_pagar SET descricao=?, valor=?, categoria=?, data_vencimento=? WHERE id=?'
-        )->execute([$descricao, $valor, $categoria, $dataVenc, $id]);
+            'UPDATE contas_pagar SET descricao=?, valor=?, categoria=?, data_vencimento=?, fornecedor=?, recorrencia=?, parcela_num=?, parcela_total=? WHERE id=?'
+        )->execute([$descricao, $valor, $categoria, $dataVenc, $fornecedor, $recorrencia, $parcelaNum, $parcelaTotal, $id]);
         jsonResponse(['ok' => true]);
     }
 
@@ -176,22 +229,90 @@ try {
     if ($action === 'pay_conta') {
         $id = (int)($_POST['id'] ?? 0);
         if ($id <= 0) jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
-        $stmt = $pdo->prepare('SELECT valor, descricao FROM contas_pagar WHERE id = ?');
+        $stmt = $pdo->prepare('SELECT * FROM contas_pagar WHERE id = ?');
         $stmt->execute([$id]);
         $conta = $stmt->fetch();
         if (!$conta) jsonResponse(['ok' => false, 'message' => 'Conta não encontrada'], 404);
 
         $today    = date('Y-m-d');
         $mesStart = date('Y-m-01');
-        $pdo->prepare('UPDATE contas_pagar SET status="Pago", data_pagamento=? WHERE id=?')
-            ->execute([$today, $id]);
+        $valorPago = isset($_POST['valor_pago']) && $_POST['valor_pago'] !== ''
+            ? (int)$_POST['valor_pago']
+            : (int)$conta['valor'];
+        $valorTotal = (int)$conta['valor'];
+        $jaAcumulado = (int)($conta['valor_pago'] ?? 0);
+        $novoAcumulado = $jaAcumulado + $valorPago;
+
+        if ($novoAcumulado >= $valorTotal) {
+            // Pago totalmente
+            $pdo->prepare('UPDATE contas_pagar SET status="Pago", data_pagamento=?, valor_pago=? WHERE id=?')
+                ->execute([$today, $valorTotal, $id]);
+        } else {
+            // Pagamento parcial — registra o acumulado
+            $pdo->prepare('UPDATE contas_pagar SET valor_pago=? WHERE id=?')
+                ->execute([$novoAcumulado, $id]);
+        }
+
+        // Registra no caixa
         $pdo->prepare(
             "INSERT INTO caixa_movimentos
                 (tipo, origem, referencia_id, mes, data_movimento, valor, status, descricao)
              VALUES ('saida', 'conta_pagar', ?, ?, ?, ?, 'realizado', ?)
              ON DUPLICATE KEY UPDATE
                 valor=VALUES(valor), data_movimento=VALUES(data_movimento), status='realizado'"
-        )->execute([$id, $mesStart, $today, (int)$conta['valor'], 'Conta — ' . $conta['descricao']]);
+        )->execute([$id, $mesStart, $today, $valorPago, 'Conta — ' . $conta['descricao']]);
+        jsonResponse(['ok' => true]);
+    }
+
+    // Carry-over: contas vencidas não-pagas movem para o próximo mês
+    if ($action === 'carry_over') {
+        $stmt = $pdo->query(
+            "SELECT id, descricao, valor, categoria, fornecedor, recorrencia, parcela_num, parcela_total, parcela_grupo_id, valor_pago
+             FROM contas_pagar
+             WHERE status = 'Vencido'"
+        );
+        $vencidas = $stmt->fetchAll();
+        $carried = 0;
+        foreach ($vencidas as $c) {
+            $saldo = (int)$c['valor'] - (int)($c['valor_pago'] ?? 0);
+            if ($saldo <= 0) continue;
+            $novaData = (new DateTime())->modify('first day of next month')->format('Y-m-d');
+            $mesRef = substr($novaData, 0, 7);
+            $pdo->prepare(
+                'INSERT INTO contas_pagar (descricao, valor, categoria, fornecedor, recorrencia, parcela_num, parcela_total, parcela_grupo_id, mes_referencia, data_vencimento)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            )->execute([
+                $c['descricao'] . ' (carry-over)',
+                $saldo, $c['categoria'], $c['fornecedor'], $c['recorrencia'],
+                $c['parcela_num'], $c['parcela_total'], $c['parcela_grupo_id'], $mesRef, $novaData
+            ]);
+            // marca a original como pago/transferido
+            $pdo->prepare("UPDATE contas_pagar SET status='Pago', data_pagamento=CURDATE() WHERE id=?")->execute([$c['id']]);
+            $carried++;
+        }
+        jsonResponse(['ok' => true, 'carried' => $carried]);
+    }
+
+    // ── CATEGORIAS DE CONTA ───────────────────────────────────────────────
+    if ($action === 'list_categorias') {
+        $stmt = $pdo->query("SELECT id, nome FROM categorias_conta ORDER BY nome ASC");
+        jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+    }
+
+    if ($action === 'create_categoria') {
+        $nome = trim($_POST['nome'] ?? '');
+        if (!$nome) jsonResponse(['ok' => false, 'message' => 'Nome obrigatório'], 422);
+        $check = $pdo->prepare("SELECT id FROM categorias_conta WHERE nome = ?");
+        $check->execute([$nome]);
+        if ($check->fetch()) jsonResponse(['ok' => false, 'message' => 'Categoria já existe'], 422);
+        $pdo->prepare('INSERT INTO categorias_conta (nome) VALUES (?)')->execute([$nome]);
+        jsonResponse(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
+    }
+
+    if ($action === 'delete_categoria') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id <= 0) jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
+        $pdo->prepare('DELETE FROM categorias_conta WHERE id=?')->execute([$id]);
         jsonResponse(['ok' => true]);
     }
 

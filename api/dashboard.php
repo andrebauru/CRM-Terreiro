@@ -55,6 +55,25 @@ function buildCalendarEvents(PDO $pdo, string $monthStart, string $monthEnd): ar
         ];
     }
 
+    // Contas a pagar no calendário
+    $contasStmt = $pdo->prepare(
+        "SELECT id, descricao, valor, data_vencimento, status, fornecedor, categoria
+         FROM contas_pagar
+         WHERE data_vencimento BETWEEN ? AND ?"
+    );
+    $contasStmt->execute([$monthStart, $monthEnd]);
+    foreach ($contasStmt->fetchAll() as $conta) {
+        $titulo = 'Conta - ' . $conta['descricao'];
+        if ($conta['fornecedor']) $titulo .= ' (' . $conta['fornecedor'] . ')';
+        $events[] = [
+            'title' => $titulo,
+            'date' => $conta['data_vencimento'],
+            'type' => 'conta_pagar',
+            'status' => $conta['status'],
+            'categoria' => $conta['categoria'],
+        ];
+    }
+
     return $events;
 }
 
