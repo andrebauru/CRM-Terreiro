@@ -1,129 +1,114 @@
-// CRM Terreiro — Global JS Utilities
+// CRM Terreiro — Global JS Utilities (external fallback)
+// ══════════════════════════════════════════════════════════════
+// IMPORTANT: All critical functions (formatBRL, parseBRL, toggleModal, etc.)
+// are now defined INLINE in tw-scripts.php (always fresh from PHP/DB).
+// This file runs AFTER the inline script and only fills in any gaps.
+// Uses `var` + typeof guards so it never throws on re-declaration.
+// ══════════════════════════════════════════════════════════════
 
-// Currency settings — initialized synchronously from PHP-embedded data.
-// loadBrand() only updates brand name/logo, NOT currency (prevents race conditions).
-let crmCurrency = { code: 'JPY', symbol: '¥', locale: 'ja-JP' };
-let crmLanguage = 'pt';
-
-// Hydrate from PHP-embedded settings (eliminates race condition)
-if (window.__crmSettings && typeof window.__crmSettings === 'object') {
-  if (window.__crmSettings.currency_code) {
-    crmCurrency.code   = window.__crmSettings.currency_code;
-    crmCurrency.symbol = window.__crmSettings.currency_symbol || (window.__crmSettings.currency_code === 'BRL' ? 'R$' : '¥');
-    crmCurrency.locale = window.__crmSettings.currency_code === 'BRL' ? 'pt-BR' : 'ja-JP';
-  }
-  if (window.__crmSettings.language) {
-    crmLanguage = window.__crmSettings.language;
+if (typeof crmCurrency === 'undefined') {
+  var crmCurrency = { code: 'JPY', symbol: '\u00a5', locale: 'ja-JP' };
+  var crmLanguage = 'pt';
+  if (window.__crmSettings && typeof window.__crmSettings === 'object') {
+    if (window.__crmSettings.currency_code) {
+      crmCurrency.code   = window.__crmSettings.currency_code;
+      crmCurrency.symbol = window.__crmSettings.currency_symbol || (window.__crmSettings.currency_code === 'BRL' ? 'R$' : '\u00a5');
+      crmCurrency.locale = window.__crmSettings.currency_code === 'BRL' ? 'pt-BR' : 'ja-JP';
+    }
+    if (window.__crmSettings.language) crmLanguage = window.__crmSettings.language;
   }
 }
 
-// Helper: return current currency symbol (useful for templates)
-const crmSymbol = () => crmCurrency.symbol;
+if (typeof crmSymbol === 'undefined') var crmSymbol = function() { return crmCurrency.symbol; };
+if (typeof isCurrencyDecimal === 'undefined') var isCurrencyDecimal = function() { return crmCurrency.code === 'BRL'; };
 
-// Debug: log currency config so users can verify
-console.log('[CRM] Currency:', crmCurrency.code, crmCurrency.symbol, '| Decimal:', crmCurrency.code === 'BRL');
+if (typeof _currInt === 'undefined') {
+  var _currInt = function(v) {
+    var raw = String(v || '');
+    if (/^\d+(\.\d+)?$/.test(raw)) return Math.round(parseFloat(raw));
+    return parseInt(raw.replace(/\D+/g, '') || '0', 10);
+  };
+}
 
-// Helper: is current currency decimal-based (like BRL centavos)?
-const isCurrencyDecimal = () => crmCurrency.code === 'BRL';
+if (typeof _groupNum === 'undefined') {
+  var _groupNum = function(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, isCurrencyDecimal() ? '.' : ','); };
+}
 
-// Parse a raw value to integer — handles DB DECIMAL strings like "1500.00"
-// and formatted strings like "¥1,500" or "R$ 15,00"
-const _currInt = (v) => {
-  const raw = String(v || '');
-  // Plain numeric string (possibly from DECIMAL column): "1500" or "1500.00"
-  if (/^\d+(\.\d+)?$/.test(raw)) return Math.round(parseFloat(raw));
-  // Already formatted or has non-digit chars: strip and parse
-  return parseInt(raw.replace(/\D+/g, '') || '0', 10);
-};
-
-// Locale-independent thousand-grouping (avoids browser locale fallback)
-const _groupNum = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, isCurrencyDecimal() ? '.' : ',');
-
-// Currency formatting (supports JPY, BRL, and any future currency)
-// JPY: stores integer yen (¥150 = 150 in DB)
-// BRL: stores integer centavos (R$1,50 = 150 in DB)
-const formatBRL = (v) => {
-  const n = _currInt(v);
-  if (!n) return '';
-  if (isCurrencyDecimal()) {
-    const abs = Math.abs(n);
-    const whole = Math.floor(abs / 100);
-    const dec = String(abs % 100).padStart(2, '0');
-    return (n < 0 ? '-' : '') + crmCurrency.symbol + '\u00a0' + _groupNum(String(whole)) + ',' + dec;
-  }
-  return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
-};
-
-// Format with zero shown (for card displays that need to show "¥0" / "R$ 0,00")
-const formatBRLOrZero = (v) => {
-  const n = _currInt(v);
-  if (isCurrencyDecimal()) {
-    const abs = Math.abs(n);
-    const whole = Math.floor(abs / 100);
-    const dec = String(abs % 100).padStart(2, '0');
-    return (n < 0 ? '-' : '') + crmCurrency.symbol + '\u00a0' + _groupNum(String(whole)) + ',' + dec;
-  }
-  return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
-};
-
-const parseBRL = (v) => _currInt(v);
-
-// Parse user input (formatted currency string) to integer for DB storage
-// BRL: "1.500,50" → 150050 (centavos)
-// JPY: "1,500" → 1500 (yen)
-const parseCurrencyInput = (str) => {
-  if (!str) return 0;
-  const clean = String(str).replace(/[^\d,\.]/g, '');
-  if (isCurrencyDecimal()) {
-    if (clean.includes(',')) {
-      return Math.round(parseFloat(clean.replace(/\./g, '').replace(',', '.')) * 100);
+if (typeof formatBRL === 'undefined') {
+  var formatBRL = function(v) {
+    var n = _currInt(v);
+    if (!n) return '';
+    if (isCurrencyDecimal()) {
+      var abs = Math.abs(n), whole = Math.floor(abs / 100), dec = String(abs % 100);
+      if (dec.length < 2) dec = '0' + dec;
+      return (n < 0 ? '-' : '') + crmCurrency.symbol + '\u00a0' + _groupNum(String(whole)) + ',' + dec;
     }
-    return Math.round(parseFloat(clean || '0') * 100);
-  }
-  // JPY: integer only
-  return parseInt(clean.replace(/[,\.]/g, '') || '0', 10);
-};
+    return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
+  };
+}
 
-// Format integer from DB back to input field value
-// BRL: 150050 → "1500,50"
-// JPY: 1500 → "1500"
-const formatCurrencyInput = (value) => {
-  const n = _currInt(value);
-  if (isCurrencyDecimal()) {
-    return (n / 100).toFixed(2).replace('.', ',');
-  }
-  return String(n);
-};
-
-const fmtDate = (d) => d ? d.split('T')[0].split('-').reverse().join('/') : '—';
-
-const toggleModal = (el, show) => {
-  el.classList.toggle('hidden', !show);
-  el.classList.toggle('flex', show);
-  document.body.style.overflow = show ? 'hidden' : '';
-};
-
-// Load brand name/logo/currency from settings
-const loadBrand = async () => {
-  try {
-    const response = await fetch('api/settings.php?action=get', { cache: 'no-store' });
-    const data = await response.json();
-    if (data.ok && data.data) {
-      const s = data.data;
-      if (s.company_name) {
-        document.querySelectorAll('#brandName').forEach(el => el.textContent = s.company_name);
-      }
-      if (s.logo_path) {
-        document.querySelectorAll('#brandLogo').forEach(el => {
-          el.innerHTML = `<img src="${s.logo_path}" class="h-10 w-10 rounded-xl object-cover" />`;
-        });
-      }
-      // Currency and language are hydrated synchronously from __crmSettings
-      // (set by PHP in tw-scripts.php).  We intentionally do NOT refresh them
-      // here to avoid a race condition where loadBrand() resolves AFTER the
-      // page has already rendered prices with the correct currency.
+if (typeof formatBRLOrZero === 'undefined') {
+  var formatBRLOrZero = function(v) {
+    var n = _currInt(v);
+    if (isCurrencyDecimal()) {
+      var abs = Math.abs(n), whole = Math.floor(abs / 100), dec = String(abs % 100);
+      if (dec.length < 2) dec = '0' + dec;
+      return (n < 0 ? '-' : '') + crmCurrency.symbol + '\u00a0' + _groupNum(String(whole)) + ',' + dec;
     }
-  } catch (e) {}
-};
+    return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
+  };
+}
 
-document.addEventListener('DOMContentLoaded', loadBrand);
+if (typeof parseBRL === 'undefined') var parseBRL = function(v) { return _currInt(v); };
+
+if (typeof parseCurrencyInput === 'undefined') {
+  var parseCurrencyInput = function(str) {
+    if (!str) return 0;
+    var clean = String(str).replace(/[^\d,\.]/g, '');
+    if (isCurrencyDecimal()) {
+      if (clean.indexOf(',') >= 0) return Math.round(parseFloat(clean.replace(/\./g, '').replace(',', '.')) * 100);
+      return Math.round(parseFloat(clean || '0') * 100);
+    }
+    return parseInt(clean.replace(/[,\.]/g, '') || '0', 10);
+  };
+}
+
+if (typeof formatCurrencyInput === 'undefined') {
+  var formatCurrencyInput = function(value) {
+    var n = _currInt(value);
+    if (isCurrencyDecimal()) return (n / 100).toFixed(2).replace('.', ',');
+    return String(n);
+  };
+}
+
+if (typeof fmtDate === 'undefined') {
+  var fmtDate = function(d) { return d ? d.split('T')[0].split('-').reverse().join('/') : '\u2014'; };
+}
+
+if (typeof toggleModal === 'undefined') {
+  var toggleModal = function(el, show) {
+    el.classList.toggle('hidden', !show);
+    el.classList.toggle('flex', show);
+    document.body.style.overflow = show ? 'hidden' : '';
+  };
+}
+
+if (typeof loadBrand === 'undefined') {
+  var loadBrand = function() {
+    fetch('api/settings.php?action=get', { cache: 'no-store' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.data) {
+          if (data.data.company_name) {
+            document.querySelectorAll('#brandName').forEach(function(el) { el.textContent = data.data.company_name; });
+          }
+          if (data.data.logo_path) {
+            document.querySelectorAll('#brandLogo').forEach(function(el) {
+              el.innerHTML = '<img src="' + data.data.logo_path + '" class="h-10 w-10 rounded-xl object-cover" />';
+            });
+          }
+        }
+      }).catch(function() {});
+  };
+  document.addEventListener('DOMContentLoaded', loadBrand);
+}

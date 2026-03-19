@@ -61,5 +61,30 @@ $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
   </script>
   <?php endif; ?>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <!-- Critical inline CSS: garante sidebar responsiva e layout mesmo se app.css estiver desatualizado -->
+  <style>
+    /* Sidebar responsive (mobile=fixed hidden, desktop=static visible) */
+    .fixed{position:fixed}.inset-y-0{top:0;bottom:0}.left-0{left:0}
+    .-translate-x-full{--tw-translate-x:-100%}
+    .-translate-x-full,.translate-x-0{transform:translate(var(--tw-translate-x,0),var(--tw-translate-y,0))}
+    .translate-x-0{--tw-translate-x:0px}
+    .transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}
+    .duration-200{transition-duration:.2s}.ease-in-out{transition-timing-function:cubic-bezier(.4,0,.2,1)}
+    /* Z-index layers: FABs(30) < overlay(40) < sidebar(50) < modals(60) < lightbox(70) */
+    .z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.z-\[60\]{z-index:60}.z-\[70\]{z-index:70}.z-\[100\]{z-index:100}
+    /* Layout flex */
+    .min-w-0{min-width:0}.overflow-x-hidden{overflow-x:hidden}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}
+    .flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}
+    .min-h-screen{min-height:100vh}.min-h-dvh{min-height:100dvh}.max-h-dvh{max-height:100dvh}
+    .w-64{width:16rem}.w-\[85vw\]{width:85vw}.max-w-64{max-width:16rem}
+    .p-4{padding:1rem}.p-6{padding:1.5rem}.pt-16{padding-top:4rem}
+    /* Desktop overrides (md: ≥768px) */
+    @media(min-width:768px){
+      .md\:static{position:static!important}
+      .md\:translate-x-0{--tw-translate-x:0px!important;transform:translate(0,0)!important}
+      .md\:hidden{display:none!important}
+      .md\:p-8{padding:2rem!important}
+    }
+  </style>
   <?= $extraHead ?? '' ?>
 </head>
