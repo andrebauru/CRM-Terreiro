@@ -100,6 +100,7 @@ const fmtDate = (d) => d ? d.split('T')[0].split('-').reverse().join('/') : '—
 const toggleModal = (el, show) => {
   el.classList.toggle('hidden', !show);
   el.classList.toggle('flex', show);
+  document.body.style.overflow = show ? 'hidden' : '';
 };
 
 // Load brand name/logo/currency from settings

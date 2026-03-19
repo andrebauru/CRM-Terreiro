@@ -4,10 +4,10 @@ $activePage = 'financeiro';
 require_once __DIR__ . '/app/views/partials/tw-head.php';
 ?>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
-  <div class="min-h-screen flex">
+  <div class="min-h-screen flex overflow-x-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
-    <main class="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
+    <main class="flex-1 min-w-0 p-4 pt-16 md:p-8">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 class="text-2xl font-bold">Financeiro</h1>

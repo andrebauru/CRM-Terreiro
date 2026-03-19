@@ -29,7 +29,7 @@ $active = $activePage ?? '';
 <div id="sidebarOverlay" class="md:hidden fixed inset-0 bg-black/50 z-40 hidden"></div>
 
 <!-- Sidebar: hidden off-screen on mobile, static on md+ -->
-<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-black border-r border-red-900 p-6 flex flex-col min-h-screen max-h-screen overflow-hidden transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
+<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-[85vw] max-w-64 bg-black border-r border-red-900 p-6 flex flex-col min-h-dvh max-h-dvh overflow-hidden transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
   <div class="flex items-center gap-3 shrink-0">
     <div id="brandLogo" class="h-10 w-10 rounded-xl bg-red-900 flex items-center justify-center text-red-400 font-black shrink-0">CT</div>
     <div class="flex-1 min-w-0">
@@ -59,8 +59,8 @@ $active = $activePage ?? '';
 (function(){
   var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay'),
       ob=document.getElementById('sidebarOpen'),cb=document.getElementById('sidebarClose');
-  function open(){sb.classList.remove('-translate-x-full');sb.classList.add('translate-x-0');ov.classList.remove('hidden');}
-  function close(){sb.classList.add('-translate-x-full');sb.classList.remove('translate-x-0');ov.classList.add('hidden');}
+  function open(){sb.classList.remove('-translate-x-full');sb.classList.add('translate-x-0');ov.classList.remove('hidden');document.body.style.overflow='hidden';if(ob)ob.classList.add('hidden');}
+  function close(){sb.classList.add('-translate-x-full');sb.classList.remove('translate-x-0');ov.classList.add('hidden');document.body.style.overflow='';if(ob)ob.classList.remove('hidden');}
   if(ob)ob.addEventListener('click',open);
   if(cb)cb.addEventListener('click',close);
   if(ov)ov.addEventListener('click',close);

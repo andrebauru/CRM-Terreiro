@@ -4,11 +4,11 @@ $activePage = 'giras';
 require_once __DIR__ . '/app/views/partials/tw-head.php';
 ?>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
-  <div class="min-h-screen flex">
+  <div class="min-h-screen flex overflow-x-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <!-- MAIN -->
-    <main class="flex-1 p-4 pt-16 md:p-8">
+    <main class="flex-1 min-w-0 p-4 pt-16 md:p-8">
       <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Registro de Giras</h1>
@@ -49,7 +49,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- FAB -->
-  <button id="fabAction" class="fixed bottom-6 right-6 w-14 h-14 bg-red-700 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl hover:bg-red-800 z-50 transition-colors">
+  <button id="fabAction" class="fixed bottom-6 right-6 w-14 h-14 bg-red-700 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl hover:bg-red-800 z-30 transition-colors">
     <i class="fa-solid fa-plus"></i>
   </button>
 

@@ -40,8 +40,13 @@ $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <!-- Use compiled Tailwind if available, otherwise CDN -->
-  <?php if (file_exists(BASE_PATH . '/public/assets/css/app.css')): ?>
-  <link rel="stylesheet" href="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/css/app.css" />
+  <?php
+    $_appCssPath = BASE_PATH . '/public/assets/css/app.css';
+    if (file_exists($_appCssPath)):
+      $_cssVer  = @filemtime($_appCssPath) ?: time();
+      $_cssHash = substr(@md5_file($_appCssPath) ?: '', 0, 8);
+  ?>
+  <link rel="stylesheet" href="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/css/app.css?v=<?= $_cssVer ?>&h=<?= $_cssHash ?>" />
   <?php else: ?>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>

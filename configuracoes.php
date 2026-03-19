@@ -4,10 +4,10 @@ $activePage = 'configuracoes';
 require_once __DIR__ . '/app/views/partials/tw-head.php';
 ?>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
-  <div class="min-h-screen flex">
+  <div class="min-h-screen flex overflow-x-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
-    <main class="flex-1 p-4 pt-16 md:p-8">
+    <main class="flex-1 min-w-0 p-4 pt-16 md:p-8">
       <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Configurações do Sistema</h1>
@@ -26,7 +26,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <input id="logoInput" type="file" accept="image/*" class="mt-2 w-full" />
             <div class="mt-3" id="logoPreview"></div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-medium text-slate-700">Moeda</label>
               <select id="currencyCode" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2">
