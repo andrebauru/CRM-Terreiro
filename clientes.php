@@ -42,7 +42,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     </main>
   </div>
 
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/40 px-4">
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-2xl w-full max-w-lg p-6 border border-slate-200">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="modalTitle">Novo Cliente</h2>

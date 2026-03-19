@@ -145,7 +145,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL CONTA A PAGAR -->
-  <div id="modalConta" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+  <div id="modalConta" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
       <div class="flex items-center justify-between p-6 border-b border-slate-100">
         <h2 id="modalContaTitulo" class="text-lg font-bold">Nova Conta</h2>
@@ -180,7 +180,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL ENTRADA -->
-  <div id="modalEntrada" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+  <div id="modalEntrada" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
       <div class="flex items-center justify-between p-6 border-b border-slate-100">
         <h2 id="modalEntradaTitulo" class="text-lg font-bold">Nova Entrada</h2>

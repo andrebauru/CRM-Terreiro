@@ -42,7 +42,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     </main>
   </div>
 
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/40 px-4">
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-2xl w-full max-w-lg p-6 border border-slate-200">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="modalTitle">Novo Serviço</h2>
@@ -56,7 +56,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Preço (<?= $_crmCurrSymbol ?>)</label>
-          <input id="servicePrice" data-mask="currency" inputmode="numeric" placeholder="<?= $_crmCurrSymbol ?>0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
+          <input id="servicePrice" inputmode="numeric" placeholder="<?= $_crmCurrSymbol ?>0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Descrição</label>
@@ -138,7 +138,15 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     [closeModal, cancelModal].forEach((btn) => btn.addEventListener('click', () => openFn(false)));
 
     servicePrice.addEventListener('input', () => {
-      servicePrice.value = formatBRL(servicePrice.value);
+      const n = servicePrice.value.replace(/[^\d]/g, '');
+      if (!n) { servicePrice.value = ''; return; }
+      servicePrice.value = formatBRL(n) || '';
+    });
+    servicePrice.addEventListener('paste', () => {
+      setTimeout(() => {
+        const n = servicePrice.value.replace(/[^\d]/g, '');
+        servicePrice.value = n ? formatBRL(n) : '';
+      }, 0);
     });
 
     document.addEventListener('keydown', (event) => {

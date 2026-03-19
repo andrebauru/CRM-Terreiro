@@ -59,7 +59,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </button>
 
   <!-- MODAL NOVO/EDITAR TRABALHO -->
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-lg p-6 border border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="modalTitle">Novo Trabalho</h2>
@@ -106,7 +106,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL CATÁLOGO -->
-  <div id="catalogoModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="catalogoModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-2xl p-6 border border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Catálogo de Trabalhos</h2>
@@ -145,7 +145,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL DETALHE -->
-  <div id="detalheModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="detalheModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="detalheTitle">Detalhe do Trabalho</h2>

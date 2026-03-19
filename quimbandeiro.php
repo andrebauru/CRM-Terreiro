@@ -56,7 +56,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     <i class="fa-solid fa-plus"></i>
   </button>
 
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-xl p-6 border border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-1">
         <h2 class="text-lg font-bold text-black">Quimbandeiro — <span id="modalFilhoName" class="text-red-600"></span></h2>
@@ -125,7 +125,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     </div>
   </div>
 
-  <div id="detalheModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="detalheModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold" id="detalheNome">Detalhe</h2>

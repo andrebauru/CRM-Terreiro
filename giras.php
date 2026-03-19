@@ -54,7 +54,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </button>
 
   <!-- MODAL NOVA/EDITAR GIRA -->
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-lg p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="modalTitle">Nova Gira</h2>
@@ -115,7 +115,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL TIPOS DE GIRA -->
-  <div id="tiposModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="tiposModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Tipos de Gira</h2>
@@ -144,7 +144,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL DETALHE -->
-  <div id="detalheModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-40">
+  <div id="detalheModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="detalheTitle">Detalhe da Gira</h2>
@@ -163,7 +163,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- LIGHTBOX (expand image) -->
-  <div id="lightbox" class="fixed inset-0 hidden items-center justify-center bg-black/80 z-50 p-4 cursor-pointer" onclick="this.classList.add('hidden');this.classList.remove('flex')">
+  <div id="lightbox" class="fixed inset-0 hidden items-center justify-center bg-black/80 z-[70] p-4 cursor-pointer" onclick="this.classList.add('hidden');this.classList.remove('flex')">
     <img id="lightboxImg" class="max-w-full max-h-[90vh] rounded-2xl shadow-2xl object-contain" />
   </div>
 

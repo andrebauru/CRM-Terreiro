@@ -152,7 +152,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL AÇÃO RÁPIDA -->
-  <div id="quickActionModal" class="fixed inset-0 hidden items-center justify-center bg-black/40 px-4">
+  <div id="quickActionModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-xl p-6 border border-slate-200">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Nova ação</h2>
@@ -183,7 +183,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL EDITAR ATENDIMENTO -->
-  <div id="editModal" class="fixed inset-0 hidden items-center justify-center bg-black/40 px-4">
+  <div id="editModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
     <div class="bg-white rounded-3xl w-full max-w-xl p-6 border border-slate-200">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Editar Atendimento</h2>
