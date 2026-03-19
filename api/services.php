@@ -9,6 +9,14 @@ $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 try {
     $pdo = db();
 
+    // Auto-migrate: ensure services.price is INT (older schemas used DECIMAL)
+    try {
+        $colInfo = $pdo->query("SHOW COLUMNS FROM services WHERE Field = 'price'")->fetch();
+        if ($colInfo && stripos($colInfo['Type'], 'decimal') !== false) {
+            $pdo->exec('ALTER TABLE services MODIFY COLUMN price INT NOT NULL DEFAULT 0');
+        }
+    } catch (Throwable $e) { /* table may not exist yet */ }
+
     if ($action === 'list') {
         $stmt = $pdo->query('SELECT id, name, description, price, is_active FROM services ORDER BY id DESC');
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);

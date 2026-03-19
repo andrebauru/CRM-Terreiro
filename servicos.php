@@ -118,7 +118,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const html = rows.map((service) => `
         <tr class="border-t border-slate-100">
           <td class="py-3">${service.name}</td>
-          <td class="py-3">${formatBRL(String(service.price || 0))}</td>
+          <td class="py-3">${formatBRL(String(Math.round(parseFloat(service.price) || 0)))}</td>
           <td class="py-3">${service.is_active == 1 ? 'Ativo' : 'Inativo'}</td>
           <td class="py-3 text-right">
             <button class="text-accent" data-edit="${service.id}">Editar</button>
@@ -154,7 +154,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         if (!service) return;
         serviceId.value = service.id;
         serviceName.value = service.name || '';
-        servicePrice.value = service.price ? formatBRL(String(service.price)) : '';
+        servicePrice.value = service.price ? formatBRL(String(Math.round(parseFloat(service.price)))) : '';
         serviceDescription.value = service.description || '';
         serviceActive.value = String(service.is_active ?? 1);
         modalTitle.textContent = 'Editar Serviço';
