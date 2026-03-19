@@ -20,6 +20,9 @@ if (window.__crmSettings && typeof window.__crmSettings === 'object') {
 // Helper: return current currency symbol (useful for templates)
 const crmSymbol = () => crmCurrency.symbol;
 
+// Debug: log currency config so users can verify
+console.log('[CRM] Currency:', crmCurrency.code, crmCurrency.symbol, '| Decimal:', crmCurrency.code === 'BRL');
+
 // Helper: is current currency decimal-based (like BRL centavos)?
 const isCurrencyDecimal = () => crmCurrency.code === 'BRL';
 

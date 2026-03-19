@@ -14,5 +14,10 @@ if (!isset($_crmSettings) || empty($_crmSettings)) {
     }
 }
 ?>
+<?php
+$_appJsPath = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3)) . '/public/assets/js/app.js';
+$_appJsVer  = @filemtime($_appJsPath) ?: time();
+$_appJsHash = @md5_file($_appJsPath) ?: '';
+?>
 <script>window.__crmSettings = <?= json_encode($_crmSettings ?: new stdClass(), JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
-<script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js?v=<?= @filemtime((defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3)) . '/public/assets/js/app.js') ?: time() ?>"></script>
+<script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js?v=<?= $_appJsVer ?>&h=<?= substr($_appJsHash, 0, 8) ?>"></script>

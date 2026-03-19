@@ -121,7 +121,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <input type="hidden" id="catId" />
         <input id="catName" placeholder="Nome do trabalho *" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
         <textarea id="catDesc" placeholder="Descrição (opcional)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" rows="2"></textarea>
-        <input id="catPrice" data-mask="currency" placeholder="Preço (ex: <?= $_crmCurrSymbol ?>150)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+        <input id="catPrice" inputmode="numeric" placeholder="Preço (ex: <?= $_crmCurrSymbol ?>150)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
         <div class="flex justify-end gap-2">
           <button id="cancelCatForm" type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 text-sm">Cancelar</button>
           <button id="saveCatForm" type="button" class="px-3 py-1.5 rounded-lg bg-red-700 text-white text-sm font-bold hover:bg-red-800">Salvar</button>
@@ -251,7 +251,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       el.innerHTML = catalogoCache.map(c => `
         <tr class="border-t border-slate-100">
           <td class="py-2 font-medium">${c.name}</td>
-          <td class="py-2 text-slate-500">${formatBRL(String(c.price || 0))}</td>
+          <td class="py-2 text-slate-500">${formatBRL(String(Math.round(parseFloat(c.price) || 0)))}</td>
           <td class="py-2 text-right">
             <button class="text-red-600 text-xs mr-2" data-cat-edit="${c.id}"><i class="fa-solid fa-pen"></i></button>
             <button class="text-slate-400 hover:text-red-600 text-xs" data-cat-delete="${c.id}"><i class="fa-solid fa-trash"></i></button>
@@ -312,8 +312,18 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     const catPriceInput = document.getElementById('catPrice');
     catPriceInput.addEventListener('input', () => {
-      const n = catPriceInput.value.replace(/\D+/g, '');
-      catPriceInput.value = n ? formatBRL(n) : '';
+      const n = catPriceInput.value.replace(/[^\d]/g, '');
+      if (!n) { catPriceInput.value = ''; return; }
+      // Use the dynamic currency formatter (not hardcoded BRL)
+      const formatted = formatBRL(n);
+      catPriceInput.value = formatted || '';
+    });
+    // Also handle paste: strip formatting and re-apply
+    catPriceInput.addEventListener('paste', (e) => {
+      setTimeout(() => {
+        const n = catPriceInput.value.replace(/[^\d]/g, '');
+        catPriceInput.value = n ? formatBRL(n) : '';
+      }, 0);
     });
 
     document.getElementById('saveCatForm').addEventListener('click', () => {
@@ -341,7 +351,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('catId').value = c.id;
         document.getElementById('catName').value = c.name;
         document.getElementById('catDesc').value = c.description || '';
-        document.getElementById('catPrice').value = c.price ? formatBRL(String(c.price)) : '';
+        document.getElementById('catPrice').value = c.price ? formatBRL(String(Math.round(parseFloat(c.price)))) : '';
         document.getElementById('addCatalogoForm').classList.remove('hidden');
       }
       if (deleteId) {

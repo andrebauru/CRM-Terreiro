@@ -14,6 +14,14 @@ function monthStart(DateTime $date): string
 try {
     $pdo = db();
 
+    // Auto-migrate: ensure trabalhos.price is INT (older schemas used DECIMAL)
+    try {
+        $colInfo = $pdo->query("SHOW COLUMNS FROM trabalhos WHERE Field = 'price'")->fetch();
+        if ($colInfo && stripos($colInfo['Type'], 'decimal') !== false) {
+            $pdo->exec('ALTER TABLE trabalhos MODIFY COLUMN price INT NOT NULL DEFAULT 0');
+        }
+    } catch (Throwable $e) { /* table may not exist yet */ }
+
     // List realizações
     if ($action === 'list') {
         $stmt = $pdo->query(
