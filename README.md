@@ -346,6 +346,49 @@ php -S localhost:8000
 ---
 
 ## Changelog
+---
+
+## Security Visual — Screenshot/Print/Copy Block
+
+### English
+
+Since v3.1 (March 2026), all main pages have a security overlay that blocks the content when a screenshot, print screen, copy, or loss of focus is detected (mobile/desktop). All such attempts are logged and visible to administrators in the Settings page.
+
+**How it works:**
+- Overlay hides sensitive content when PrintScreen, copy, or focus loss is detected
+- Event is logged with user, page, IP, and user agent
+- Admins can view logs in Settings > Screenshot/Copy Logs
+
+**Pages protected:**
+- Expenses (Gastos)
+- Users
+- Jobs
+- Services
+- Reports
+- Quimbandeiro
+
+This feature increases privacy and prevents unauthorized sharing of sensitive information.
+
+---
+
+### Português
+
+Desde a versão 3.1 (março de 2026), todas as páginas principais possuem um overlay de segurança que bloqueia o conteúdo ao detectar tentativa de print, screenshot, cópia ou perda de foco (mobile/desktop). Todas as tentativas são registradas e ficam visíveis para administradores na página de Configurações.
+
+**Como funciona:**
+- Overlay oculta o conteúdo ao detectar PrintScreen, cópia ou perda de foco
+- Evento é registrado com usuário, página, IP e user agent
+- Admin visualiza os logs em Configurações > Logs de Prints/Cópias
+
+**Páginas protegidas:**
+- Gastos
+- Usuários
+- Trabalhos
+- Serviços
+- Relatórios
+- Quimbandeiro
+
+Esse recurso aumenta a privacidade e previne o compartilhamento não autorizado de informações sensíveis.
 
 ### v3.0 — Março 2026
 - **Visual**: sidebar totalmente reformulada → fundo **preto**, destaque **vermelho bold**

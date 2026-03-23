@@ -101,6 +101,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <input id="trabalhoData" type="date" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
         <div>
+          <label class="text-sm font-medium text-slate-700">Datas Extras (opcional)</label>
+          <div id="datasExtrasList" class="flex flex-col gap-2 mt-2"></div>
+          <button type="button" id="addDataExtraBtn" class="mt-2 px-3 py-1.5 rounded-lg border border-slate-200 text-sm">Adicionar Data Extra</button>
+        </div>
+        <div>
           <label class="text-sm font-medium text-slate-700">Status</label>
           <select id="trabalhoStatus" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2">
             <option value="Pendente">⬜ Pendente</option>
@@ -111,6 +116,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div id="novaDataRow" class="hidden">
           <label class="text-sm font-medium text-slate-700">Nova Data (se adiado)</label>
           <input id="trabalhoNovaData" type="date" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Data de Pagamento</label>
+          <input id="trabalhoDataPagamento" type="date" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Observações</label>
@@ -184,6 +193,24 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
+            // --- Datas Extras ---
+            let datasExtras = [];
+            function renderDatasExtras() {
+              const list = document.getElementById('datasExtrasList');
+              if (!list) return;
+              list.innerHTML = datasExtras.map((d, i) => `
+                <div class="flex gap-2 items-center">
+                  <input type="date" class="rounded-xl border border-slate-200 px-3 py-2" value="${d}" onchange="datasExtras[${i}]=this.value" />
+                  <button type="button" class="text-red-600 text-xs" onclick="datasExtras.splice(${i},1);renderDatasExtras();"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              `).join('') || '<span class="text-slate-400 text-xs">Nenhuma data extra adicionada.</span>';
+            }
+            document.getElementById('addDataExtraBtn').addEventListener('click', () => {
+              datasExtras.push('');
+              renderDatasExtras();
+            });
+            // Limpar datas extras ao abrir modal novo
+            function resetDatasExtras() { datasExtras = []; renderDatasExtras(); }
         // Overlay de bloqueio de print/foco
         function showPrintBlockOverlay() {
           document.getElementById('printBlockOverlay').style.display = 'flex';
@@ -398,6 +425,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalTitle').textContent = 'Novo Trabalho';
       loadCatalogoSelect();
       loadClientes();
+      document.getElementById('trabalhoDataPagamento').value = '';
+      resetDatasExtras();
       toggleModal(modal, true);
     };
 
@@ -496,6 +525,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('trabalhoObs').value = r.observacoes || '';
         document.getElementById('novaDataRow').classList.toggle('hidden', r.status !== 'Adiado');
         document.getElementById('modalTitle').textContent = 'Editar Trabalho';
+        document.getElementById('trabalhoDataPagamento').value = r.data_pagamento || '';
+        // Carregar datas extras via API
+        fetch('api/trabalhos.php?action=list_datas_extras&id='+r.id)
+          .then(res => res.json())
+          .then(data => { datasExtras = (data.data || []).map(e => e.data_extra); renderDatasExtras(); });
         loadCatalogoSelect().then(() => {
           document.getElementById('trabalhoTipoId').value = r.trabalho_id;
         });
@@ -568,7 +602,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         data_realizacao: document.getElementById('trabalhoData').value,
         status,
         nova_data: novaData,
+        data_pagamento: document.getElementById('trabalhoDataPagamento').value,
         observacoes: document.getElementById('trabalhoObs').value,
+        datas_extras: JSON.stringify(datasExtras.filter(d => d))
       });
       fetch('api/trabalhos.php', { method: 'POST', body })
         .then(() => {

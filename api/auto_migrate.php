@@ -178,6 +178,7 @@ function runAutoMigrate(PDO $pdo): void
                 data_realizacao DATE NOT NULL,
                 status ENUM('Pendente','Realizado','Adiado') DEFAULT 'Pendente',
                 nova_data DATE NULL,
+                data_pagamento DATE NULL,
                 observacoes TEXT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -186,6 +187,18 @@ function runAutoMigrate(PDO $pdo): void
         ");
         ensureColumn($pdo, 'trabalho_realizacoes', 'attendance_id', 'INT NULL AFTER trabalho_id');
         ensureColumn($pdo, 'trabalho_realizacoes', 'client_id', 'INT NULL AFTER cliente_nome');
+        ensureColumn($pdo, 'trabalho_realizacoes', 'data_pagamento', 'DATE NULL AFTER nova_data');
+
+        // ── trabalho_datas_extras ──
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS trabalho_datas_extras (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                trabalho_realizacao_id INT NOT NULL,
+                data_extra DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (trabalho_realizacao_id) REFERENCES trabalho_realizacoes(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
 
         // ── tipos_gira ──
         $pdo->exec("

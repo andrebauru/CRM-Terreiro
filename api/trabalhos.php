@@ -27,12 +27,19 @@ try {
     if ($action === 'list') {
         $stmt = $pdo->query(
             "SELECT r.id, r.trabalho_id, t.name AS trabalho_nome, t.price,
-                    r.cliente_nome, r.data_realizacao, r.status, r.nova_data, r.observacoes
+                    r.cliente_nome, r.data_realizacao, r.status, r.nova_data, r.data_pagamento, r.observacoes
              FROM trabalho_realizacoes r
              JOIN trabalhos t ON t.id = r.trabalho_id
              ORDER BY r.data_realizacao DESC, r.id DESC"
         );
-        jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+        $rows = $stmt->fetchAll();
+        // Carregar datas extras para cada realização
+        foreach ($rows as &$row) {
+            $datasStmt = $pdo->prepare('SELECT data_extra FROM trabalho_datas_extras WHERE trabalho_realizacao_id = ? ORDER BY data_extra ASC');
+            $datasStmt->execute([$row['id']]);
+            $row['datas_extras'] = array_column($datasStmt->fetchAll(), 'data_extra');
+        }
+        jsonResponse(['ok' => true, 'data' => $rows]);
     }
 
     // List catálogo de trabalhos
@@ -118,11 +125,23 @@ try {
         $dataRealizacao = $_POST['data_realizacao'] ?? date('Y-m-d');
         $status = $_POST['status'] ?? 'Pendente';
         $novaData = trim((string)($_POST['nova_data'] ?? '')) ?: null;
+        $dataPagamento = $_POST['data_pagamento'] ?? null;
         $obs = trim((string)($_POST['observacoes'] ?? '')) ?: null;
+        $datasExtras = isset($_POST['datas_extras']) ? json_decode($_POST['datas_extras'], true) : [];
 
-        $stmt = $pdo->prepare('INSERT INTO trabalho_realizacoes (trabalho_id, attendance_id, cliente_nome, client_id, data_realizacao, status, nova_data, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$trabalhoId, $attendanceId, $clienteNome, $clientId, $dataRealizacao, $status, $novaData, $obs]);
+        $stmt = $pdo->prepare('INSERT INTO trabalho_realizacoes (trabalho_id, attendance_id, cliente_nome, client_id, data_realizacao, status, nova_data, data_pagamento, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$trabalhoId, $attendanceId, $clienteNome, $clientId, $dataRealizacao, $status, $novaData, $dataPagamento, $obs]);
         $newId = (int)$pdo->lastInsertId();
+
+        // Salvar datas extras
+        if (is_array($datasExtras)) {
+            foreach ($datasExtras as $dataExtra) {
+                if ($dataExtra) {
+                    $stmtExtra = $pdo->prepare('INSERT INTO trabalho_datas_extras (trabalho_realizacao_id, data_extra) VALUES (?, ?)');
+                    $stmtExtra->execute([$newId, $dataExtra]);
+                }
+            }
+        }
 
         if ($status === 'Realizado') {
             $dateObj = new DateTime($dataRealizacao);
@@ -163,10 +182,23 @@ try {
         $dataRealizacao = $_POST['data_realizacao'] ?? date('Y-m-d');
         $status = $_POST['status'] ?? 'Pendente';
         $novaData = trim((string)($_POST['nova_data'] ?? '')) ?: null;
+        $dataPagamento = $_POST['data_pagamento'] ?? null;
         $obs = trim((string)($_POST['observacoes'] ?? '')) ?: null;
+        $datasExtras = isset($_POST['datas_extras']) ? json_decode($_POST['datas_extras'], true) : [];
 
-        $stmt = $pdo->prepare('UPDATE trabalho_realizacoes SET trabalho_id = ?, attendance_id = ?, cliente_nome = ?, client_id = ?, data_realizacao = ?, status = ?, nova_data = ?, observacoes = ? WHERE id = ?');
-        $stmt->execute([$trabalhoId, $attendanceId, $clienteNome, $clientId, $dataRealizacao, $status, $novaData, $obs, $id]);
+        $stmt = $pdo->prepare('UPDATE trabalho_realizacoes SET trabalho_id = ?, attendance_id = ?, cliente_nome = ?, client_id = ?, data_realizacao = ?, status = ?, nova_data = ?, data_pagamento = ?, observacoes = ? WHERE id = ?');
+        $stmt->execute([$trabalhoId, $attendanceId, $clienteNome, $clientId, $dataRealizacao, $status, $novaData, $dataPagamento, $obs, $id]);
+
+        // Atualizar datas extras
+        $pdo->prepare('DELETE FROM trabalho_datas_extras WHERE trabalho_realizacao_id = ?')->execute([$id]);
+        if (is_array($datasExtras)) {
+            foreach ($datasExtras as $dataExtra) {
+                if ($dataExtra) {
+                    $stmtExtra = $pdo->prepare('INSERT INTO trabalho_datas_extras (trabalho_realizacao_id, data_extra) VALUES (?, ?)');
+                    $stmtExtra->execute([$id, $dataExtra]);
+                }
+            }
+        }
 
         $pdo->prepare("DELETE FROM caixa_movimentos WHERE origem = 'trabalho' AND referencia_id = ?")
             ->execute([$id]);
@@ -188,6 +220,17 @@ try {
             ]);
         }
         jsonResponse(['ok' => true]);
+    }
+    // Listar datas extras de uma realização específica
+    if ($action === 'list_datas_extras') {
+        $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+        if ($id <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
+        }
+        $stmt = $pdo->prepare('SELECT data_extra FROM trabalho_datas_extras WHERE trabalho_realizacao_id = ? ORDER BY data_extra ASC');
+        $stmt->execute([$id]);
+        $datas = array_column($stmt->fetchAll(), 'data_extra');
+        jsonResponse(['ok' => true, 'data' => $datas]);
     }
 
     // Delete realização
