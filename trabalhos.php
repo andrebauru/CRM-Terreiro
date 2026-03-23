@@ -180,13 +180,18 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <button id="closeDetalheModal" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
       <div id="detalheBody" class="space-y-3 text-sm"></div>
-      <div class="flex justify-between gap-2 mt-6">
+      <div class="flex justify-between gap-2 mt-6 flex-wrap">
         <button id="detalheDelete" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100">
           <i class="fa-solid fa-trash mr-1"></i> Excluir
         </button>
-        <button id="detalheEdit" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold hover:bg-red-800">
-          <i class="fa-solid fa-pen mr-1"></i> Editar
-        </button>
+        <div class="flex gap-2">
+          <button id="detalheFinance" class="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700">
+            <i class="fa-solid fa-yen-sign mr-1"></i> Financeiro
+          </button>
+          <button id="detalheEdit" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold hover:bg-red-800">
+            <i class="fa-solid fa-pen mr-1"></i> Editar
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -320,6 +325,35 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold text-xs"><i class="fa-regular fa-circle"></i> Pendente</span>';
     };
 
+    function findClienteFromTrabalho(row) {
+      const normalizedName = String(row?.cliente_nome || '').trim().toLowerCase();
+      return clientesCache.find(c => String(c.id) === String(row?.client_id || ''))
+        || clientesCache.find(c => String(c.name || '').trim().toLowerCase() === normalizedName)
+        || null;
+    }
+
+    async function openFinanceiroPrefill(trabalhoId) {
+      if (!clientesCache.length) {
+        await loadClientes();
+      }
+      const row = trabalhosCache.find(x => String(x.id) === String(trabalhoId));
+      if (!row) return;
+      const cliente = findClienteFromTrabalho(row);
+      const params = new URLSearchParams({
+        tab: 'split',
+        source: 'trabalho',
+        trabalho_realizacao_id: String(row.id),
+        cliente_nome: row.cliente_nome || '',
+        cliente_telefone: cliente?.phone || '',
+        descricao_servico: row.trabalho_nome || '宗教儀式提供料として',
+        valor_total: String(row.price || 0),
+        data_realizacao: row.data_realizacao || '',
+        data_pagamento: row.data_pagamento || row.data_realizacao || '',
+        status_pagamento: row.data_pagamento ? 'pago' : 'pendente'
+      });
+      window.open(`financeiro.php?${params.toString()}`, '_blank');
+    }
+
     const loadTrabalhos = async () => {
       trabalhosTable.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Carregando...</td></tr>';
       const res = await fetch(`api/trabalhos.php?action=list&t=${Date.now()}`, { cache: 'no-store' });
@@ -351,6 +385,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               : '-'}
           </td>
           <td class="py-3 text-right">
+            <button class="text-emerald-600 hover:text-emerald-800 mr-3" data-finance="${r.id}" title="Levar ao financeiro" onclick="event.stopPropagation()">
+              <i class="fa-solid fa-yen-sign"></i>
+            </button>
             <button class="text-red-600 hover:text-red-800 mr-3" data-edit="${r.id}" onclick="event.stopPropagation()">
               <i class="fa-solid fa-pen"></i>
             </button>
@@ -509,10 +546,16 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       }
     });
 
-    trabalhosTable.addEventListener('click', (e) => {
+    trabalhosTable.addEventListener('click', async (e) => {
+      const financeId = e.target.closest('[data-finance]')?.dataset.finance;
       const editId = e.target.closest('[data-edit]')?.dataset.edit;
       const deleteId = e.target.closest('[data-delete]')?.dataset.delete;
       const row = e.target.closest('tr[data-id]');
+
+      if (financeId) {
+        await openFinanceiroPrefill(financeId);
+        return;
+      }
 
       if (editId) {
         const r = trabalhosCache.find(x => String(x.id) === editId);
@@ -568,6 +611,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           toggleModal(detalheModal, false);
           loadTrabalhos();
         });
+    });
+    document.getElementById('detalheFinance').addEventListener('click', async () => {
+      toggleModal(detalheModal, false);
+      await openFinanceiroPrefill(currentDetalheId);
     });
     document.getElementById('detalheEdit').addEventListener('click', () => {
       toggleModal(detalheModal, false);

@@ -26,7 +26,7 @@ try {
     // List realizações
     if ($action === 'list') {
         $stmt = $pdo->query(
-            "SELECT r.id, r.trabalho_id, t.name AS trabalho_nome, t.price,
+            "SELECT r.id, r.trabalho_id, r.client_id, r.attendance_id, t.name AS trabalho_nome, t.price,
                     r.cliente_nome, r.data_realizacao, r.status, r.nova_data, r.data_pagamento, r.observacoes
              FROM trabalho_realizacoes r
              JOIN trabalhos t ON t.id = r.trabalho_id

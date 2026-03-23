@@ -96,6 +96,37 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
       </section>
 
+      <section id="mediumSummarySection" class="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 class="text-lg font-semibold">Resumo do Médium</h2>
+            <p class="text-sm text-slate-500">Split dos trabalhos com retenção Gensen Choshu de 10,21%</p>
+          </div>
+          <a href="ryoushuusho.php" class="px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <i class="fa-solid fa-receipt mr-1"></i>Gerar recibo
+          </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Total Realizado</p>
+            <p id="mediumTotalRealizado" class="mt-2 text-2xl font-black text-emerald-800"><?= $_crmCurrSymbol ?>0</p>
+          </div>
+          <div class="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Imposto Retido Acumulado</p>
+            <p id="mediumImpostoRetido" class="mt-2 text-2xl font-black text-amber-800"><?= $_crmCurrSymbol ?>0</p>
+          </div>
+          <div class="rounded-2xl border border-sky-100 bg-sky-50 p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Valor a Receber</p>
+            <p id="mediumValorReceber" class="mt-2 text-2xl font-black text-sky-800"><?= $_crmCurrSymbol ?>0</p>
+          </div>
+          <div class="rounded-2xl border border-rose-100 bg-rose-50 p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-rose-700">Mensalidades/Trabalhos Pendentes</p>
+            <p id="mediumPendenciasTotal" class="mt-2 text-2xl font-black text-rose-800">0</p>
+            <p id="mediumPendenciasDetalhe" class="mt-1 text-xs text-rose-700">0 mensalidades + 0 trabalhos</p>
+          </div>
+        </div>
+      </section>
+
       <section class="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold">Trabalhos Recentes</h2>
@@ -240,6 +271,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const countReceivables = document.getElementById('countReceivables');
     const countPayables = document.getElementById('countPayables');
     const countCash = document.getElementById('countCash');
+    const mediumTotalRealizado = document.getElementById('mediumTotalRealizado');
+    const mediumImpostoRetido = document.getElementById('mediumImpostoRetido');
+    const mediumValorReceber = document.getElementById('mediumValorReceber');
+    const mediumPendenciasTotal = document.getElementById('mediumPendenciasTotal');
+    const mediumPendenciasDetalhe = document.getElementById('mediumPendenciasDetalhe');
     const mensalidadesTable = document.getElementById('mensalidadesTable');
     const editModal = document.getElementById('editModal');
     const closeEditModal = document.getElementById('closeEditModal');
@@ -265,6 +301,13 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       countReceivables.textContent = formatBRLAmt(data.counts.receivable_month ?? 0);
       countPayables.textContent = formatBRLAmt(data.counts.payable_month ?? 0);
       countCash.textContent = formatBRLAmt(data.counts.cash_month ?? 0);
+
+      const mediumSummary = data.medium_summary || {};
+      mediumTotalRealizado.textContent = formatBRLAmt(mediumSummary.total_realizado ?? 0);
+      mediumImpostoRetido.textContent = formatBRLAmt(mediumSummary.imposto_retido_acumulado ?? 0);
+      mediumValorReceber.textContent = formatBRLAmt(mediumSummary.valor_a_receber ?? 0);
+      mediumPendenciasTotal.textContent = String(mediumSummary.pendencias_total ?? 0);
+      mediumPendenciasDetalhe.textContent = `${mediumSummary.mensalidades_pendentes ?? 0} mensalidades + ${mediumSummary.trabalhos_pendentes ?? 0} trabalhos`;
 
       const formatWhatsapp = (phone) => {
         const digits = String(phone || '').replace(/\D+/g, '');

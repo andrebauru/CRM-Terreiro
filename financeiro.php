@@ -58,6 +58,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <button onclick="showTab('contas')"   id="tab-contas"   class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Contas a Pagar</button>
         <button onclick="showTab('entradas')" id="tab-entradas" class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Entradas</button>
         <button onclick="showTab('credito')"  id="tab-credito"  class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Crédito Casa</button>
+        <button onclick="showTab('split')"    id="tab-split"    class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Split / Recibos</button>
       </div>
 
       <section id="pane-caixa" class="tab-pane hidden">
@@ -144,6 +145,99 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               </tr>
             </thead>
             <tbody id="creditoBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="pane-split" class="tab-pane hidden space-y-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 class="text-lg font-bold">Configuração do Médium</h2>
+                <p class="text-sm text-slate-500">Defina os percentuais usados no split de trabalhos espirituais.</p>
+              </div>
+              <div id="splitPercentTotal" class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">Total: 100%</div>
+            </div>
+            <form id="formMediumConfig" class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Médium</label>
+                <select id="splitMediumUser" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"></select>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div><label class="block text-xs font-semibold text-slate-500 mb-1">Espaço %</label><input id="pctEspaco" type="number" step="0.01" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-semibold text-slate-500 mb-1">Treinamento %</label><input id="pctTreinamento" type="number" step="0.01" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-semibold text-slate-500 mb-1">Material %</label><input id="pctMaterial" type="number" step="0.01" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-semibold text-slate-500 mb-1">Tata %</label><input id="pctTata" type="number" step="0.01" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-semibold text-slate-500 mb-1">Executor %</label><input id="pctExecutor" type="number" step="0.01" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+              </div>
+              <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 rounded-lg bg-red-700 text-white font-bold hover:bg-red-800">Salvar Percentuais</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 class="text-lg font-bold">Preview do Split</h2>
+                <p class="text-sm text-slate-500">Imposto Gensen de 10,21% apenas sobre Tata e Executor.</p>
+              </div>
+              <div class="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-bold">10.21% Gensen</div>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-semibold text-slate-600 mb-1">Valor total do trabalho</label>
+              <input id="splitPreviewValor" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="<?= $_crmCurrSymbol ?>0" />
+            </div>
+            <div id="splitPreviewGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm"></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-lg font-bold">Cadastrar Trabalho com Split</h2>
+              <p class="text-sm text-slate-500">Registre cliente, valor, Tata e datas. O recibo é criado automaticamente com a data de pagamento, sem marcar o trabalho como pago.</p>
+            </div>
+          </div>
+          <form id="formSplitTransaction" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Cliente</label><input id="splitClienteNome" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Telefone do cliente</label><input id="splitClienteTelefone" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Tata</label><select id="splitTataUser" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"></select></div>
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Status</label><select id="splitStatusPagamento" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"><option value="pendente">Pendente</option><option value="processando">Processando</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Descrição</label><input id="splitDescricaoServico" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" value="宗教儀式提供料として" /></div>
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Valor total</label><input id="splitValorTotal" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="<?= $_crmCurrSymbol ?>0" /></div>
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Data de realização</label><input id="splitDataRealizacao" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><label class="block text-sm font-semibold text-slate-600 mb-1">Data de pagamento do recibo</label><input id="splitDataPagamento" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" /></div>
+              <div class="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-xs text-amber-800 flex items-center">O status financeiro continua o que você escolher acima; gerar recibo não muda para <strong class="ml-1">pago</strong>.</div>
+            </div>
+            <div class="flex justify-end gap-3">
+              <button type="button" id="btnSplitPreviewSync" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 font-bold hover:bg-slate-200">Atualizar Preview</button>
+              <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700">Salvar Trabalho</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table class="w-full text-sm min-w-[1100px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+              <tr>
+                <th class="px-4 py-3 text-left">Data</th>
+                <th class="px-4 py-3 text-left">Cliente</th>
+                <th class="px-4 py-3 text-left">Médium / Tata</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-right">Total</th>
+                <th class="px-4 py-3 text-right">Gensen</th>
+                <th class="px-4 py-3 text-right">Líquido Médium</th>
+                <th class="px-4 py-3 text-right">Recibo</th>
+              </tr>
+            </thead>
+            <tbody id="splitTransactionsBody" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </section>
@@ -289,6 +383,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
+    const currentUserId = <?= (int)($_SESSION['user_id'] ?? 0) ?>;
+    const currentUserRole = <?= json_encode((string)($_SESSION['user_role'] ?? 'user')) ?>;
+    const gensenRate = 0.1021;
+
     function formatBRLCents(cents) {
       return formatBRLOrZero(String(cents || 0));
     }
@@ -302,6 +400,13 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       this.value = formatBRL(this.value);
     });
     document.getElementById('entradaValor').addEventListener('input', function () {
+      this.value = formatBRL(this.value);
+    });
+    document.getElementById('splitPreviewValor').addEventListener('input', function () {
+      this.value = formatBRL(this.value);
+      renderSplitPreview();
+    });
+    document.getElementById('splitValorTotal').addEventListener('input', function () {
       this.value = formatBRL(this.value);
     });
 
@@ -344,6 +449,265 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (name === 'contas')   loadContas();
       if (name === 'entradas') loadEntradas();
       if (name === 'credito')  loadCredito();
+      if (name === 'split')    loadSplitTab();
+    }
+
+    function getSplitConfigPayload() {
+      return {
+        pct_espaco: parseFloat(document.getElementById('pctEspaco').value || '0'),
+        pct_treinamento: parseFloat(document.getElementById('pctTreinamento').value || '0'),
+        pct_material: parseFloat(document.getElementById('pctMaterial').value || '0'),
+        pct_tata: parseFloat(document.getElementById('pctTata').value || '0'),
+        pct_executor: parseFloat(document.getElementById('pctExecutor').value || '0'),
+      };
+    }
+
+    function setSplitConfigValues(config = {}) {
+      document.getElementById('pctEspaco').value = config.pct_espaco ?? 20;
+      document.getElementById('pctTreinamento').value = config.pct_treinamento ?? 10;
+      document.getElementById('pctMaterial').value = config.pct_material ?? 20;
+      document.getElementById('pctTata').value = config.pct_tata ?? 10;
+      document.getElementById('pctExecutor').value = config.pct_executor ?? 40;
+      updateSplitPercentTotal();
+      renderSplitPreview();
+    }
+
+    function updateSplitPercentTotal() {
+      const cfg = getSplitConfigPayload();
+      const total = Object.values(cfg).reduce((sum, n) => sum + (parseFloat(n) || 0), 0);
+      const badge = document.getElementById('splitPercentTotal');
+      badge.textContent = `Total: ${total.toFixed(2)}%`;
+      badge.className = `px-3 py-1 rounded-full text-xs font-bold ${Math.abs(total - 100) < 0.01 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`;
+    }
+
+    function calcularSplitLocal(valorTotal) {
+      const cfg = getSplitConfigPayload();
+      const totalPct = Object.values(cfg).reduce((sum, n) => sum + (parseFloat(n) || 0), 0) || 100;
+      const normalized = Object.fromEntries(Object.entries(cfg).map(([k, v]) => [k, ((parseFloat(v) || 0) / totalPct) * 100]));
+      const keys = Object.keys(normalized);
+      const brutos = {};
+      let acumulado = 0;
+      keys.forEach((key, index) => {
+        if (index === keys.length - 1) {
+          brutos[key] = Math.max(0, valorTotal - acumulado);
+          return;
+        }
+        const valor = Math.round(valorTotal * (normalized[key] / 100));
+        brutos[key] = valor;
+        acumulado += valor;
+      });
+
+      const impostoTata = Math.round((brutos.pct_tata || 0) * gensenRate);
+      const impostoExecutor = Math.round((brutos.pct_executor || 0) * gensenRate);
+      return {
+        valor_total: valorTotal,
+        brutos,
+        imposto_tata: impostoTata,
+        imposto_executor: impostoExecutor,
+        imposto_total: impostoTata + impostoExecutor,
+        liquido_tata: (brutos.pct_tata || 0) - impostoTata,
+        liquido_executor: (brutos.pct_executor || 0) - impostoExecutor,
+      };
+    }
+
+    function renderSplitPreview() {
+      updateSplitPercentTotal();
+      const valor = parseCurrency(document.getElementById('splitPreviewValor').value || '0');
+      const split = calcularSplitLocal(valor);
+      document.getElementById('splitPreviewGrid').innerHTML = `
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Espaço</p><p class="font-bold">${formatBRLCents(split.brutos.pct_espaco || 0)}</p></div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Treinamento</p><p class="font-bold">${formatBRLCents(split.brutos.pct_treinamento || 0)}</p></div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Material</p><p class="font-bold">${formatBRLCents(split.brutos.pct_material || 0)}</p></div>
+        <div class="rounded-xl border border-amber-100 bg-amber-50 p-3"><p class="text-xs text-amber-700">Tata líquido</p><p class="font-bold text-amber-800">${formatBRLCents(split.liquido_tata || 0)}</p><p class="text-[11px] text-amber-700">Retido: ${formatBRLCents(split.imposto_tata || 0)}</p></div>
+        <div class="rounded-xl border border-sky-100 bg-sky-50 p-3"><p class="text-xs text-sky-700">Executor líquido</p><p class="font-bold text-sky-800">${formatBRLCents(split.liquido_executor || 0)}</p><p class="text-[11px] text-sky-700">Retido: ${formatBRLCents(split.imposto_executor || 0)}</p></div>
+        <div class="rounded-xl border border-rose-100 bg-rose-50 p-3"><p class="text-xs text-rose-700">Zeimusho</p><p class="font-bold text-rose-800">${formatBRLCents(split.imposto_total || 0)}</p></div>`;
+    }
+
+    async function loadSplitUsers() {
+      const d = await api({ action: 'list_financial_users' });
+      if (!d.ok) return;
+      const mediumSel = document.getElementById('splitMediumUser');
+      const tataSel = document.getElementById('splitTataUser');
+      const users = d.data || [];
+      mediumSel.innerHTML = users.map(u => `<option value="${u.id}">${u.name}${u.role ? ` — ${u.role}` : ''}</option>`).join('');
+      tataSel.innerHTML = '<option value="">Sem Tata</option>' + users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+      const preferred = users.find(u => String(u.id) === String(currentUserId));
+      if (preferred) mediumSel.value = String(preferred.id);
+      if (currentUserRole !== 'admin') {
+        mediumSel.value = String(currentUserId);
+        mediumSel.disabled = true;
+      }
+    }
+
+    function getSplitPrefillFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') !== 'split' && !params.get('source')) {
+        return null;
+      }
+      return {
+        cliente_nome: params.get('cliente_nome') || '',
+        cliente_telefone: params.get('cliente_telefone') || '',
+        descricao_servico: params.get('descricao_servico') || '',
+        valor_total: params.get('valor_total') || '',
+        data_realizacao: params.get('data_realizacao') || '',
+        data_pagamento: params.get('data_pagamento') || '',
+        status_pagamento: params.get('status_pagamento') || 'pendente',
+      };
+    }
+
+    function applySplitPrefillFromQuery() {
+      if (window._splitPrefillApplied) return;
+      const prefill = getSplitPrefillFromQuery();
+      if (!prefill) return;
+
+      if (prefill.cliente_nome) document.getElementById('splitClienteNome').value = prefill.cliente_nome;
+      if (prefill.cliente_telefone) document.getElementById('splitClienteTelefone').value = prefill.cliente_telefone;
+      if (prefill.descricao_servico) document.getElementById('splitDescricaoServico').value = prefill.descricao_servico;
+      if (prefill.valor_total) {
+        document.getElementById('splitValorTotal').value = formatBRL(prefill.valor_total);
+        document.getElementById('splitPreviewValor').value = formatBRL(prefill.valor_total);
+      }
+      if (prefill.data_realizacao) document.getElementById('splitDataRealizacao').value = prefill.data_realizacao;
+      if (prefill.data_pagamento) document.getElementById('splitDataPagamento').value = prefill.data_pagamento;
+      if (prefill.status_pagamento) document.getElementById('splitStatusPagamento').value = prefill.status_pagamento;
+
+      renderSplitPreview();
+      window._splitPrefillApplied = true;
+      toast('Dados do trabalho carregados no Split');
+    }
+
+    async function loadMediumConfig() {
+      const userId = document.getElementById('splitMediumUser').value || currentUserId;
+      const valorPreview = parseCurrency(document.getElementById('splitPreviewValor').value || '0') || 100000;
+      const d = await api({ action: 'get_medium_config', query: { user_id: userId, valor_preview: valorPreview } });
+      if (!d.ok) return toast(d.message || 'Erro ao carregar configuração', false);
+      setSplitConfigValues(d.data || {});
+    }
+
+    async function saveMediumConfig(e) {
+      e.preventDefault();
+      const userId = document.getElementById('splitMediumUser').value || currentUserId;
+      const body = { user_id: userId, valor_preview: parseCurrency(document.getElementById('splitPreviewValor').value || '0') || 100000, ...getSplitConfigPayload() };
+      const d = await api({ action: 'save_medium_config', method: 'POST', body });
+      if (d.ok) {
+        setSplitConfigValues(d.data || {});
+        toast('Percentuais salvos com sucesso');
+      } else {
+        toast(d.message || 'Erro ao salvar percentuais', false);
+      }
+    }
+
+    async function submitSplitTransaction(e) {
+      e.preventDefault();
+      const body = {
+        medium_id: document.getElementById('splitMediumUser').value || currentUserId,
+        tata_id: document.getElementById('splitTataUser').value,
+        cliente_nome: document.getElementById('splitClienteNome').value,
+        cliente_telefone: document.getElementById('splitClienteTelefone').value,
+        descricao_servico: document.getElementById('splitDescricaoServico').value,
+        valor_total: parseCurrency(document.getElementById('splitValorTotal').value),
+        data_realizacao: document.getElementById('splitDataRealizacao').value,
+        data_pagamento: document.getElementById('splitDataPagamento').value,
+        status_pagamento: document.getElementById('splitStatusPagamento').value,
+      };
+      const d = await api({ action: 'registrar_split_trabalho', method: 'POST', body });
+      if (d.ok) {
+        toast(d.receipt_path ? 'Trabalho salvo e recibo gerado' : 'Trabalho financeiro salvo');
+        document.getElementById('formSplitTransaction').reset();
+        document.getElementById('splitDescricaoServico').value = '宗教儀式提供料として';
+        document.getElementById('splitDataRealizacao').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('splitDataPagamento').value = new Date().toISOString().slice(0, 10);
+        loadFinancialTransactions();
+        if (d.receipt_view_url) window.open(d.receipt_view_url, '_blank');
+      } else {
+        toast(d.message || 'Erro ao salvar trabalho', false);
+      }
+    }
+
+    async function loadFinancialTransactions() {
+      const d = await api({ action: 'list_financial_transactions' });
+      const body = document.getElementById('splitTransactionsBody');
+      if (!d.ok) {
+        body.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-red-500">Erro ao carregar transações</td></tr>';
+        return;
+      }
+
+      body.innerHTML = (d.data || []).length === 0
+        ? '<tr><td colspan="8" class="px-4 py-6 text-center text-slate-400">Nenhuma transação registrada</td></tr>'
+        : d.data.map(t => {
+          const options = ['pendente', 'processando', 'pago', 'cancelado']
+            .map(status => `<option value="${status}" ${status === t.status_pagamento ? 'selected' : ''}>${status}</option>`).join('');
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3"><div>${t.data_realizacao || '-'}</div><div class="text-xs text-slate-500">Pgto: ${t.data_pagamento || '-'}</div></td>
+              <td class="px-4 py-3"><div class="font-medium">${t.cliente_nome || '-'}</div><div class="text-xs text-slate-500">${t.cliente_telefone || ''}</div></td>
+              <td class="px-4 py-3"><div>${t.medium_name || '-'}</div><div class="text-xs text-slate-500">Tata: ${t.tata_name || '-'}</div></td>
+              <td class="px-4 py-3"><div class="flex items-center gap-2"><select onchange="updateFinancialStatus(${t.id}, this.value, '${esc(t.data_pagamento || '')}')" class="border border-slate-200 rounded px-2 py-1 text-xs">${options}</select></div></td>
+              <td class="px-4 py-3 text-right font-semibold">${formatBRLCents(t.valor_total)}</td>
+              <td class="px-4 py-3 text-right text-rose-600">${formatBRLCents(t.taxa_gensen_paga)}</td>
+              <td class="px-4 py-3 text-right text-sky-700 font-semibold">${formatBRLCents(t.valor_liquido_medium)}</td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex gap-2 justify-end">
+                  <button onclick="generateReceipt(${t.id})" class="px-2 py-1 rounded text-xs bg-amber-100 text-amber-700 font-bold hover:bg-amber-200">Gerar</button>
+                  ${t.receipt_path ? `<a href="${t.receipt_path}" target="_blank" class="px-2 py-1 rounded text-xs bg-slate-100 text-slate-700 font-bold hover:bg-slate-200">PDF</a>` : ''}
+                  <a href="ryoushuusho.php?id=${t.id}" target="_blank" class="px-2 py-1 rounded text-xs bg-slate-100 text-slate-700 font-bold hover:bg-slate-200">Visualizar</a>
+                </div>
+              </td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function updateFinancialStatus(id, status_pagamento, data_pagamento_atual = '') {
+      const body = { id, status_pagamento };
+      if (status_pagamento === 'pago') {
+        body.data_pagamento = data_pagamento_atual || new Date().toISOString().slice(0, 10);
+      }
+      const d = await api({ action: 'update_financial_status', method: 'POST', body });
+      if (!d.ok) {
+        toast(d.message || 'Erro ao atualizar status', false);
+        return;
+      }
+      if (d.receipt_regenerated) {
+        toast('Pago confirmado e recibo atualizado');
+        loadFinancialTransactions();
+        window.open(d.view_url || `ryoushuusho.php?id=${id}`, '_blank');
+        return;
+      }
+      toast('Status atualizado');
+      loadFinancialTransactions();
+    }
+
+    async function generateReceipt(id) {
+      const d = await api({ action: 'generate_receipt', method: 'POST', body: { id } });
+      if (d.ok) {
+        toast(`Recibo salvo em ${d.path}`);
+        loadFinancialTransactions();
+        window.open(d.view_url || `ryoushuusho.php?id=${id}`, '_blank');
+      } else {
+        toast(d.message || 'Erro ao gerar recibo', false);
+      }
+    }
+
+    async function loadSplitTab() {
+      if (!window._splitTabBootstrapped) {
+        await loadSplitUsers();
+        document.getElementById('splitDataRealizacao').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('splitDataPagamento').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('formMediumConfig').addEventListener('submit', saveMediumConfig);
+        document.getElementById('formSplitTransaction').addEventListener('submit', submitSplitTransaction);
+        document.getElementById('splitMediumUser').addEventListener('change', loadMediumConfig);
+        ['pctEspaco','pctTreinamento','pctMaterial','pctTata','pctExecutor'].forEach(id => {
+          document.getElementById(id).addEventListener('input', renderSplitPreview);
+        });
+        document.getElementById('btnSplitPreviewSync').addEventListener('click', () => {
+          document.getElementById('splitPreviewValor').value = document.getElementById('splitValorTotal').value || '';
+          renderSplitPreview();
+        });
+        window._splitTabBootstrapped = true;
+      }
+      await loadMediumConfig();
+      applySplitPrefillFromQuery();
+      await loadFinancialTransactions();
     }
 
     async function loadDashboard() {
@@ -650,7 +1014,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         loadTab(currentTab);
       });
       loadDashboard();
-      showTab('caixa');
+      const initialTab = new URLSearchParams(window.location.search).get('tab') || 'caixa';
+      showTab(['caixa', 'contas', 'entradas', 'credito', 'split'].includes(initialTab) ? initialTab : 'caixa');
     });
   </script>
 </body>

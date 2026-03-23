@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/_auth_guard.php';
+require_once __DIR__ . '/../app/Helpers/FinanceSplit.php';
+require_once __DIR__ . '/../app/Helpers/FinancialReceipt.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';
 
@@ -24,6 +26,102 @@ function monthBounds(string $ms): array
 function calcularCreditoCasa(int $valorCentavos): int
 {
     return (int)round($valorCentavos * 0.10);
+}
+
+function obterMediumConfig(PDO $pdo, int $userId): array
+{
+    $stmt = $pdo->prepare(
+        'SELECT user_id, pct_espaco, pct_treinamento, pct_material, pct_tata, pct_executor
+         FROM medium_configs
+         WHERE user_id = ?'
+    );
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch();
+
+    $config = $row ?: array_merge(['user_id' => $userId], CRM_MEDIUM_SPLIT_DEFAULTS);
+    foreach (CRM_MEDIUM_SPLIT_DEFAULTS as $key => $value) {
+        $config[$key] = isset($config[$key]) ? (float)$config[$key] : $value;
+    }
+
+    return $config;
+}
+
+function salvarMediumConfig(PDO $pdo, int $userId, array $payload): array
+{
+    $config = [];
+    foreach (CRM_MEDIUM_SPLIT_DEFAULTS as $key => $value) {
+        $config[$key] = isset($payload[$key]) ? (float)$payload[$key] : $value;
+    }
+
+    $pdo->prepare(
+        'INSERT INTO medium_configs (user_id, pct_espaco, pct_treinamento, pct_material, pct_tata, pct_executor)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+            pct_espaco = VALUES(pct_espaco),
+            pct_treinamento = VALUES(pct_treinamento),
+            pct_material = VALUES(pct_material),
+            pct_tata = VALUES(pct_tata),
+            pct_executor = VALUES(pct_executor)'
+    )->execute([
+        $userId,
+        $config['pct_espaco'],
+        $config['pct_treinamento'],
+        $config['pct_material'],
+        $config['pct_tata'],
+        $config['pct_executor'],
+    ]);
+
+    return obterMediumConfig($pdo, $userId);
+}
+
+function validarStatusFinanceiro(?string $status): string
+{
+    $status = strtolower(trim((string)$status));
+    $permitidos = ['pendente', 'processando', 'pago', 'cancelado'];
+    return in_array($status, $permitidos, true) ? $status : 'pendente';
+}
+
+function obterFinancialTransaction(PDO $pdo, int $id): ?array
+{
+    $stmt = $pdo->prepare(
+        "SELECT ft.*, m.name AS medium_name, t.name AS tata_name
+         FROM financial_transactions ft
+         LEFT JOIN users m ON m.id = ft.medium_id
+         LEFT JOIN users t ON t.id = ft.tata_id
+         WHERE ft.id = ?
+         LIMIT 1"
+    );
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+function montarDadosRecibo(PDO $pdo, array $transaction): array
+{
+    $settings = [];
+    try {
+        $settings = $pdo->query('SELECT company_name FROM settings LIMIT 1')->fetch() ?: [];
+    } catch (Throwable $e) {
+        $settings = [];
+    }
+
+    return [
+        'receipt_no' => (string)($transaction['id'] ?? '—'),
+        'data_realizacao' => (string)($transaction['data_realizacao'] ?? date('Y-m-d')),
+        'data_pagamento' => (string)($transaction['data_pagamento'] ?? $transaction['data_realizacao'] ?? date('Y-m-d')),
+        'valor_total' => (int)($transaction['valor_total'] ?? 0),
+        'imposto_retido' => (int)($transaction['taxa_gensen_paga'] ?? 0),
+        'valor_liquido_medium' => (int)($transaction['valor_liquido_medium'] ?? 0),
+        'destinatario' => (string)($transaction['cliente_nome'] ?? $transaction['medium_name'] ?? '________________________________'),
+        'cliente_nome' => (string)($transaction['cliente_nome'] ?? ''),
+        'cliente_telefone' => (string)($transaction['cliente_telefone'] ?? ''),
+        'descricao_jp' => (string)($transaction['descricao_servico'] ?: '宗教儀式提供料として'),
+        'descricao_pt' => 'Referente a serviços de cerimônia religiosa',
+        'npo_nome' => (string)($settings['company_name'] ?? 'CRM Terreiro'),
+        'npo_endereco' => 'Tsu, Mie, Japão',
+        'medium_name' => (string)($transaction['medium_name'] ?? '—'),
+        'tata_name' => (string)($transaction['tata_name'] ?? '—'),
+    ];
 }
 
 // ─── Sync mensalidades mensais → caixa_movimentos ─────────────────────────
@@ -131,6 +229,213 @@ try {
             'mensalidades_pagas'     => $mensPagas,
             'mensalidades_pendentes' => $totalMens - $mensPagas,
         ]]);
+    }
+
+    // ── SPLIT FINANCEIRO / GENSEN ────────────────────────────────────────
+    if ($action === 'get_medium_config') {
+        $targetUserId = (int)($_GET['user_id'] ?? $_POST['user_id'] ?? $_apiUserId);
+        if ($targetUserId <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'Usuário inválido'], 422);
+        }
+        if ($_apiUserRole !== 'admin' && $targetUserId !== $_apiUserId) {
+            jsonResponse(['ok' => false, 'message' => 'Acesso negado'], 403);
+        }
+
+        $config = obterMediumConfig($pdo, $targetUserId);
+        jsonResponse([
+            'ok' => true,
+            'data' => $config,
+            'split_preview' => calcularSplitTrabalho((int)($_GET['valor_preview'] ?? 100000), $config),
+        ]);
+    }
+
+    if ($action === 'save_medium_config') {
+        $targetUserId = (int)($_POST['user_id'] ?? $_apiUserId);
+        if ($targetUserId <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'Usuário inválido'], 422);
+        }
+        if ($_apiUserRole !== 'admin' && $targetUserId !== $_apiUserId) {
+            jsonResponse(['ok' => false, 'message' => 'Acesso negado'], 403);
+        }
+
+        $config = salvarMediumConfig($pdo, $targetUserId, $_POST);
+        jsonResponse([
+            'ok' => true,
+            'data' => $config,
+            'split_preview' => calcularSplitTrabalho((int)($_POST['valor_preview'] ?? 100000), $config),
+        ]);
+    }
+
+    if ($action === 'list_financial_users') {
+        $stmt = $pdo->query(
+            "SELECT id, name, phone, role
+             FROM users
+             WHERE is_active = 1
+             ORDER BY name ASC"
+        );
+        jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+    }
+
+    if ($action === 'list_financial_transactions') {
+        if ($_apiUserRole === 'admin') {
+            $stmt = $pdo->query(
+                "SELECT ft.*, m.name AS medium_name, t.name AS tata_name
+                 FROM financial_transactions ft
+                 LEFT JOIN users m ON m.id = ft.medium_id
+                 LEFT JOIN users t ON t.id = ft.tata_id
+                 ORDER BY COALESCE(ft.data_pagamento, ft.data_realizacao) DESC, ft.id DESC"
+            );
+        } else {
+            $stmt = $pdo->prepare(
+                "SELECT ft.*, m.name AS medium_name, t.name AS tata_name
+                 FROM financial_transactions ft
+                 LEFT JOIN users m ON m.id = ft.medium_id
+                 LEFT JOIN users t ON t.id = ft.tata_id
+                 WHERE ft.medium_id = ?
+                 ORDER BY COALESCE(ft.data_pagamento, ft.data_realizacao) DESC, ft.id DESC"
+            );
+            $stmt->execute([$_apiUserId]);
+        }
+
+        jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+    }
+
+    if ($action === 'registrar_split_trabalho') {
+        $mediumId = (int)($_POST['medium_id'] ?? $_apiUserId);
+        $tataId = ((int)($_POST['tata_id'] ?? 0)) ?: null;
+        $clienteNome = trim((string)($_POST['cliente_nome'] ?? '')) ?: null;
+        $clienteTelefone = trim((string)($_POST['cliente_telefone'] ?? '')) ?: null;
+        $descricaoServico = trim((string)($_POST['descricao_servico'] ?? '')) ?: '宗教儀式提供料として';
+        $valorTotal = (int)($_POST['valor_total'] ?? 0);
+        $dataRealizacao = $_POST['data_realizacao'] ?? date('Y-m-d');
+        $dataPagamento = trim((string)($_POST['data_pagamento'] ?? '')) ?: $dataRealizacao;
+        $statusPagamento = validarStatusFinanceiro($_POST['status_pagamento'] ?? 'pendente');
+
+        if ($mediumId <= 0 || $valorTotal <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'Medium e valor total são obrigatórios'], 422);
+        }
+        if ($_apiUserRole !== 'admin' && $mediumId !== $_apiUserId) {
+            jsonResponse(['ok' => false, 'message' => 'Acesso negado'], 403);
+        }
+
+        $config = obterMediumConfig($pdo, $mediumId);
+        $split = calcularSplitTrabalho($valorTotal, $config);
+
+        $pdo->prepare(
+            'INSERT INTO financial_transactions
+                (medium_id, tata_id, cliente_nome, cliente_telefone, descricao_servico, valor_total, taxa_gensen_paga, valor_liquido_medium, valor_liquido_tata, status_pagamento, data_realizacao, data_pagamento)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        )->execute([
+            $mediumId,
+            $tataId,
+            $clienteNome,
+            $clienteTelefone,
+            $descricaoServico,
+            $split['valor_total'],
+            $split['impostos']['total_retido'],
+            $split['liquidos']['executor'],
+            $split['liquidos']['tata'],
+            $statusPagamento,
+            $dataRealizacao,
+            $dataPagamento,
+        ]);
+
+        $newId = (int)$pdo->lastInsertId();
+        $receiptPath = null;
+        try {
+            $transaction = obterFinancialTransaction($pdo, $newId);
+            if ($transaction) {
+                $saved = financialReceiptSavePdf(montarDadosRecibo($pdo, $transaction), dirname(__DIR__));
+                $receiptPath = $saved['relative_path'];
+                $pdo->prepare('UPDATE financial_transactions SET receipt_path = ? WHERE id = ?')
+                    ->execute([$receiptPath, $newId]);
+            }
+        } catch (Throwable $e) {
+            error_log('[financial_transactions receipt] ' . $e->getMessage());
+        }
+
+        jsonResponse([
+            'ok' => true,
+            'id' => $newId,
+            'data' => $split,
+            'receipt_path' => $receiptPath,
+            'receipt_view_url' => 'ryoushuusho.php?id=' . $newId,
+        ]);
+    }
+
+    if ($action === 'generate_receipt') {
+        $id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
+        if ($id <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
+        }
+
+        $transaction = obterFinancialTransaction($pdo, $id);
+        if (!$transaction) {
+            jsonResponse(['ok' => false, 'message' => 'Transação não encontrada'], 404);
+        }
+        if ($_apiUserRole !== 'admin' && (int)$transaction['medium_id'] !== $_apiUserId) {
+            jsonResponse(['ok' => false, 'message' => 'Acesso negado'], 403);
+        }
+
+        $receiptData = montarDadosRecibo($pdo, $transaction);
+        $saved = financialReceiptSavePdf($receiptData, dirname(__DIR__));
+        $pdo->prepare('UPDATE financial_transactions SET receipt_path = ? WHERE id = ?')
+            ->execute([$saved['relative_path'], $id]);
+
+        jsonResponse([
+            'ok' => true,
+            'path' => $saved['relative_path'],
+            'url' => $saved['relative_path'],
+            'view_url' => 'ryoushuusho.php?id=' . $id,
+            'filename' => $saved['filename'],
+        ]);
+    }
+
+    if ($action === 'update_financial_status') {
+        $id = (int)($_POST['id'] ?? 0);
+        $statusPagamento = validarStatusFinanceiro($_POST['status_pagamento'] ?? 'pendente');
+        $dataPagamentoInput = trim((string)($_POST['data_pagamento'] ?? ''));
+        if ($id <= 0) {
+            jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
+        }
+
+        $transaction = obterFinancialTransaction($pdo, $id);
+        if (!$transaction) {
+            jsonResponse(['ok' => false, 'message' => 'Transação não encontrada'], 404);
+        }
+        if ($_apiUserRole !== 'admin' && (int)$transaction['medium_id'] !== $_apiUserId) {
+            jsonResponse(['ok' => false, 'message' => 'Acesso negado'], 403);
+        }
+
+        $dataPagamento = $transaction['data_pagamento'] ?? null;
+        $receiptPath = $transaction['receipt_path'] ?? null;
+        if ($statusPagamento === 'pago') {
+            $dataPagamento = $dataPagamentoInput !== ''
+                ? $dataPagamentoInput
+                : ((string)($transaction['data_pagamento'] ?? '') !== '' ? $transaction['data_pagamento'] : date('Y-m-d'));
+        }
+
+        $pdo->prepare('UPDATE financial_transactions SET status_pagamento = ?, data_pagamento = ? WHERE id = ?')
+            ->execute([$statusPagamento, $dataPagamento, $id]);
+
+        if ($statusPagamento === 'pago') {
+            $transaction['status_pagamento'] = $statusPagamento;
+            $transaction['data_pagamento'] = $dataPagamento;
+            $saved = financialReceiptSavePdf(montarDadosRecibo($pdo, $transaction), dirname(__DIR__));
+            $receiptPath = $saved['relative_path'];
+            $pdo->prepare('UPDATE financial_transactions SET receipt_path = ? WHERE id = ?')
+                ->execute([$receiptPath, $id]);
+        }
+
+        jsonResponse([
+            'ok' => true,
+            'id' => $id,
+            'status_pagamento' => $statusPagamento,
+            'data_pagamento' => $dataPagamento,
+            'receipt_path' => $receiptPath,
+            'view_url' => 'ryoushuusho.php?id=' . $id,
+            'receipt_regenerated' => $statusPagamento === 'pago',
+        ]);
     }
 
     // ── CONTAS A PAGAR ─────────────────────────────────────────────────────

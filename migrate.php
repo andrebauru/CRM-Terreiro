@@ -251,6 +251,46 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
     );
 
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS medium_configs (
+            user_id          INT NOT NULL PRIMARY KEY,
+            pct_espaco       DECIMAL(5,2) NOT NULL DEFAULT 20.00,
+            pct_treinamento  DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+            pct_material     DECIMAL(5,2) NOT NULL DEFAULT 20.00,
+            pct_tata         DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+            pct_executor     DECIMAL(5,2) NOT NULL DEFAULT 40.00,
+            created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS financial_transactions (
+            id                   INT AUTO_INCREMENT PRIMARY KEY,
+            medium_id            INT NOT NULL,
+            tata_id              INT NULL,
+            cliente_nome         VARCHAR(255) NULL,
+            cliente_telefone     VARCHAR(50) NULL,
+            descricao_servico    VARCHAR(255) NULL,
+            valor_total          INT NOT NULL DEFAULT 0,
+            taxa_gensen_paga     INT NOT NULL DEFAULT 0,
+            valor_liquido_medium INT NOT NULL DEFAULT 0,
+            valor_liquido_tata   INT NOT NULL DEFAULT 0,
+            status_pagamento     ENUM('pendente','processando','pago','cancelado') NOT NULL DEFAULT 'pendente',
+            data_realizacao      DATE NOT NULL,
+            data_pagamento       DATE NULL,
+            receipt_path         VARCHAR(512) NULL,
+            created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_financial_transactions_medium (medium_id),
+            KEY idx_financial_transactions_tata (tata_id),
+            KEY idx_financial_transactions_status_data (status_pagamento, data_realizacao),
+            FOREIGN KEY (medium_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (tata_id) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
     // ── 3. COLUMN MIGRATIONS (ensureColumn) ───────────────────────────────
 
     // filhos — columns added across versions
@@ -281,6 +321,28 @@ try {
     ensureColumn($pdo, 'caixa_movimentos', 'mes',           'DATE NOT NULL');
     ensureColumn($pdo, 'caixa_movimentos', 'status',        "ENUM('previsto','realizado') NOT NULL DEFAULT 'realizado'");
     ensureColumn($pdo, 'caixa_movimentos', 'descricao',     'VARCHAR(512) NULL');
+
+    // medium_configs
+    ensureColumn($pdo, 'medium_configs', 'pct_espaco', 'DECIMAL(5,2) NOT NULL DEFAULT 20.00');
+    ensureColumn($pdo, 'medium_configs', 'pct_treinamento', 'DECIMAL(5,2) NOT NULL DEFAULT 10.00');
+    ensureColumn($pdo, 'medium_configs', 'pct_material', 'DECIMAL(5,2) NOT NULL DEFAULT 20.00');
+    ensureColumn($pdo, 'medium_configs', 'pct_tata', 'DECIMAL(5,2) NOT NULL DEFAULT 10.00');
+    ensureColumn($pdo, 'medium_configs', 'pct_executor', 'DECIMAL(5,2) NOT NULL DEFAULT 40.00');
+
+    // financial_transactions
+    ensureColumn($pdo, 'financial_transactions', 'medium_id', 'INT NOT NULL');
+    ensureColumn($pdo, 'financial_transactions', 'tata_id', 'INT NULL');
+    ensureColumn($pdo, 'financial_transactions', 'cliente_nome', 'VARCHAR(255) NULL');
+    ensureColumn($pdo, 'financial_transactions', 'cliente_telefone', 'VARCHAR(50) NULL');
+    ensureColumn($pdo, 'financial_transactions', 'descricao_servico', 'VARCHAR(255) NULL');
+    ensureColumn($pdo, 'financial_transactions', 'valor_total', 'INT NOT NULL DEFAULT 0');
+    ensureColumn($pdo, 'financial_transactions', 'taxa_gensen_paga', 'INT NOT NULL DEFAULT 0');
+    ensureColumn($pdo, 'financial_transactions', 'valor_liquido_medium', 'INT NOT NULL DEFAULT 0');
+    ensureColumn($pdo, 'financial_transactions', 'valor_liquido_tata', 'INT NOT NULL DEFAULT 0');
+    ensureColumn($pdo, 'financial_transactions', 'status_pagamento', "ENUM('pendente','processando','pago','cancelado') NOT NULL DEFAULT 'pendente'");
+    ensureColumn($pdo, 'financial_transactions', 'data_realizacao', 'DATE NOT NULL');
+    ensureColumn($pdo, 'financial_transactions', 'data_pagamento', 'DATE NULL');
+    ensureColumn($pdo, 'financial_transactions', 'receipt_path', 'VARCHAR(512) NULL');
 
     // ── 4. ENUM MIGRATIONS (ensureEnumHasValue) ───────────────────────────
 

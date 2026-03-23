@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/_auth_guard.php';
+require_once __DIR__ . '/../app/Helpers/FinanceSplit.php';
 
 $action = $_GET['action'] ?? 'dashboard';
 
@@ -76,6 +77,54 @@ function buildCalendarEvents(PDO $pdo, string $monthStart, string $monthEnd): ar
     }
 
     return $events;
+}
+
+function buildMediumSummary(PDO $pdo, int $userId): array
+{
+    $stmt = $pdo->prepare(
+        "SELECT
+            COALESCE(SUM(valor_total), 0) AS total_realizado,
+            COALESCE(SUM(taxa_gensen_paga), 0) AS imposto_retido_acumulado,
+            COALESCE(SUM(CASE WHEN status_pagamento IN ('pendente', 'processando') THEN valor_liquido_medium ELSE 0 END), 0) AS valor_a_receber,
+            COALESCE(SUM(CASE WHEN status_pagamento IN ('pendente', 'processando') THEN 1 ELSE 0 END), 0) AS trabalhos_pendentes
+         FROM financial_transactions
+         WHERE medium_id = ?"
+    );
+    $stmt->execute([$userId]);
+    $summary = $stmt->fetch() ?: [];
+
+    $monthStart = (new DateTime('first day of this month'))->format('Y-m-01');
+    $mensalidadesPendentes = 0;
+
+    try {
+        $stmtMensalidades = $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM filhos f
+             WHERE COALESCE(f.status, 'ativo') = 'ativo'
+               AND COALESCE(f.isento_mensalidade, 0) = 0
+               AND NOT EXISTS (
+                    SELECT 1
+                    FROM mensalidades_pagas mp
+                    WHERE mp.filho_id = f.id AND mp.paid_month = ?
+               )"
+        );
+        $stmtMensalidades->execute([$monthStart]);
+        $mensalidadesPendentes = (int)$stmtMensalidades->fetchColumn();
+    } catch (Throwable $e) {
+        $mensalidadesPendentes = 0;
+    }
+
+    $trabalhosPendentes = (int)($summary['trabalhos_pendentes'] ?? 0);
+
+    return [
+        'total_realizado' => (int)($summary['total_realizado'] ?? 0),
+        'imposto_retido_acumulado' => (int)($summary['imposto_retido_acumulado'] ?? 0),
+        'valor_a_receber' => (int)($summary['valor_a_receber'] ?? 0),
+        'trabalhos_pendentes' => $trabalhosPendentes,
+        'mensalidades_pendentes' => $mensalidadesPendentes,
+        'pendencias_total' => $trabalhosPendentes + $mensalidadesPendentes,
+        'aliquota_gensen' => CRM_GENSEN_RATE,
+    ];
 }
 
 try {
@@ -160,10 +209,12 @@ try {
     );
 
     $calendarEvents = buildCalendarEvents($pdo, $monthStart, $monthEnd);
+    $mediumSummary = buildMediumSummary($pdo, $_apiUserId);
 
     jsonResponse([
         'ok' => true,
         'counts' => $counts,
+        'medium_summary' => $mediumSummary,
         'latest_attendances' => $stmt->fetchAll(),
         'calendar_events' => $calendarEvents,
     ]);
