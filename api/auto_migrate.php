@@ -309,6 +309,24 @@ function runAutoMigrate(PDO $pdo): void
                 ('Material de Limpeza'), ('Velas e Materiais'), ('Transporte'),
                 ('Alimentação'), ('Manutenção'), ('Outros')
             ");
+
+            // ── avisos ──
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS avisos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    titulo VARCHAR(255) NOT NULL,
+                    mensagem TEXT NOT NULL,
+                    is_active TINYINT(1) NOT NULL DEFAULT 1,
+                    created_by INT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_avisos_active_date (is_active, created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+            ensureColumn($pdo, 'avisos', 'titulo', 'VARCHAR(255) NOT NULL');
+            ensureColumn($pdo, 'avisos', 'mensagem', 'TEXT NOT NULL');
+            ensureColumn($pdo, 'avisos', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1');
+            ensureColumn($pdo, 'avisos', 'created_by', 'INT NULL');
         }
 
         // ── contas_pagar (enhanced) ──

@@ -36,6 +36,19 @@ try {
     );
 
     $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS avisos (
+            id         INT AUTO_INCREMENT PRIMARY KEY,
+            titulo     VARCHAR(255) NOT NULL,
+            mensagem   TEXT NOT NULL,
+            is_active  TINYINT(1) NOT NULL DEFAULT 1,
+            created_by INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_avisos_active_date (is_active, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
+    $pdo->exec(
         "CREATE TABLE IF NOT EXISTS clients (
             id         INT AUTO_INCREMENT PRIMARY KEY,
             name       VARCHAR(255) NOT NULL,
@@ -364,6 +377,12 @@ try {
     ensureColumn($pdo, 'financial_transactions', 'data_realizacao', 'DATE NOT NULL');
     ensureColumn($pdo, 'financial_transactions', 'data_pagamento', 'DATE NULL');
     ensureColumn($pdo, 'financial_transactions', 'receipt_path', 'VARCHAR(512) NULL');
+
+    // avisos
+    ensureColumn($pdo, 'avisos', 'titulo', 'VARCHAR(255) NOT NULL');
+    ensureColumn($pdo, 'avisos', 'mensagem', 'TEXT NOT NULL');
+    ensureColumn($pdo, 'avisos', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1');
+    ensureColumn($pdo, 'avisos', 'created_by', 'INT NULL');
 
     // atendimento_agendamentos
     ensureColumn($pdo, 'atendimento_agendamentos', 'nome', 'VARCHAR(255) NOT NULL');

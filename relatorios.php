@@ -8,8 +8,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     <div id="printBlockOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:9999;color:#fff;font-size:1.3rem;align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(2px);">
       <div>
         <i class="fa-solid fa-shield-halved" style="font-size:2.5rem;margin-bottom:16px;"></i><br>
-        <b>Captura de tela detectada ou página fora de foco.</b><br>
-        Por segurança, o conteúdo foi ocultado.<br>
+        <b>Tentativa de captura, impressão ou cópia detectada.</b><br>
+        Por segurança, o conteúdo foi ocultado temporariamente.<br>
         <button onclick="hidePrintBlockOverlay()" style="margin-top:24px;padding:12px 24px;border-radius:8px;background:#dc2626;color:#fff;font-weight:bold;border:none;">Voltar ao conteúdo</button>
       </div>
     </div>
@@ -101,37 +101,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
-        // Overlay de bloqueio de print/foco
-        function showPrintBlockOverlay() {
-          document.getElementById('printBlockOverlay').style.display = 'flex';
-          registrarPrintLog();
-        }
-        function hidePrintBlockOverlay() {
-          document.getElementById('printBlockOverlay').style.display = 'none';
-        }
-        // Registrar tentativa de print/foco no log
-        function registrarPrintLog() {
-          fetch('api/settings.php', {
-            method: 'POST',
-            body: new URLSearchParams({ action: 'log_event', event: 'print_screen', page: 'relatorios', user_agent: navigator.userAgent }),
-          });
-        }
-        // Detecta perda de foco (possível print)
-        document.addEventListener('visibilitychange', function() {
-          if (document.visibilityState === 'hidden') {
-            showPrintBlockOverlay();
-          }
-        });
-        // Detecta tecla PrintScreen (Windows)
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'PrintScreen') {
-            showPrintBlockOverlay();
-          }
-        });
-        // Detecta tentativa de copiar
-        document.addEventListener('copy', function() {
-          showPrintBlockOverlay();
-        });
+        initSensitivePageProtection('relatorios');
     const reportsTable = document.getElementById('reportsTable');
     const totalSum = document.getElementById('totalSum');
     const reportForm = document.getElementById('reportForm');

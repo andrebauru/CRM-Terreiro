@@ -130,5 +130,77 @@ $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
       .md\:p-8{padding:2rem!important}
     }
   </style>
+  <script>
+    window.__crmSensitiveProtection = window.__crmSensitiveProtection || { boundPages: {} };
+
+    window.initSensitivePageProtection = function initSensitivePageProtection(pageName) {
+      const overlay = document.getElementById('printBlockOverlay');
+      if (!overlay || !pageName || window.__crmSensitiveProtection.boundPages[pageName]) {
+        return;
+      }
+
+      const logEvent = (eventName) => {
+        try {
+          fetch('api/settings.php', {
+            method: 'POST',
+            body: new URLSearchParams({
+              action: 'log_event',
+              event: eventName,
+              page: pageName,
+              user_agent: navigator.userAgent,
+            }),
+          }).catch(() => {});
+        } catch (_) {}
+      };
+
+      const showOverlay = (eventName) => {
+        overlay.style.display = 'flex';
+        logEvent(eventName || 'capture_attempt');
+      };
+
+      window.hidePrintBlockOverlay = function hidePrintBlockOverlay() {
+        overlay.style.display = 'none';
+      };
+
+      window.showPrintBlockOverlay = function showPrintBlockOverlay() {
+        showOverlay('capture_attempt');
+      };
+
+      const isMacShotShortcut = (event) => event.metaKey && event.shiftKey && ['3', '4', '5'].includes(event.key);
+      const isPrintShortcut = (event) => (event.ctrlKey || event.metaKey) && String(event.key || '').toLowerCase() === 'p';
+      const isPrintScreenKey = (event) => event.key === 'PrintScreen' || event.code === 'PrintScreen';
+
+      const onKeyCapture = (event) => {
+        if (isPrintShortcut(event) || isPrintScreenKey(event) || isMacShotShortcut(event)) {
+          event.preventDefault();
+          showOverlay(isPrintShortcut(event) ? 'print_attempt' : 'screenshot_attempt');
+        }
+      };
+
+      const onClipboardCapture = (event) => {
+        event.preventDefault();
+        showOverlay('clipboard_attempt');
+      };
+
+      document.addEventListener('keydown', onKeyCapture, true);
+      document.addEventListener('keyup', onKeyCapture, true);
+      document.addEventListener('copy', onClipboardCapture, true);
+      document.addEventListener('cut', onClipboardCapture, true);
+      window.addEventListener('beforeprint', () => showOverlay('print_attempt'));
+
+      if (window.matchMedia) {
+        const printMedia = window.matchMedia('print');
+        if (printMedia && typeof printMedia.addEventListener === 'function') {
+          printMedia.addEventListener('change', (event) => {
+            if (event.matches) {
+              showOverlay('print_attempt');
+            }
+          });
+        }
+      }
+
+      window.__crmSensitiveProtection.boundPages[pageName] = true;
+    };
+  </script>
   <?= $extraHead ?? '' ?>
 </head>
