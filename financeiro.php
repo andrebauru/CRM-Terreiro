@@ -59,6 +59,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <button onclick="showTab('entradas')" id="tab-entradas" class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Entradas</button>
         <button onclick="showTab('credito')"  id="tab-credito"  class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Crédito Casa</button>
         <button onclick="showTab('split')"    id="tab-split"    class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Split / Recibos</button>
+        <?php if ($_SESSION['user_role'] === 'admin'): ?><button onclick="showTab('admin')" id="tab-admin" class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Admin — Pagamentos</button><?php endif; ?>
+      </div>
+        <button onclick="showTab('split')"    id="tab-split"    class="tab-btn px-4 py-2 font-semibold text-sm rounded-t-lg">Split / Recibos</button>
       </div>
 
       <section id="pane-caixa" class="tab-pane hidden">
@@ -145,6 +148,51 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               </tr>
             </thead>
             <tbody id="creditoBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="pane-admin" class="tab-pane hidden">
+        <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm mb-6">
+          <h2 class="text-lg font-bold mb-4">Resumo de Pagamentos aos Médiuns</h2>
+          <div id="adminSummaryCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+            <div class="rounded-lg bg-slate-50 p-3 border border-slate-200">
+              <p class="text-xs text-slate-500 font-semibold">Total Realizado</p>
+              <p id="adminTotalRealizado" class="text-lg font-bold text-slate-800 mt-1">¥0</p>
+            </div>
+            <div class="rounded-lg bg-slate-50 p-3 border border-slate-200">
+              <p class="text-xs text-slate-500 font-semibold">Imposto Retido</p>
+              <p id="adminTotalImposto" class="text-lg font-bold text-rose-600 mt-1">¥0</p>
+            </div>
+            <div class="rounded-lg bg-slate-50 p-3 border border-slate-200">
+              <p class="text-xs text-slate-500 font-semibold">Valor Líquido Total</p>
+              <p id="adminTotalLiquido" class="text-lg font-bold text-slate-800 mt-1">¥0</p>
+            </div>
+            <div class="rounded-lg bg-green-50 p-3 border border-green-200">
+              <p class="text-xs text-green-700 font-semibold">Já Pagos</p>
+              <p id="adminTotalPago" class="text-lg font-bold text-green-700 mt-1">¥0</p>
+            </div>
+            <div class="rounded-lg bg-amber-50 p-3 border border-amber-200">
+              <p class="text-xs text-amber-700 font-semibold">A Pagar</p>
+              <p id="adminTotalPendente" class="text-lg font-bold text-amber-700 mt-1">¥0</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table class="w-full text-sm min-w-[1200px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+              <tr>
+                <th class="px-4 py-3 text-left">Médium</th>
+                <th class="px-4 py-3 text-center">Transações</th>
+                <th class="px-4 py-3 text-right">Total Realizado</th>
+                <th class="px-4 py-3 text-right">Imposto (Gensen)</th>
+                <th class="px-4 py-3 text-right">Valor Líquido</th>
+                <th class="px-4 py-3 text-right">Já Pagos</th>
+                <th class="px-4 py-3 text-right">A Pagar</th>
+                <th class="px-4 py-3 text-left">Última Transação</th>
+              </tr>
+            </thead>
+            <tbody id="adminPayablesBody" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </section>
@@ -450,6 +498,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (name === 'entradas') loadEntradas();
       if (name === 'credito')  loadCredito();
       if (name === 'split')    loadSplitTab();
+      if (name === 'admin')    loadAdminPayables();
     }
 
     function getSplitConfigPayload() {
@@ -998,6 +1047,39 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <td class="px-4 py-3 text-right">${formatBRLCents(c.valor_original)}</td>
             <td class="px-4 py-3 text-right">${parseFloat(c.percentual).toFixed(0)}%</td>
             <td class="px-4 py-3 text-right font-semibold text-amber-600">${formatBRLCents(c.valor_credito)}</td>
+          </tr>`).join('');
+    }
+
+    async function loadAdminPayables() {
+      const d = await api({ action: 'list_admin_payables' });
+      if (!d.ok) {
+        document.getElementById('adminPayablesBody').innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-red-500">Erro ao carregar dados</td></tr>';
+        return;
+      }
+
+      const totals = d.totals || {};
+      document.getElementById('adminTotalRealizado').textContent = formatBRLCents(totals.valor_total_realizado || 0);
+      document.getElementById('adminTotalImposto').textContent = formatBRLCents(totals.imposto_total || 0);
+      document.getElementById('adminTotalLiquido').textContent = formatBRLCents(totals.valor_liquido_total || 0);
+      document.getElementById('adminTotalPago').textContent = formatBRLCents(totals.valor_pago_total || 0);
+      document.getElementById('adminTotalPendente').textContent = formatBRLCents(totals.valor_pendente_total || 0);
+
+      const body = document.getElementById('adminPayablesBody');
+      body.innerHTML = (d.data || []).length === 0
+        ? '<tr><td colspan="8" class="px-4 py-6 text-center text-slate-400">Nenhum médium registrado</td></tr>'
+        : d.data.map(m => `
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3">
+              <div class="font-medium">${m.medium_name || 'Sem médium'}</div>
+              <div class="text-xs text-slate-500">${m.medium_phone || '-'}</div>
+            </td>
+            <td class="px-4 py-3 text-center text-slate-600">${m.total_transacoes || 0}</td>
+            <td class="px-4 py-3 text-right font-semibold">${formatBRLCents(m.valor_total_realizado || 0)}</td>
+            <td class="px-4 py-3 text-right text-rose-600">${formatBRLCents(m.imposto_total || 0)}</td>
+            <td class="px-4 py-3 text-right font-semibold text-blue-700">${formatBRLCents(m.valor_liquido_medium || 0)}</td>
+            <td class="px-4 py-3 text-right text-green-600">${formatBRLCents(m.valor_pago || 0)}</td>
+            <td class="px-4 py-3 text-right font-bold ${(m.valor_pendente || 0) > 0 ? 'text-amber-600' : 'text-slate-400'}">${formatBRLCents(m.valor_pendente || 0)}</td>
+            <td class="px-4 py-3 text-xs text-slate-500">${m.ultima_transacao || '-'}</td>
           </tr>`).join('');
     }
 

@@ -57,6 +57,27 @@ function buildCalendarEvents(PDO $pdo, string $monthStart, string $monthEnd): ar
         ];
     }
 
+    try {
+        $agendamentoStmt = $pdo->prepare(
+            "SELECT nome, data_agendamento, hora_agendamento, tipo_atendimento, referencia_nome, status
+             FROM atendimento_agendamentos
+             WHERE data_agendamento BETWEEN ? AND ?"
+        );
+        $agendamentoStmt->execute([$monthStart, $monthEnd]);
+        foreach ($agendamentoStmt->fetchAll() as $ag) {
+            $hora = substr((string)($ag['hora_agendamento'] ?? ''), 0, 5);
+            $events[] = [
+                'title' => 'Atendimento - ' . $ag['nome'] . ($ag['referencia_nome'] ? ' (' . $ag['referencia_nome'] . ')' : ''),
+                'date' => $ag['data_agendamento'],
+                'start' => $ag['data_agendamento'] . 'T' . $hora . ':00',
+                'type' => 'agendamento_atendimento',
+                'status' => $ag['status'],
+            ];
+        }
+    } catch (Throwable $e) {
+        // tabela ainda não migrada
+    }
+
     // Contas a pagar no calendário
     $contasStmt = $pdo->prepare(
         "SELECT id, descricao, valor, data_vencimento, status, fornecedor, categoria
@@ -157,6 +178,18 @@ try {
     $receivableStmt = $pdo->prepare('SELECT COALESCE(SUM(amount),0) FROM attendance_installments WHERE due_date BETWEEN ? AND ?');
     $receivableStmt->execute([$monthStart, $monthEnd]);
         $counts['receivable_month'] = (int)$receivableStmt->fetchColumn();
+
+        try {
+            $agendamentosReceberStmt = $pdo->prepare(
+                "SELECT COALESCE(SUM(valor_previsto),0)
+                 FROM atendimento_agendamentos
+                 WHERE status = 'agendado' AND data_agendamento BETWEEN ? AND ?"
+            );
+            $agendamentosReceberStmt->execute([$monthStart, $monthEnd]);
+            $counts['receivable_month'] += (int)$agendamentosReceberStmt->fetchColumn();
+        } catch (Throwable $e) {
+            // tabela ainda não migrada
+        }
 
         $monthStart = (new DateTime('first day of this month'))->format('Y-m-01');
         $mensalidadesStmt = $pdo->prepare(

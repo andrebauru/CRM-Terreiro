@@ -1,7 +1,7 @@
 <?php
 // $activePage - current page identifier (string): 'dashboard', 'atendimentos',
 //   'trabalhos', 'clientes', 'filhos', 'quimbandeiro', 'mensalidades', 'giras',
-//   'servicos', 'financeiro', 'gastos', 'usuarios', 'relatorios', 'configuracoes'
+//   'servicos', 'agendamentos', 'financeiro', 'gastos', 'usuarios', 'relatorios', 'configuracoes'
 
 $navItems = [
   ['page' => 'dashboard',     'href' => 'dashboard.php',     'icon' => 'fa-chart-line',   'label' => 'Dashboard'],
@@ -14,6 +14,7 @@ $navItems = [
   ['page' => 'mensalidades',  'href' => 'mensalidades.php',  'icon' => 'fa-coins',        'label' => 'Mensalidades'],
   ['page' => 'giras',         'href' => 'giras.php',         'icon' => 'fa-drum',         'label' => 'Registro de Giras'],
   ['page' => 'servicos',      'href' => 'servicos.php',      'icon' => 'fa-tags',         'label' => 'Serviços'],
+  ['page' => 'agendamentos',  'href' => 'agendamentos.php',  'icon' => 'fa-calendar-check','label' => 'Agendamentos'],
   ['page' => 'financeiro',    'href' => 'financeiro.php',    'icon' => 'fa-wallet',       'label' => 'Financeiro'],
   ['page' => 'usuarios',      'href' => 'usuarios.php',      'icon' => 'fa-user-shield',  'label' => 'Usuários'],
   ['page' => 'relatorios',    'href' => 'relatorios.php',    'icon' => 'fa-file-lines',   'label' => 'Relatórios'],

@@ -300,6 +300,56 @@ try {
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
 
+    if ($action === 'list_admin_payables') {
+        if ($_apiUserRole !== 'admin') {
+            jsonResponse(['ok' => false, 'message' => 'Acesso restrito a admin'], 403);
+        }
+
+        $stmt = $pdo->query(
+            "SELECT m.id AS medium_id, m.name AS medium_name, m.phone AS medium_phone,
+                    COUNT(ft.id) AS total_transacoes,
+                    SUM(ft.valor_total) AS valor_total_realizado,
+                    SUM(ft.taxa_gensen_paga) AS imposto_total,
+                    SUM(ft.valor_liquido_medium) AS valor_liquido_medium,
+                    SUM(CASE WHEN ft.status_pagamento = 'pago' THEN ft.valor_liquido_medium ELSE 0 END) AS valor_pago,
+                    SUM(CASE WHEN ft.status_pagamento != 'pago' THEN ft.valor_liquido_medium ELSE 0 END) AS valor_pendente,
+                    MAX(COALESCE(ft.data_pagamento, ft.data_realizacao)) AS ultima_transacao
+             FROM users m
+             LEFT JOIN financial_transactions ft ON ft.medium_id = m.id
+             WHERE m.is_active = 1
+             GROUP BY m.id
+             ORDER BY m.name ASC"
+        );
+
+        $payables = $stmt->fetchAll();
+
+        $totalRealizado = 0;
+        $totalImposto = 0;
+        $totalLiquido = 0;
+        $totalPago = 0;
+        $totalPendente = 0;
+
+        foreach ($payables as $p) {
+            $totalRealizado += (int)($p['valor_total_realizado'] ?? 0);
+            $totalImposto += (int)($p['imposto_total'] ?? 0);
+            $totalLiquido += (int)($p['valor_liquido_medium'] ?? 0);
+            $totalPago += (int)($p['valor_pago'] ?? 0);
+            $totalPendente += (int)($p['valor_pendente'] ?? 0);
+        }
+
+        jsonResponse([
+            'ok' => true,
+            'data' => $payables,
+            'totals' => [
+                'valor_total_realizado' => $totalRealizado,
+                'imposto_total' => $totalImposto,
+                'valor_liquido_total' => $totalLiquido,
+                'valor_pago_total' => $totalPago,
+                'valor_pendente_total' => $totalPendente,
+            ],
+        ]);
+    }
+
     if ($action === 'registrar_split_trabalho') {
         $mediumId = (int)($_POST['medium_id'] ?? $_apiUserId);
         $tataId = ((int)($_POST['tata_id'] ?? 0)) ?: null;

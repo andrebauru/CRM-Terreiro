@@ -212,6 +212,27 @@ try {
     );
 
     $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS atendimento_agendamentos (
+            id               INT AUTO_INCREMENT PRIMARY KEY,
+            nome             VARCHAR(255) NOT NULL,
+            data_agendamento DATE NOT NULL,
+            hora_agendamento TIME NOT NULL,
+            tipo_atendimento ENUM('servico','trabalho') NOT NULL DEFAULT 'servico',
+            referencia_id    INT NULL,
+            referencia_nome  VARCHAR(255) NULL,
+            valor_previsto   INT NOT NULL DEFAULT 0,
+            status           ENUM('agendado','realizado','cancelado') NOT NULL DEFAULT 'agendado',
+            observacoes      TEXT NULL,
+            converted_attendance_id INT NULL,
+            created_by       INT NULL,
+            created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_ag_data_hora (data_agendamento, hora_agendamento),
+            KEY idx_ag_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
+    $pdo->exec(
         "CREATE TABLE IF NOT EXISTS attendance_services (
             id            INT AUTO_INCREMENT PRIMARY KEY,
             attendance_id INT NOT NULL,
@@ -343,6 +364,19 @@ try {
     ensureColumn($pdo, 'financial_transactions', 'data_realizacao', 'DATE NOT NULL');
     ensureColumn($pdo, 'financial_transactions', 'data_pagamento', 'DATE NULL');
     ensureColumn($pdo, 'financial_transactions', 'receipt_path', 'VARCHAR(512) NULL');
+
+    // atendimento_agendamentos
+    ensureColumn($pdo, 'atendimento_agendamentos', 'nome', 'VARCHAR(255) NOT NULL');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'data_agendamento', 'DATE NOT NULL');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'hora_agendamento', 'TIME NOT NULL');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'tipo_atendimento', "ENUM('servico','trabalho') NOT NULL DEFAULT 'servico'");
+    ensureColumn($pdo, 'atendimento_agendamentos', 'referencia_id', 'INT NULL');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'referencia_nome', 'VARCHAR(255) NULL');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'valor_previsto', 'INT NOT NULL DEFAULT 0');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'status', "ENUM('agendado','realizado','cancelado') NOT NULL DEFAULT 'agendado'");
+    ensureColumn($pdo, 'atendimento_agendamentos', 'observacoes', 'TEXT NULL');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'converted_attendance_id', 'INT NULL');
+    ensureColumn($pdo, 'atendimento_agendamentos', 'created_by', 'INT NULL');
 
     // ── 4. ENUM MIGRATIONS (ensureEnumHasValue) ───────────────────────────
 

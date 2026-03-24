@@ -386,6 +386,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const monthIndex = viewStart.getUTCMonth();
       const moonEvents = getMoonEvents(year, monthIndex);
       return [...events, ...moonEvents].map((evt) => {
+        if (evt.type === 'agendamento_atendimento') {
+          return {
+            title: evt.title,
+            start: evt.start || (evt.date ? `${evt.date}T09:00:00` : undefined),
+            color: '#ec4899',
+            textColor: '#831843',
+          };
+        }
         if (evt.type === 'trabalho') return { title: evt.title, date: evt.date, color: '#2563eb' };
         if (evt.type === 'mensalidade') return { title: evt.title, date: evt.date, color: '#10b981' };
         if (evt.type === 'conta_pagar') return { title: evt.title, date: evt.date, color: evt.status === 'Pago' ? '#6b7280' : '#dc2626' };
