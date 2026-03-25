@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/_auth_guard.php';
+require_once __DIR__ . '/../app/Helpers/SendGridNotifier.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
@@ -46,6 +47,8 @@ try {
             'INSERT INTO avisos (titulo, mensagem, is_active, created_by) VALUES (?, ?, ?, ?)'
         )->execute([$titulo, $mensagem, $isActive ? 1 : 0, $_apiUserId]);
 
+        sendGridNotifyBoard($pdo, 'Avisos', 'create', $titulo, $mensagem);
+
         jsonResponse(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
     }
 
@@ -63,6 +66,8 @@ try {
             'UPDATE avisos SET titulo = ?, mensagem = ?, is_active = ? WHERE id = ?'
         )->execute([$titulo, $mensagem, $isActive ? 1 : 0, $id]);
 
+        sendGridNotifyBoard($pdo, 'Avisos', 'update', $titulo, $mensagem);
+
         jsonResponse(['ok' => true]);
     }
 
@@ -72,7 +77,20 @@ try {
             jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
         }
 
+        $aviso = $pdo->prepare('SELECT titulo, mensagem FROM avisos WHERE id = ? LIMIT 1');
+        $aviso->execute([$id]);
+        $avisoData = $aviso->fetch() ?: ['titulo' => 'Aviso removido', 'mensagem' => ''];
+
         $pdo->prepare('DELETE FROM avisos WHERE id = ?')->execute([$id]);
+
+        sendGridNotifyBoard(
+            $pdo,
+            'Avisos',
+            'delete',
+            (string)($avisoData['titulo'] ?? 'Aviso removido'),
+            (string)($avisoData['mensagem'] ?? '')
+        );
+
         jsonResponse(['ok' => true]);
     }
 

@@ -27,6 +27,8 @@ try {
             client_name     VARCHAR(255),
             company_name    VARCHAR(255),
             logo_path       VARCHAR(512),
+            notification_email VARCHAR(255) NULL,
+            sendgrid_api_key TEXT NULL,
             currency_code   VARCHAR(3) NOT NULL DEFAULT 'JPY',
             currency_symbol VARCHAR(8) NOT NULL DEFAULT '¥',
             timezone        VARCHAR(64) NOT NULL DEFAULT 'Asia/Tokyo',
@@ -428,6 +430,9 @@ try {
             $pdo->exec("ALTER TABLE `$tbl` MODIFY `$col` $def");
         }
     }
+
+    ensureColumn($pdo, 'settings', 'notification_email', "VARCHAR(255) NULL AFTER logo_path");
+    ensureColumn($pdo, 'settings', 'sendgrid_api_key', "TEXT NULL AFTER notification_email");
 
     // ── 6. SEEDS ──────────────────────────────────────────────────────────
 

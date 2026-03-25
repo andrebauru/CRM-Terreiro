@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/_auth_guard.php';
+require_once __DIR__ . '/../app/Helpers/SendGridNotifier.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
@@ -113,6 +114,16 @@ try {
             VALUES (?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([$tipoId, $plataforma, $fotoPath, $dataPostagem, $dataRealizacao, $descricao]);
+
+        $tipoNomeStmt = $pdo->prepare('SELECT nome FROM tipos_gira WHERE id = ? LIMIT 1');
+        $tipoNomeStmt->execute([$tipoId]);
+        $tipoNome = (string)($tipoNomeStmt->fetchColumn() ?: 'Gira');
+        $detalhes = 'Data de realização: ' . $dataRealizacao
+            . ($dataPostagem ? "\nData de postagem: " . $dataPostagem : '')
+            . "\nPlataforma: " . $plataforma
+            . ($descricao ? "\nDescrição: " . $descricao : '');
+        sendGridNotifyBoard($pdo, 'Avisos', 'create', $tipoNome, $detalhes);
+
         jsonResponse(['ok' => true, 'id' => $pdo->lastInsertId()]);
     }
 
@@ -158,6 +169,15 @@ try {
             $stmt->execute([$tipoId, $plataforma, $dataPostagem, $dataRealizacao, $descricao, $id]);
         }
 
+        $tipoNomeStmt = $pdo->prepare('SELECT nome FROM tipos_gira WHERE id = ? LIMIT 1');
+        $tipoNomeStmt->execute([$tipoId]);
+        $tipoNome = (string)($tipoNomeStmt->fetchColumn() ?: 'Gira');
+        $detalhes = 'Data de realização: ' . $dataRealizacao
+            . ($dataPostagem ? "\nData de postagem: " . $dataPostagem : '')
+            . "\nPlataforma: " . $plataforma
+            . ($descricao ? "\nDescrição: " . $descricao : '');
+        sendGridNotifyBoard($pdo, 'Avisos', 'update', $tipoNome, $detalhes);
+
         jsonResponse(['ok' => true]);
     }
 
@@ -167,8 +187,29 @@ try {
         if (!$id) {
             jsonResponse(['ok' => false, 'message' => 'ID obrigatório'], 400);
         }
+
+        $giraStmt = $pdo->prepare(
+            'SELECT g.data_realizacao, g.data_postagem, g.plataforma, g.descricao, t.nome AS tipo_nome
+             FROM giras g
+             JOIN tipos_gira t ON t.id = g.tipo_gira_id
+             WHERE g.id = ? LIMIT 1'
+        );
+        $giraStmt->execute([$id]);
+        $gira = $giraStmt->fetch() ?: [];
+
         $stmt = $pdo->prepare('DELETE FROM giras WHERE id = ?');
         $stmt->execute([$id]);
+
+        if (!empty($gira)) {
+            $detalhes = 'Data de realização: ' . (string)($gira['data_realizacao'] ?? '')
+                . (!empty($gira['data_postagem']) ? "\nData de postagem: " . (string)$gira['data_postagem'] : '')
+                . "\nPlataforma: " . (string)($gira['plataforma'] ?? '')
+                . (!empty($gira['descricao']) ? "\nDescrição: " . (string)$gira['descricao'] : '');
+            sendGridNotifyBoard($pdo, 'Avisos', 'delete', (string)($gira['tipo_nome'] ?? 'Gira'), $detalhes);
+        } else {
+            sendGridNotifyBoard($pdo, 'Avisos', 'delete', 'Gira removida', 'Registro excluído.');
+        }
+
         jsonResponse(['ok' => true]);
     }
 

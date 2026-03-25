@@ -58,6 +58,8 @@ function runAutoMigrate(PDO $pdo): void
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 company_name VARCHAR(255) DEFAULT 'CRM Terreiro',
                 logo_path VARCHAR(512) NULL,
+                notification_email VARCHAR(255) NULL,
+                sendgrid_api_key TEXT NULL,
                 currency_code VARCHAR(10) DEFAULT 'JPY',
                 currency_symbol VARCHAR(10) DEFAULT '¥',
                 language VARCHAR(10) DEFAULT 'pt',
@@ -65,6 +67,8 @@ function runAutoMigrate(PDO $pdo): void
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+        ensureColumn($pdo, 'settings', 'notification_email', 'VARCHAR(255) NULL');
+        ensureColumn($pdo, 'settings', 'sendgrid_api_key', 'TEXT NULL');
         // Seed settings if empty
         $cnt = (int)$pdo->query("SELECT COUNT(*) FROM settings")->fetchColumn();
         if ($cnt === 0) {

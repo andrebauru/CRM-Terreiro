@@ -42,6 +42,17 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               </select>
             </div>
           </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-slate-700">E-mail para notificações</label>
+              <input id="notificationEmail" type="email" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="seu@email.com" />
+            </div>
+            <div>
+              <label class="text-sm font-medium text-slate-700">API Key SendGrid</label>
+              <input id="sendgridApiKey" type="password" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="SG.xxxxx" autocomplete="new-password" />
+              <p id="sendgridInfo" class="text-xs text-slate-500 mt-1 hidden">API Key já cadastrada. Preencha apenas para substituir.</p>
+            </div>
+          </div>
           <div class="flex gap-2">
             <button type="submit" class="px-4 py-2 rounded-xl bg-accent text-white">Salvar</button>
             <a href="api/backup.php" class="px-4 py-2 rounded-xl border border-slate-200">Backup SQL</a>
@@ -101,6 +112,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const logoPreview = document.getElementById('logoPreview');
     const currencyCode = document.getElementById('currencyCode');
     const language = document.getElementById('language');
+    const notificationEmail = document.getElementById('notificationEmail');
+    const sendgridApiKey = document.getElementById('sendgridApiKey');
+    const sendgridInfo = document.getElementById('sendgridInfo');
 
     const loadSettings = async () => {
       const response = await fetch('api/settings.php?action=get', { cache: 'no-store' });
@@ -109,6 +123,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       companyName.value = data.data.company_name || 'CRM Terreiro';
       currencyCode.value = data.data.currency_code || 'JPY';
       language.value = data.data.language || 'pt';
+      notificationEmail.value = data.data.notification_email || '';
+      if (data.data.has_sendgrid_api_key) {
+        sendgridInfo.classList.remove('hidden');
+      }
       if (data.data.logo_path) {
         logoPreview.innerHTML = `<img src="${data.data.logo_path}" class="h-16 rounded-xl border border-slate-200" />`;
       }
@@ -121,6 +139,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       formData.append('company_name', companyName.value);
       formData.append('currency_code', currencyCode.value);
       formData.append('language', language.value);
+      formData.append('notification_email', notificationEmail.value);
+      formData.append('sendgrid_api_key', sendgridApiKey.value);
       if (logoInput.files.length) {
         formData.append('logo', logoInput.files[0]);
       }

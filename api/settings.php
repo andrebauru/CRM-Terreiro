@@ -14,6 +14,8 @@ try {
     if ($exists === 0) {
         $pdo->exec("INSERT INTO settings (company_name) VALUES ('CRM Terreiro')");
     }
+    ensureColumn($pdo, 'settings', 'notification_email', 'VARCHAR(255) NULL');
+    ensureColumn($pdo, 'settings', 'sendgrid_api_key', 'TEXT NULL');
 
     // Endpoint para registrar prints/cópias
     if ($action === 'log_event') {
@@ -44,7 +46,12 @@ try {
 
     if ($action === 'get') {
         $stmt = $pdo->query('SELECT * FROM settings ORDER BY id ASC LIMIT 1');
-        jsonResponse(['ok' => true, 'data' => $stmt->fetch()]);
+        $data = $stmt->fetch() ?: [];
+        if (array_key_exists('sendgrid_api_key', $data)) {
+            $data['has_sendgrid_api_key'] = trim((string)$data['sendgrid_api_key']) !== '';
+            $data['sendgrid_api_key'] = '';
+        }
+        jsonResponse(['ok' => true, 'data' => $data]);
     }
 
     if ($action === 'update') {
@@ -60,6 +67,8 @@ try {
         if (!in_array($language, ['pt', 'ja'], true)) {
             $language = 'pt';
         }
+        $notificationEmail = trim((string)($_POST['notification_email'] ?? ''));
+        $sendgridApiKey = trim((string)($_POST['sendgrid_api_key'] ?? ''));
         $logoPath = null;
 
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
@@ -91,6 +100,14 @@ try {
         $sql .= ', language = ?';
         $params[] = $language;
 
+        $sql .= ', notification_email = ?';
+        $params[] = $notificationEmail !== '' ? $notificationEmail : null;
+
+        if ($sendgridApiKey !== '') {
+            $sql .= ', sendgrid_api_key = ?';
+            $params[] = $sendgridApiKey;
+        }
+
         if ($logoPath) {
             $sql .= ', logo_path = ?';
             $params[] = $logoPath;
@@ -101,7 +118,12 @@ try {
         $stmt->execute($params);
 
         $stmt = $pdo->query('SELECT * FROM settings ORDER BY id ASC LIMIT 1');
-        jsonResponse(['ok' => true, 'data' => $stmt->fetch()]);
+        $data = $stmt->fetch() ?: [];
+        if (array_key_exists('sendgrid_api_key', $data)) {
+            $data['has_sendgrid_api_key'] = trim((string)$data['sendgrid_api_key']) !== '';
+            $data['sendgrid_api_key'] = '';
+        }
+        jsonResponse(['ok' => true, 'data' => $data]);
     }
 
     jsonResponse(['ok' => false, 'message' => 'Ação inválida'], 400);
