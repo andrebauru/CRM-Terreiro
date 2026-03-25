@@ -462,6 +462,35 @@ function runAutoMigrate(PDO $pdo): void
         ensureColumn($pdo, 'financial_transactions', 'data_pagamento', 'DATE NULL');
         ensureColumn($pdo, 'financial_transactions', 'receipt_path', 'VARCHAR(512) NULL');
 
+        try {
+            // Backfill: usuários existentes (role=user) viram membros probatórios
+            // Regra: se email já existir em filhos, não migra aquele usuário.
+            $pdo->exec(
+                "INSERT INTO filhos (name, email, phone, grade, grade_date, status)
+                 SELECT u.name, u.email, NULLIF(u.phone, ''), 'Probatório', DATE(u.created_at), 'ativo'
+                 FROM users u
+                 LEFT JOIN filhos f ON f.email = u.email
+                 WHERE u.role = 'user'
+                   AND u.email IS NOT NULL
+                   AND u.email <> ''
+                   AND f.id IS NULL"
+            );
+
+            $pdo->exec(
+                "INSERT INTO quimbandeiro (filho_id, probatorio)
+                 SELECT f.id, COALESCE(f.grade_date, CURDATE())
+                 FROM filhos f
+                 JOIN users u ON u.email = f.email
+                 LEFT JOIN quimbandeiro q ON q.filho_id = f.id
+                 WHERE u.role = 'user'
+                   AND u.email IS NOT NULL
+                   AND u.email <> ''
+                   AND q.filho_id IS NULL"
+            );
+        } catch (Throwable $e) {
+            // ignora falhas de backfill para não bloquear carregamento de página
+        }
+
         $_SESSION['_auto_migrated'] = true;
     } catch (Throwable $e) {
         // Log error but don't break the page

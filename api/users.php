@@ -10,6 +10,41 @@ if (session_status() === PHP_SESSION_NONE) {
     safeSessionStart();
 }
 
+function migrateUserToMemberIfNeeded(PDO $pdo, string $name, string $email, string $phone, ?string $registrationDate = null): int
+{
+    $registrationDate = $registrationDate ?: date('Y-m-d');
+
+    if ($email === '') {
+        return 0;
+    }
+
+    $stmt = $pdo->prepare('SELECT id FROM filhos WHERE email = ? ORDER BY id ASC LIMIT 1');
+    $stmt->execute([$email]);
+    $filhoIdExistente = (int)($stmt->fetchColumn() ?: 0);
+    if ($filhoIdExistente > 0) {
+        // Regra solicitada: se e-mail já existir, não realiza a migração
+        return 0;
+    }
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO filhos
+            (name, email, phone, grade, grade_date, status)
+         VALUES
+            (?, ?, ?, 'Probatório', ?, 'ativo')"
+    );
+    $stmt->execute([$name, $email, $phone !== '' ? $phone : null, $registrationDate]);
+    $filhoId = (int)$pdo->lastInsertId();
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO quimbandeiro (filho_id, probatorio)
+         VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE probatorio = VALUES(probatorio)"
+    );
+    $stmt->execute([$filhoId, $registrationDate]);
+
+    return $filhoId;
+}
+
 // ── REGISTER (self-registration, no auth needed) ──
 if ($action === 'register') {
     try {
@@ -30,10 +65,21 @@ if ($action === 'register') {
         }
         $phone = trim((string)($_POST['phone'] ?? ''));
         $hash = password_hash($password, PASSWORD_DEFAULT);
+
+        $pdo->beginTransaction();
+
         $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, password, role, is_active) VALUES (?, ?, ?, ?, ?, ?)');
         $stmt->execute([$name, $email, $phone, $hash, 'user', 0]);
+
+        $registrationDate = date('Y-m-d');
+        migrateUserToMemberIfNeeded($pdo, $name, $email, $phone, $registrationDate);
+
+        $pdo->commit();
         jsonResponse(['ok' => true, 'message' => 'Cadastro realizado! Aguarde a ativação pelo administrador.']);
     } catch (Throwable $e) {
+        if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         safeJsonError($e);
     }
 }
@@ -71,8 +117,16 @@ try {
         $password = $_POST['password'] ?? '123456';
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
+        $pdo->beginTransaction();
+
         $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, password, role, is_active, allowed_pages) VALUES (?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([$name, $email, $phone, $hash, $role, $isActive, $allowedPages ?: null]);
+
+        if ($role === 'user') {
+            migrateUserToMemberIfNeeded($pdo, $name, $email, $phone, date('Y-m-d'));
+        }
+
+        $pdo->commit();
         jsonResponse(['ok' => true, 'id' => $pdo->lastInsertId()]);
     }
 
@@ -125,5 +179,8 @@ try {
 
     jsonResponse(['ok' => false, 'message' => 'Ação inválida'], 400);
 } catch (Throwable $e) {
+    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     safeJsonError($e);
 }
