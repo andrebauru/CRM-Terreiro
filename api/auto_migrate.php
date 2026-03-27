@@ -60,6 +60,8 @@ function runAutoMigrate(PDO $pdo): void
                 logo_path VARCHAR(512) NULL,
                 notification_email VARCHAR(255) NULL,
                 sendgrid_api_key TEXT NULL,
+                sendgrid_from_email VARCHAR(255) NULL,
+                sendgrid_from_name VARCHAR(255) NULL,
                 currency_code VARCHAR(10) DEFAULT 'JPY',
                 currency_symbol VARCHAR(10) DEFAULT '¥',
                 language VARCHAR(10) DEFAULT 'pt',
@@ -69,6 +71,28 @@ function runAutoMigrate(PDO $pdo): void
         ");
         ensureColumn($pdo, 'settings', 'notification_email', 'VARCHAR(255) NULL');
         ensureColumn($pdo, 'settings', 'sendgrid_api_key', 'TEXT NULL');
+        ensureColumn($pdo, 'settings', 'sendgrid_from_email', 'VARCHAR(255) NULL');
+        ensureColumn($pdo, 'settings', 'sendgrid_from_name', 'VARCHAR(255) NULL');
+
+        $pdo->exec(" 
+            CREATE TABLE IF NOT EXISTS sendgrid_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NULL,
+                section VARCHAR(80) NULL,
+                action_name VARCHAR(80) NULL,
+                title VARCHAR(255) NULL,
+                to_email VARCHAR(255) NULL,
+                from_email VARCHAR(255) NULL,
+                subject VARCHAR(255) NULL,
+                status_code INT NOT NULL DEFAULT 0,
+                success TINYINT(1) NOT NULL DEFAULT 0,
+                message TEXT NULL,
+                provider_response MEDIUMTEXT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_sendgrid_logs_created (created_at),
+                INDEX idx_sendgrid_logs_success (success, created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
         // Seed settings if empty
         $cnt = (int)$pdo->query("SELECT COUNT(*) FROM settings")->fetchColumn();
         if ($cnt === 0) {

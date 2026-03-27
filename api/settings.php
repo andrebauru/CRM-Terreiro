@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/_auth_guard.php';
+require_once __DIR__ . '/../app/Helpers/SendGridNotifier.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'get';
 
@@ -16,6 +17,8 @@ try {
     }
     ensureColumn($pdo, 'settings', 'notification_email', 'VARCHAR(255) NULL');
     ensureColumn($pdo, 'settings', 'sendgrid_api_key', 'TEXT NULL');
+    ensureColumn($pdo, 'settings', 'sendgrid_from_email', 'VARCHAR(255) NULL');
+    ensureColumn($pdo, 'settings', 'sendgrid_from_name', 'VARCHAR(255) NULL');
 
     // Endpoint para registrar prints/cópias
     if ($action === 'log_event') {
@@ -40,8 +43,47 @@ try {
 
     // Endpoint para retornar logs de prints/cópias
     if ($action === 'get_logs_eventos') {
+        if ($_apiUserRole !== 'admin') {
+            jsonResponse(['ok' => false, 'message' => 'Acesso restrito a administradores'], 403);
+        }
         $stmt = $pdo->query("SELECT l.*, u.name AS user_name FROM logs_eventos l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.id DESC LIMIT 100");
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+    }
+
+    if ($action === 'get_sendgrid_logs') {
+        if ($_apiUserRole !== 'admin') {
+            jsonResponse(['ok' => false, 'message' => 'Acesso restrito a administradores'], 403);
+        }
+
+        ensureSendGridLogsTable($pdo);
+        $stmt = $pdo->query(
+            "SELECT l.*, u.name AS user_name
+             FROM sendgrid_logs l
+             LEFT JOIN users u ON u.id = l.user_id
+             ORDER BY l.id DESC
+             LIMIT 100"
+        );
+        jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
+    }
+
+    if ($action === 'test_sendgrid') {
+        if ($_apiUserRole !== 'admin') {
+            jsonResponse(['ok' => false, 'message' => 'Acesso restrito a administradores'], 403);
+        }
+
+        $result = sendGridNotifyBoard(
+            $pdo,
+            'SendGrid',
+            'test',
+            'Teste de integração',
+            'Disparo de teste executado em ' . date('Y-m-d H:i:s')
+        );
+
+        jsonResponse([
+            'ok' => !empty($result['ok']),
+            'message' => (string)($result['message'] ?? ''),
+            'data' => $result,
+        ], !empty($result['ok']) ? 200 : 422);
     }
 
     if ($action === 'get') {
@@ -69,6 +111,8 @@ try {
         }
         $notificationEmail = trim((string)($_POST['notification_email'] ?? ''));
         $sendgridApiKey = trim((string)($_POST['sendgrid_api_key'] ?? ''));
+        $sendgridFromEmail = trim((string)($_POST['sendgrid_from_email'] ?? ''));
+        $sendgridFromName = trim((string)($_POST['sendgrid_from_name'] ?? ''));
         $logoPath = null;
 
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
@@ -102,6 +146,12 @@ try {
 
         $sql .= ', notification_email = ?';
         $params[] = $notificationEmail !== '' ? $notificationEmail : null;
+
+        $sql .= ', sendgrid_from_email = ?';
+        $params[] = $sendgridFromEmail !== '' ? $sendgridFromEmail : null;
+
+        $sql .= ', sendgrid_from_name = ?';
+        $params[] = $sendgridFromName !== '' ? $sendgridFromName : null;
 
         if ($sendgridApiKey !== '') {
             $sql .= ', sendgrid_api_key = ?';

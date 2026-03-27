@@ -122,7 +122,7 @@ try {
             . ($dataPostagem ? "\nData de postagem: " . $dataPostagem : '')
             . "\nPlataforma: " . $plataforma
             . ($descricao ? "\nDescrição: " . $descricao : '');
-        sendGridNotifyBoard($pdo, 'Avisos', 'create', $tipoNome, $detalhes);
+        sendGridNotifyBoard($pdo, 'Giras', 'create', $tipoNome, $detalhes);
 
         jsonResponse(['ok' => true, 'id' => $pdo->lastInsertId()]);
     }
@@ -176,7 +176,7 @@ try {
             . ($dataPostagem ? "\nData de postagem: " . $dataPostagem : '')
             . "\nPlataforma: " . $plataforma
             . ($descricao ? "\nDescrição: " . $descricao : '');
-        sendGridNotifyBoard($pdo, 'Avisos', 'update', $tipoNome, $detalhes);
+        sendGridNotifyBoard($pdo, 'Giras', 'update', $tipoNome, $detalhes);
 
         jsonResponse(['ok' => true]);
     }
@@ -205,9 +205,9 @@ try {
                 . (!empty($gira['data_postagem']) ? "\nData de postagem: " . (string)$gira['data_postagem'] : '')
                 . "\nPlataforma: " . (string)($gira['plataforma'] ?? '')
                 . (!empty($gira['descricao']) ? "\nDescrição: " . (string)$gira['descricao'] : '');
-            sendGridNotifyBoard($pdo, 'Avisos', 'delete', (string)($gira['tipo_nome'] ?? 'Gira'), $detalhes);
+            sendGridNotifyBoard($pdo, 'Giras', 'delete', (string)($gira['tipo_nome'] ?? 'Gira'), $detalhes);
         } else {
-            sendGridNotifyBoard($pdo, 'Avisos', 'delete', 'Gira removida', 'Registro excluído.');
+            sendGridNotifyBoard($pdo, 'Giras', 'delete', 'Gira removida', 'Registro excluído.');
         }
 
         jsonResponse(['ok' => true]);

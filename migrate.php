@@ -29,6 +29,8 @@ try {
             logo_path       VARCHAR(512),
             notification_email VARCHAR(255) NULL,
             sendgrid_api_key TEXT NULL,
+            sendgrid_from_email VARCHAR(255) NULL,
+            sendgrid_from_name VARCHAR(255) NULL,
             currency_code   VARCHAR(3) NOT NULL DEFAULT 'JPY',
             currency_symbol VARCHAR(8) NOT NULL DEFAULT '¥',
             timezone        VARCHAR(64) NOT NULL DEFAULT 'Asia/Tokyo',
@@ -47,6 +49,26 @@ try {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             KEY idx_avisos_active_date (is_active, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS sendgrid_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NULL,
+            section VARCHAR(80) NULL,
+            action_name VARCHAR(80) NULL,
+            title VARCHAR(255) NULL,
+            to_email VARCHAR(255) NULL,
+            from_email VARCHAR(255) NULL,
+            subject VARCHAR(255) NULL,
+            status_code INT NOT NULL DEFAULT 0,
+            success TINYINT(1) NOT NULL DEFAULT 0,
+            message TEXT NULL,
+            provider_response MEDIUMTEXT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_sendgrid_logs_created (created_at),
+            KEY idx_sendgrid_logs_success (success, created_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
     );
 
@@ -433,6 +455,8 @@ try {
 
     ensureColumn($pdo, 'settings', 'notification_email', "VARCHAR(255) NULL AFTER logo_path");
     ensureColumn($pdo, 'settings', 'sendgrid_api_key', "TEXT NULL AFTER notification_email");
+    ensureColumn($pdo, 'settings', 'sendgrid_from_email', "VARCHAR(255) NULL AFTER sendgrid_api_key");
+    ensureColumn($pdo, 'settings', 'sendgrid_from_name', "VARCHAR(255) NULL AFTER sendgrid_from_email");
 
     // ── 6. SEEDS ──────────────────────────────────────────────────────────
 

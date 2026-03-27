@@ -48,6 +48,16 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <input id="notificationEmail" type="email" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="seu@email.com" />
             </div>
             <div>
+              <label class="text-sm font-medium text-slate-700">E-mail remetente (verificado no SendGrid)</label>
+              <input id="sendgridFromEmail" type="email" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="no-reply@seu-dominio.com" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-slate-700">Nome remetente</label>
+              <input id="sendgridFromName" type="text" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="CRM Terreiro" />
+            </div>
+            <div>
               <label class="text-sm font-medium text-slate-700">API Key SendGrid</label>
               <input id="sendgridApiKey" type="password" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="SG.xxxxx" autocomplete="new-password" />
               <p id="sendgridInfo" class="text-xs text-slate-500 mt-1 hidden">API Key já cadastrada. Preencha apenas para substituir.</p>
@@ -55,6 +65,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </div>
           <div class="flex gap-2">
             <button type="submit" class="px-4 py-2 rounded-xl bg-accent text-white">Salvar</button>
+            <button type="button" id="testSendgridBtn" class="px-4 py-2 rounded-xl border border-emerald-300 text-emerald-700">Testar SendGrid</button>
             <a href="api/backup.php" class="px-4 py-2 rounded-xl border border-slate-200">Backup SQL</a>
           </div>
         </form>
@@ -83,23 +94,77 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </table>
         </div>
       </section>
+
+      <section class="bg-white border border-emerald-200 rounded-2xl p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-emerald-700">Logs de E-mail (SendGrid)</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-slate-500">
+              <tr>
+                <th class="text-left pb-3">Data</th>
+                <th class="text-left pb-3">Usuário</th>
+                <th class="text-left pb-3">Seção</th>
+                <th class="text-left pb-3">Ação</th>
+                <th class="text-left pb-3">Status</th>
+                <th class="text-left pb-3">Mensagem</th>
+                <th class="text-left pb-3">Resposta SendGrid</th>
+              </tr>
+            </thead>
+            <tbody id="sendgridLogsTable">
+              <tr><td class="py-3" colspan="7">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
       <script>
+        function escapeHtml(value) {
+          return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
         async function loadLogsEventos() {
           const response = await fetch('api/settings.php?action=get_logs_eventos');
           const data = await response.json();
           const rows = (data.data || []).map(log => `
             <tr class="border-t border-slate-100">
-              <td class="py-3">${log.user_name || '-'}</td>
-              <td class="py-3">${log.event}</td>
-              <td class="py-3">${log.page}</td>
-              <td class="py-3">${log.ip}</td>
-              <td class="py-3">${log.created_at}</td>
-              <td class="py-3 text-xs">${log.user_agent ? log.user_agent.slice(0,40)+'...' : '-'}</td>
+              <td class="py-3">${escapeHtml(log.user_name || '-')}</td>
+              <td class="py-3">${escapeHtml(log.event || '-')}</td>
+              <td class="py-3">${escapeHtml(log.page || '-')}</td>
+              <td class="py-3">${escapeHtml(log.ip || '-')}</td>
+              <td class="py-3">${escapeHtml(log.created_at || '-')}</td>
+              <td class="py-3 text-xs">${escapeHtml(log.user_agent ? log.user_agent.slice(0,40)+'...' : '-')}</td>
             </tr>
           `).join('');
           document.getElementById('logsEventosTable').innerHTML = rows || '<tr><td class="py-3" colspan="6">Nenhum log encontrado.</td></tr>';
         }
-        document.addEventListener('DOMContentLoaded', loadLogsEventos);
+
+        async function loadSendgridLogs() {
+          const response = await fetch('api/settings.php?action=get_sendgrid_logs');
+          const data = await response.json();
+          const rows = (data.data || []).map(log => `
+            <tr class="border-t border-slate-100">
+              <td class="py-3">${escapeHtml(log.created_at || '-')}</td>
+              <td class="py-3">${escapeHtml(log.user_name || '-')}</td>
+              <td class="py-3">${escapeHtml(log.section || '-')}</td>
+              <td class="py-3">${escapeHtml(log.action_name || '-')}</td>
+              <td class="py-3 ${Number(log.success) === 1 ? 'text-emerald-700' : 'text-red-700'}">${Number(log.success) === 1 ? 'Sucesso' : 'Falha'} (${log.status_code || 0})</td>
+              <td class="py-3 text-xs">${escapeHtml((log.message || '-').slice(0, 180))}</td>
+              <td class="py-3 text-xs">${escapeHtml((log.provider_response || '-').slice(0, 220))}</td>
+            </tr>
+          `).join('');
+          document.getElementById('sendgridLogsTable').innerHTML = rows || '<tr><td class="py-3" colspan="7">Nenhum log encontrado.</td></tr>';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          loadLogsEventos();
+          loadSendgridLogs();
+        });
       </script>
     </main>
   </div>
@@ -113,8 +178,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const currencyCode = document.getElementById('currencyCode');
     const language = document.getElementById('language');
     const notificationEmail = document.getElementById('notificationEmail');
+    const sendgridFromEmail = document.getElementById('sendgridFromEmail');
+    const sendgridFromName = document.getElementById('sendgridFromName');
     const sendgridApiKey = document.getElementById('sendgridApiKey');
     const sendgridInfo = document.getElementById('sendgridInfo');
+    const testSendgridBtn = document.getElementById('testSendgridBtn');
 
     const loadSettings = async () => {
       const response = await fetch('api/settings.php?action=get', { cache: 'no-store' });
@@ -124,6 +192,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       currencyCode.value = data.data.currency_code || 'JPY';
       language.value = data.data.language || 'pt';
       notificationEmail.value = data.data.notification_email || '';
+      sendgridFromEmail.value = data.data.sendgrid_from_email || '';
+      sendgridFromName.value = data.data.sendgrid_from_name || '';
       if (data.data.has_sendgrid_api_key) {
         sendgridInfo.classList.remove('hidden');
       }
@@ -140,6 +210,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       formData.append('currency_code', currencyCode.value);
       formData.append('language', language.value);
       formData.append('notification_email', notificationEmail.value);
+      formData.append('sendgrid_from_email', sendgridFromEmail.value);
+      formData.append('sendgrid_from_name', sendgridFromName.value);
       formData.append('sendgrid_api_key', sendgridApiKey.value);
       if (logoInput.files.length) {
         formData.append('logo', logoInput.files[0]);
@@ -155,6 +227,28 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       }
       alert('Configurações salvas! A página será recarregada para aplicar as alterações.');
       location.reload();
+    });
+
+    testSendgridBtn.addEventListener('click', async () => {
+      testSendgridBtn.disabled = true;
+      const originalText = testSendgridBtn.textContent;
+      testSendgridBtn.textContent = 'Testando...';
+      try {
+        const response = await fetch('api/settings.php', {
+          method: 'POST',
+          body: new URLSearchParams({ action: 'test_sendgrid' }),
+        });
+        const data = await response.json();
+        alert(data.message || (data.ok ? 'Teste enviado com sucesso.' : 'Falha no teste de envio.'));
+        if (typeof loadSendgridLogs === 'function') {
+          loadSendgridLogs();
+        }
+      } catch (error) {
+        alert('Erro ao testar SendGrid.');
+      } finally {
+        testSendgridBtn.disabled = false;
+        testSendgridBtn.textContent = originalText;
+      }
     });
 
     loadSettings();

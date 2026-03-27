@@ -67,6 +67,11 @@ try {
 $_crmCurrCode   = $_crmSettings['currency_code']   ?? 'JPY';
 $_crmCurrSymbol = $_crmSettings['currency_symbol']  ?? '¥';
 $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
+$_crmCurrentUserLabel = (string)(
+  $_SESSION['user_name']
+  ?? $_SESSION['user_email']
+  ?? ('user#' . $_currentUserId)
+);
 
 // $pageTitle - page title (string)
 // $extraHead - optional extra head content (string)
@@ -129,9 +134,29 @@ $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
       .md\:hidden{display:none!important}
       .md\:p-8{padding:2rem!important}
     }
+    .crm-watermark-layer{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:45;
+      opacity:.13;
+      display:none;
+      user-select:none;
+      overflow:hidden;
+    }
+    .crm-watermark-layer .wm{
+      position:absolute;
+      color:#dc2626;
+      font-weight:700;
+      font-size:16px;
+      transform:rotate(-26deg);
+      white-space:nowrap;
+      text-shadow:0 1px 0 rgba(255,255,255,.45);
+    }
   </style>
   <script>
     window.__crmSensitiveProtection = window.__crmSensitiveProtection || { boundPages: {} };
+    window.__crmCurrentUserLabel = <?= json_encode($_crmCurrentUserLabel, JSON_UNESCAPED_UNICODE) ?>;
 
     window.initSensitivePageProtection = function initSensitivePageProtection(pageName) {
       const overlay = document.getElementById('printBlockOverlay');
@@ -158,6 +183,40 @@ $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
         logEvent(eventName || 'capture_attempt');
       };
 
+      const mountWatermark = () => {
+        const id = 'crmWatermarkLayer';
+        let layer = document.getElementById(id);
+        if (!layer) {
+          layer = document.createElement('div');
+          layer.id = id;
+          layer.className = 'crm-watermark-layer';
+          document.body.appendChild(layer);
+        }
+        layer.innerHTML = '';
+
+        const user = String(window.__crmCurrentUserLabel || 'user');
+        const stamp = new Date().toLocaleString('pt-BR');
+        const text = `${pageName} • ${user} • ${stamp}`;
+
+        const cols = 6;
+        const rows = 6;
+        const stepX = Math.ceil(window.innerWidth / cols);
+        const stepY = Math.ceil(window.innerHeight / rows);
+
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const wm = document.createElement('div');
+            wm.className = 'wm';
+            wm.textContent = text;
+            wm.style.left = `${x * stepX - 40}px`;
+            wm.style.top = `${y * stepY + 20}px`;
+            layer.appendChild(wm);
+          }
+        }
+
+        layer.style.display = 'block';
+      };
+
       window.hidePrintBlockOverlay = function hidePrintBlockOverlay() {
         overlay.style.display = 'none';
       };
@@ -167,11 +226,12 @@ $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
       };
 
       const isMacShotShortcut = (event) => event.metaKey && event.shiftKey && ['3', '4', '5'].includes(event.key);
+      const isWindowsSnippingShortcut = (event) => event.metaKey && event.shiftKey && String(event.key || '').toLowerCase() === 's';
       const isPrintShortcut = (event) => (event.ctrlKey || event.metaKey) && String(event.key || '').toLowerCase() === 'p';
       const isPrintScreenKey = (event) => event.key === 'PrintScreen' || event.code === 'PrintScreen';
 
       const onKeyCapture = (event) => {
-        if (isPrintShortcut(event) || isPrintScreenKey(event) || isMacShotShortcut(event)) {
+        if (isPrintShortcut(event) || isPrintScreenKey(event) || isMacShotShortcut(event) || isWindowsSnippingShortcut(event)) {
           event.preventDefault();
           showOverlay(isPrintShortcut(event) ? 'print_attempt' : 'screenshot_attempt');
         }
@@ -186,7 +246,15 @@ $_crmLang       = ($_crmSettings['language'] ?? 'pt') === 'ja' ? 'ja' : 'pt-BR';
       document.addEventListener('keyup', onKeyCapture, true);
       document.addEventListener('copy', onClipboardCapture, true);
       document.addEventListener('cut', onClipboardCapture, true);
+      document.addEventListener('contextmenu', onClipboardCapture, true);
+      document.addEventListener('dragstart', onClipboardCapture, true);
+      document.addEventListener('selectstart', (event) => event.preventDefault(), true);
       window.addEventListener('beforeprint', () => showOverlay('print_attempt'));
+      window.addEventListener('resize', mountWatermark);
+
+      const refreshWatermark = () => mountWatermark();
+      mountWatermark();
+      setInterval(refreshWatermark, 30000);
 
       if (window.matchMedia) {
         const printMedia = window.matchMedia('print');
