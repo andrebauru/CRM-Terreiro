@@ -48,8 +48,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <input id="notificationEmail" type="email" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="seu@email.com" />
             </div>
             <div>
-              <label class="text-sm font-medium text-slate-700">E-mail remetente (verificado no SendGrid)</label>
+              <label class="text-sm font-medium text-slate-700">E-mail remetente (fallback)</label>
               <input id="sendgridFromEmail" type="email" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="no-reply@seu-dominio.com" />
+              <p class="text-xs text-slate-500 mt-1">O envio usa <strong>EMAIL_FROM</strong> do .env.</p>
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -63,11 +64,19 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <p id="sendgridInfo" class="text-xs text-slate-500 mt-1 hidden">API Key já cadastrada. Preencha apenas para substituir.</p>
             </div>
           </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-slate-700">Porta SMTP</label>
+              <input id="sendgridPort" type="number" min="1" max="65535" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="2525" />
+              <p class="text-xs text-slate-500 mt-1">2525 = SMTP (smtp.sendgrid.net). 443 (ou vazio) = API v3.</p>
+            </div>
+          </div>
           <div class="flex gap-2">
             <button type="submit" class="px-4 py-2 rounded-xl bg-accent text-white">Salvar</button>
-            <button type="button" id="testSendgridBtn" class="px-4 py-2 rounded-xl border border-emerald-300 text-emerald-700">Testar SendGrid</button>
+            <button type="button" id="testSendgridBtn" class="px-4 py-2 rounded-xl border border-emerald-300 text-emerald-700">Testar Configuração</button>
             <a href="api/backup.php" class="px-4 py-2 rounded-xl border border-slate-200">Backup SQL</a>
           </div>
+          <div id="sendgridTestResult" class="hidden rounded-xl border px-3 py-2 text-sm"></div>
         </form>
       </section>
 
@@ -180,9 +189,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const notificationEmail = document.getElementById('notificationEmail');
     const sendgridFromEmail = document.getElementById('sendgridFromEmail');
     const sendgridFromName = document.getElementById('sendgridFromName');
+    const sendgridPort = document.getElementById('sendgridPort');
     const sendgridApiKey = document.getElementById('sendgridApiKey');
     const sendgridInfo = document.getElementById('sendgridInfo');
     const testSendgridBtn = document.getElementById('testSendgridBtn');
+    const sendgridTestResult = document.getElementById('sendgridTestResult');
 
     const loadSettings = async () => {
       const response = await fetch('api/settings.php?action=get', { cache: 'no-store' });
@@ -194,6 +205,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       notificationEmail.value = data.data.notification_email || '';
       sendgridFromEmail.value = data.data.sendgrid_from_email || '';
       sendgridFromName.value = data.data.sendgrid_from_name || '';
+      sendgridPort.value = data.data.sendgrid_port || '';
       if (data.data.has_sendgrid_api_key) {
         sendgridInfo.classList.remove('hidden');
       }
@@ -212,6 +224,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       formData.append('notification_email', notificationEmail.value);
       formData.append('sendgrid_from_email', sendgridFromEmail.value);
       formData.append('sendgrid_from_name', sendgridFromName.value);
+      formData.append('sendgrid_port', sendgridPort.value);
       formData.append('sendgrid_api_key', sendgridApiKey.value);
       if (logoInput.files.length) {
         formData.append('logo', logoInput.files[0]);
@@ -239,12 +252,27 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           body: new URLSearchParams({ action: 'test_sendgrid' }),
         });
         const data = await response.json();
-        alert(data.message || (data.ok ? 'Teste enviado com sucesso.' : 'Falha no teste de envio.'));
+
+        const mode = data?.data?.mode || '-';
+        const port = data?.data?.port || '-';
+        const statusCode = data?.data?.status_code || 0;
+        const providerResponse = (data?.data?.provider_response || '').slice(0, 350);
+
+        sendgridTestResult.classList.remove('hidden');
+        sendgridTestResult.className = `rounded-xl border px-3 py-2 text-sm ${data.ok ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-red-300 bg-red-50 text-red-800'}`;
+        sendgridTestResult.innerHTML = `
+          <div><strong>${escapeHtml(data.message || (data.ok ? 'Teste enviado com sucesso.' : 'Falha no teste de envio.'))}</strong></div>
+          <div class="mt-1">Modo: ${escapeHtml(String(mode))} | Porta: ${escapeHtml(String(port))} | Status: ${escapeHtml(String(statusCode))}</div>
+          <div class="mt-1 text-xs">Resposta: ${escapeHtml(providerResponse || '-')}</div>
+        `;
+
         if (typeof loadSendgridLogs === 'function') {
           loadSendgridLogs();
         }
       } catch (error) {
-        alert('Erro ao testar SendGrid.');
+        sendgridTestResult.classList.remove('hidden');
+        sendgridTestResult.className = 'rounded-xl border px-3 py-2 text-sm border-red-300 bg-red-50 text-red-800';
+        sendgridTestResult.textContent = 'Erro ao testar SendGrid.';
       } finally {
         testSendgridBtn.disabled = false;
         testSendgridBtn.textContent = originalText;

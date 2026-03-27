@@ -31,6 +31,7 @@ try {
             sendgrid_api_key TEXT NULL,
             sendgrid_from_email VARCHAR(255) NULL,
             sendgrid_from_name VARCHAR(255) NULL,
+            sendgrid_port INT NULL,
             currency_code   VARCHAR(3) NOT NULL DEFAULT 'JPY',
             currency_symbol VARCHAR(8) NOT NULL DEFAULT '¥',
             timezone        VARCHAR(64) NOT NULL DEFAULT 'Asia/Tokyo',
@@ -457,6 +458,7 @@ try {
     ensureColumn($pdo, 'settings', 'sendgrid_api_key', "TEXT NULL AFTER notification_email");
     ensureColumn($pdo, 'settings', 'sendgrid_from_email', "VARCHAR(255) NULL AFTER sendgrid_api_key");
     ensureColumn($pdo, 'settings', 'sendgrid_from_name', "VARCHAR(255) NULL AFTER sendgrid_from_email");
+    ensureColumn($pdo, 'settings', 'sendgrid_port', "INT NULL AFTER sendgrid_from_name");
 
     // ── 6. SEEDS ──────────────────────────────────────────────────────────
 

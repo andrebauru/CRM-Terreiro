@@ -19,6 +19,7 @@ try {
     ensureColumn($pdo, 'settings', 'sendgrid_api_key', 'TEXT NULL');
     ensureColumn($pdo, 'settings', 'sendgrid_from_email', 'VARCHAR(255) NULL');
     ensureColumn($pdo, 'settings', 'sendgrid_from_name', 'VARCHAR(255) NULL');
+    ensureColumn($pdo, 'settings', 'sendgrid_port', 'INT NULL');
 
     // Endpoint para registrar prints/cópias
     if ($action === 'log_event') {
@@ -78,6 +79,14 @@ try {
             'Teste de integração',
             'Disparo de teste executado em ' . date('Y-m-d H:i:s')
         );
+        ensureSendGridLogsTable($pdo);
+        persistSendGridLog(
+            $pdo,
+            $result,
+            (string)($result['to_email'] ?? ''),
+            (string)($result['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+            'Quadro de Avisos'
+        );
 
         jsonResponse([
             'ok' => !empty($result['ok']),
@@ -113,6 +122,10 @@ try {
         $sendgridApiKey = trim((string)($_POST['sendgrid_api_key'] ?? ''));
         $sendgridFromEmail = trim((string)($_POST['sendgrid_from_email'] ?? ''));
         $sendgridFromName = trim((string)($_POST['sendgrid_from_name'] ?? ''));
+        $sendgridPort = (int)($_POST['sendgrid_port'] ?? 0);
+        if ($sendgridPort < 0 || $sendgridPort > 65535) {
+            $sendgridPort = 0;
+        }
         $logoPath = null;
 
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
@@ -152,6 +165,9 @@ try {
 
         $sql .= ', sendgrid_from_name = ?';
         $params[] = $sendgridFromName !== '' ? $sendgridFromName : null;
+
+        $sql .= ', sendgrid_port = ?';
+        $params[] = $sendgridPort > 0 ? $sendgridPort : null;
 
         if ($sendgridApiKey !== '') {
             $sql .= ', sendgrid_api_key = ?';

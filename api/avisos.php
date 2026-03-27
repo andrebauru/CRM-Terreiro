@@ -47,7 +47,19 @@ try {
             'INSERT INTO avisos (titulo, mensagem, is_active, created_by) VALUES (?, ?, ?, ?)'
         )->execute([$titulo, $mensagem, $isActive ? 1 : 0, $_apiUserId]);
 
-        sendGridNotifyBoard($pdo, 'Avisos', 'create', $titulo, $mensagem);
+        try {
+            $sendResult = sendGridNotifyBoard($pdo, 'Avisos', 'create', $titulo, $mensagem);
+            ensureSendGridLogsTable($pdo);
+            persistSendGridLog(
+                $pdo,
+                $sendResult,
+                (string)($sendResult['to_email'] ?? ''),
+                (string)($sendResult['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+                'Quadro de Avisos'
+            );
+        } catch (Throwable $e) {
+            error_log('[Avisos] Falha ao disparar e-mail create: ' . $e->getMessage());
+        }
 
         jsonResponse(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
     }
@@ -66,7 +78,19 @@ try {
             'UPDATE avisos SET titulo = ?, mensagem = ?, is_active = ? WHERE id = ?'
         )->execute([$titulo, $mensagem, $isActive ? 1 : 0, $id]);
 
-        sendGridNotifyBoard($pdo, 'Avisos', 'update', $titulo, $mensagem);
+        try {
+            $sendResult = sendGridNotifyBoard($pdo, 'Avisos', 'update', $titulo, $mensagem);
+            ensureSendGridLogsTable($pdo);
+            persistSendGridLog(
+                $pdo,
+                $sendResult,
+                (string)($sendResult['to_email'] ?? ''),
+                (string)($sendResult['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+                'Quadro de Avisos'
+            );
+        } catch (Throwable $e) {
+            error_log('[Avisos] Falha ao disparar e-mail update: ' . $e->getMessage());
+        }
 
         jsonResponse(['ok' => true]);
     }
@@ -83,13 +107,25 @@ try {
 
         $pdo->prepare('DELETE FROM avisos WHERE id = ?')->execute([$id]);
 
-        sendGridNotifyBoard(
-            $pdo,
-            'Avisos',
-            'delete',
-            (string)($avisoData['titulo'] ?? 'Aviso removido'),
-            (string)($avisoData['mensagem'] ?? '')
-        );
+        try {
+            $sendResult = sendGridNotifyBoard(
+                $pdo,
+                'Avisos',
+                'delete',
+                (string)($avisoData['titulo'] ?? 'Aviso removido'),
+                (string)($avisoData['mensagem'] ?? '')
+            );
+            ensureSendGridLogsTable($pdo);
+            persistSendGridLog(
+                $pdo,
+                $sendResult,
+                (string)($sendResult['to_email'] ?? ''),
+                (string)($sendResult['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+                'Quadro de Avisos'
+            );
+        } catch (Throwable $e) {
+            error_log('[Avisos] Falha ao disparar e-mail delete: ' . $e->getMessage());
+        }
 
         jsonResponse(['ok' => true]);
     }

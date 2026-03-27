@@ -62,6 +62,7 @@ function runAutoMigrate(PDO $pdo): void
                 sendgrid_api_key TEXT NULL,
                 sendgrid_from_email VARCHAR(255) NULL,
                 sendgrid_from_name VARCHAR(255) NULL,
+                sendgrid_port INT NULL,
                 currency_code VARCHAR(10) DEFAULT 'JPY',
                 currency_symbol VARCHAR(10) DEFAULT '¥',
                 language VARCHAR(10) DEFAULT 'pt',
@@ -73,6 +74,7 @@ function runAutoMigrate(PDO $pdo): void
         ensureColumn($pdo, 'settings', 'sendgrid_api_key', 'TEXT NULL');
         ensureColumn($pdo, 'settings', 'sendgrid_from_email', 'VARCHAR(255) NULL');
         ensureColumn($pdo, 'settings', 'sendgrid_from_name', 'VARCHAR(255) NULL');
+        ensureColumn($pdo, 'settings', 'sendgrid_port', 'INT NULL');
 
         $pdo->exec(" 
             CREATE TABLE IF NOT EXISTS sendgrid_logs (

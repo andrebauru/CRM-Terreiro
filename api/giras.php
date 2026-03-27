@@ -122,7 +122,19 @@ try {
             . ($dataPostagem ? "\nData de postagem: " . $dataPostagem : '')
             . "\nPlataforma: " . $plataforma
             . ($descricao ? "\nDescrição: " . $descricao : '');
-        sendGridNotifyBoard($pdo, 'Giras', 'create', $tipoNome, $detalhes);
+        try {
+            $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'create', $tipoNome, $detalhes);
+            ensureSendGridLogsTable($pdo);
+            persistSendGridLog(
+                $pdo,
+                $sendResult,
+                (string)($sendResult['to_email'] ?? ''),
+                (string)($sendResult['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+                'Quadro de Avisos'
+            );
+        } catch (Throwable $e) {
+            error_log('[Giras] Falha ao disparar e-mail create: ' . $e->getMessage());
+        }
 
         jsonResponse(['ok' => true, 'id' => $pdo->lastInsertId()]);
     }
@@ -176,7 +188,19 @@ try {
             . ($dataPostagem ? "\nData de postagem: " . $dataPostagem : '')
             . "\nPlataforma: " . $plataforma
             . ($descricao ? "\nDescrição: " . $descricao : '');
-        sendGridNotifyBoard($pdo, 'Giras', 'update', $tipoNome, $detalhes);
+        try {
+            $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'update', $tipoNome, $detalhes);
+            ensureSendGridLogsTable($pdo);
+            persistSendGridLog(
+                $pdo,
+                $sendResult,
+                (string)($sendResult['to_email'] ?? ''),
+                (string)($sendResult['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+                'Quadro de Avisos'
+            );
+        } catch (Throwable $e) {
+            error_log('[Giras] Falha ao disparar e-mail update: ' . $e->getMessage());
+        }
 
         jsonResponse(['ok' => true]);
     }
@@ -205,9 +229,33 @@ try {
                 . (!empty($gira['data_postagem']) ? "\nData de postagem: " . (string)$gira['data_postagem'] : '')
                 . "\nPlataforma: " . (string)($gira['plataforma'] ?? '')
                 . (!empty($gira['descricao']) ? "\nDescrição: " . (string)$gira['descricao'] : '');
-            sendGridNotifyBoard($pdo, 'Giras', 'delete', (string)($gira['tipo_nome'] ?? 'Gira'), $detalhes);
+            try {
+                $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'delete', (string)($gira['tipo_nome'] ?? 'Gira'), $detalhes);
+                ensureSendGridLogsTable($pdo);
+                persistSendGridLog(
+                    $pdo,
+                    $sendResult,
+                    (string)($sendResult['to_email'] ?? ''),
+                    (string)($sendResult['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+                    'Quadro de Avisos'
+                );
+            } catch (Throwable $e) {
+                error_log('[Giras] Falha ao disparar e-mail delete: ' . $e->getMessage());
+            }
         } else {
-            sendGridNotifyBoard($pdo, 'Giras', 'delete', 'Gira removida', 'Registro excluído.');
+            try {
+                $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'delete', 'Gira removida', 'Registro excluído.');
+                ensureSendGridLogsTable($pdo);
+                persistSendGridLog(
+                    $pdo,
+                    $sendResult,
+                    (string)($sendResult['to_email'] ?? ''),
+                    (string)($sendResult['from_email'] ?? ($_ENV['EMAIL_FROM'] ?? '')),
+                    'Quadro de Avisos'
+                );
+            } catch (Throwable $e) {
+                error_log('[Giras] Falha ao disparar e-mail delete fallback: ' . $e->getMessage());
+            }
         }
 
         jsonResponse(['ok' => true]);
