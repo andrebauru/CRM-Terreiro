@@ -107,6 +107,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               'giras' => 'Registro de Giras',
               'servicos' => 'Serviços',
               'avisos' => 'Avisos',
+              'chat' => 'Chat Interno',
               'financeiro' => 'Financeiro',
               'usuarios' => 'Usuários',
               'relatorios' => 'Relatórios',
