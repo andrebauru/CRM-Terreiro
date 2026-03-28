@@ -68,7 +68,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <div>
               <label class="text-sm font-medium text-slate-700">Porta SMTP</label>
               <input id="sendgridPort" type="number" min="1" max="65535" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="2525" />
-              <p class="text-xs text-slate-500 mt-1">2525 = SMTP (smtp.sendgrid.net). 443 (ou vazio) = API v3.</p>
+              <p class="text-xs text-slate-500 mt-1">Porta de referência da integração (ex.: 2525 ou 443). Envio realizado via API v3.</p>
             </div>
           </div>
           <div class="flex gap-2">
@@ -249,7 +249,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       try {
         const response = await fetch('api/settings.php', {
           method: 'POST',
-          body: new URLSearchParams({ action: 'test_sendgrid' }),
+          body: new URLSearchParams({ action: 'testar_envio' }),
         });
         const data = await response.json();
 

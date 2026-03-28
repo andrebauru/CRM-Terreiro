@@ -6,6 +6,25 @@ require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/_auth_guard.php';
 require_once __DIR__ . '/../app/Helpers/SendGridNotifier.php';
 
+function buildGirasCtaLink(): ?string
+{
+    $baseUrl = rtrim((string)($_ENV['BASE_URL'] ?? ''), '/');
+    if ($baseUrl === '') {
+        return null;
+    }
+    return $baseUrl . '/giras.php';
+}
+
+function getTerreiroDefaultImagePath(PDO $pdo): ?string
+{
+    try {
+        $logo = trim((string)($pdo->query('SELECT logo_path FROM settings ORDER BY id ASC LIMIT 1')->fetchColumn() ?: ''));
+        return $logo !== '' ? $logo : null;
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
 try {
@@ -123,7 +142,15 @@ try {
             . "\nPlataforma: " . $plataforma
             . ($descricao ? "\nDescrição: " . $descricao : '');
         try {
-            $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'create', $tipoNome, $detalhes);
+            $sendResult = sendGridNotifyBoard(
+                $pdo,
+                'Giras',
+                'create',
+                $tipoNome,
+                $detalhes,
+                buildGirasCtaLink(),
+                getTerreiroDefaultImagePath($pdo)
+            );
             ensureSendGridLogsTable($pdo);
             persistSendGridLog(
                 $pdo,
@@ -189,7 +216,15 @@ try {
             . "\nPlataforma: " . $plataforma
             . ($descricao ? "\nDescrição: " . $descricao : '');
         try {
-            $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'update', $tipoNome, $detalhes);
+            $sendResult = sendGridNotifyBoard(
+                $pdo,
+                'Giras',
+                'update',
+                $tipoNome,
+                $detalhes,
+                buildGirasCtaLink(),
+                getTerreiroDefaultImagePath($pdo)
+            );
             ensureSendGridLogsTable($pdo);
             persistSendGridLog(
                 $pdo,
@@ -230,7 +265,15 @@ try {
                 . "\nPlataforma: " . (string)($gira['plataforma'] ?? '')
                 . (!empty($gira['descricao']) ? "\nDescrição: " . (string)$gira['descricao'] : '');
             try {
-                $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'delete', (string)($gira['tipo_nome'] ?? 'Gira'), $detalhes);
+                $sendResult = sendGridNotifyBoard(
+                    $pdo,
+                    'Giras',
+                    'delete',
+                    (string)($gira['tipo_nome'] ?? 'Gira'),
+                    $detalhes,
+                    buildGirasCtaLink(),
+                    getTerreiroDefaultImagePath($pdo)
+                );
                 ensureSendGridLogsTable($pdo);
                 persistSendGridLog(
                     $pdo,
@@ -244,7 +287,15 @@ try {
             }
         } else {
             try {
-                $sendResult = sendGridNotifyBoard($pdo, 'Giras', 'delete', 'Gira removida', 'Registro excluído.');
+                $sendResult = sendGridNotifyBoard(
+                    $pdo,
+                    'Giras',
+                    'delete',
+                    'Gira removida',
+                    'Registro excluído.',
+                    buildGirasCtaLink(),
+                    getTerreiroDefaultImagePath($pdo)
+                );
                 ensureSendGridLogsTable($pdo);
                 persistSendGridLog(
                     $pdo,

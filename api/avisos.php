@@ -6,6 +6,25 @@ require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/_auth_guard.php';
 require_once __DIR__ . '/../app/Helpers/SendGridNotifier.php';
 
+function buildAvisosCtaLink(): ?string
+{
+    $baseUrl = rtrim((string)($_ENV['BASE_URL'] ?? ''), '/');
+    if ($baseUrl === '') {
+        return null;
+    }
+    return $baseUrl . '/avisos.php';
+}
+
+function getTerreiroDefaultImagePath(PDO $pdo): ?string
+{
+    try {
+        $logo = trim((string)($pdo->query('SELECT logo_path FROM settings ORDER BY id ASC LIMIT 1')->fetchColumn() ?: ''));
+        return $logo !== '' ? $logo : null;
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
 try {
@@ -48,7 +67,15 @@ try {
         )->execute([$titulo, $mensagem, $isActive ? 1 : 0, $_apiUserId]);
 
         try {
-            $sendResult = sendGridNotifyBoard($pdo, 'Avisos', 'create', $titulo, $mensagem);
+            $sendResult = sendGridNotifyBoard(
+                $pdo,
+                'Avisos',
+                'create',
+                $titulo,
+                $mensagem,
+                buildAvisosCtaLink(),
+                getTerreiroDefaultImagePath($pdo)
+            );
             ensureSendGridLogsTable($pdo);
             persistSendGridLog(
                 $pdo,
@@ -79,7 +106,15 @@ try {
         )->execute([$titulo, $mensagem, $isActive ? 1 : 0, $id]);
 
         try {
-            $sendResult = sendGridNotifyBoard($pdo, 'Avisos', 'update', $titulo, $mensagem);
+            $sendResult = sendGridNotifyBoard(
+                $pdo,
+                'Avisos',
+                'update',
+                $titulo,
+                $mensagem,
+                buildAvisosCtaLink(),
+                getTerreiroDefaultImagePath($pdo)
+            );
             ensureSendGridLogsTable($pdo);
             persistSendGridLog(
                 $pdo,
@@ -113,7 +148,9 @@ try {
                 'Avisos',
                 'delete',
                 (string)($avisoData['titulo'] ?? 'Aviso removido'),
-                (string)($avisoData['mensagem'] ?? '')
+                (string)($avisoData['mensagem'] ?? ''),
+                buildAvisosCtaLink(),
+                getTerreiroDefaultImagePath($pdo)
             );
             ensureSendGridLogsTable($pdo);
             persistSendGridLog(

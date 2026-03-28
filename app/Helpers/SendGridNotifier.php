@@ -2,7 +2,15 @@
 
 declare(strict_types=1);
 
-function sendGridNotifyBoard(PDO $pdo, string $section, string $action, string $title, string $details = ''): array
+function sendGridNotifyBoard(
+    PDO $pdo,
+    string $section,
+    string $action,
+    string $title,
+    string $details = '',
+    ?string $ctaLink = null,
+    ?string $imagePath = null
+): array
 {
     $result = [
         'ok' => false,
@@ -34,7 +42,7 @@ function sendGridNotifyBoard(PDO $pdo, string $section, string $action, string $
         }
 
         $result['port'] = $port;
-        $result['mode'] = ($port === 2525) ? 'smtp' : 'api';
+        $result['mode'] = 'api';
         $result['to_email'] = $toEmail;
         $result['from_email'] = $fromEmail;
 
@@ -66,41 +74,62 @@ function sendGridNotifyBoard(PDO $pdo, string $section, string $action, string $
             : strtoupper($sectionBase);
         $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
         $safeDetails = nl2br(htmlspecialchars($details, ENT_QUOTES, 'UTF-8'));
+        $safeCtaLink = trim((string)$ctaLink);
+        if ($safeCtaLink !== '' && !preg_match('~^https?://~i', $safeCtaLink)) {
+            $safeCtaLink = '';
+        }
 
         $subject = 'Quadro de Avisos';
         $text = "{$sectionUpper} | {$actionLabel}\nTítulo: {$title}";
         if ($details !== '') {
             $text .= "\n\n{$details}";
         }
+        if ($safeCtaLink !== '') {
+            $text .= "\n\nLink: {$safeCtaLink}";
+        }
+
+        $inlineContentId = 'img_notificacao';
+        $inlineHtmlImage = '';
+        $attachments = [];
+        if ($imagePath !== null && trim($imagePath) !== '') {
+            $resolvedImage = resolveEmailImagePath((string)$imagePath);
+            if ($resolvedImage !== null && is_file($resolvedImage) && is_readable($resolvedImage)) {
+                $binary = @file_get_contents($resolvedImage);
+                if ($binary !== false) {
+                    $mime = detectMimeTypeByPath($resolvedImage) ?: 'image/png';
+                    $filename = basename($resolvedImage);
+                    $attachments[] = [
+                        'content' => base64_encode($binary),
+                        'type' => $mime,
+                        'filename' => $filename !== '' ? $filename : 'notificacao.png',
+                        'disposition' => 'inline',
+                        'content_id' => $inlineContentId,
+                    ];
+                    $inlineHtmlImage = '<div style="margin:0 0 16px 0"><img src="cid:' . $inlineContentId . '" alt="Imagem" style="max-width:100%;height:auto;border-radius:12px;border:1px solid #e2e8f0"></div>';
+                }
+            }
+        }
+
+        $ctaHtml = '';
+        if ($safeCtaLink !== '') {
+            $safeUrl = htmlspecialchars($safeCtaLink, ENT_QUOTES, 'UTF-8');
+            $ctaHtml = '<div style="margin:18px 0 0 0"><a href="' . $safeUrl . '" style="display:inline-block;background:#e12127;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:700">Abrir aviso</a></div>';
+        }
 
         $html = "
             <div style=\"font-family:Arial,sans-serif;color:#0f172a;line-height:1.5\">
                 <h1 style=\"margin:0 0 12px 0;font-size:20px\">Quadro de Avisos</h1>
-                <h2 style=\"margin:0 0 8px 0;font-size:18px;color:#dc2626;font-weight:800\">{$sectionUpper}</h2>
+                {$inlineHtmlImage}
+                <h2 style=\"margin:0 0 8px 0;font-size:18px;color:#e12127;font-weight:800\">{$sectionUpper}</h2>
                 <p style=\"margin:0 0 8px 0\"><strong>Ação:</strong> {$actionLabel}</p>
-                <p style=\"margin:0 0 8px 0\"><strong>Título:</strong> {$safeTitle}</p>
+                <p style=\"margin:0 0 8px 0\"><strong>Título:</strong> <span style=\"color:#e12127;font-weight:800\">{$safeTitle}</span></p>
                 " . ($safeDetails !== '' ? "<p style=\"margin:0 0 12px 0\"><strong>Detalhes:</strong><br>{$safeDetails}</p>" : '') . "
+                {$ctaHtml}
                 <hr style=\"border:none;border-top:1px solid #e2e8f0;margin:16px 0\">
                 <p style=\"margin:0;color:#64748b;font-size:12px\">{$companyName}</p>
             </div>
         ";
-
-        if ($port === 2525) {
-            return sendGridSmtpDispatch(
-                apiKey: $apiKey,
-                host: 'smtp.sendgrid.net',
-                port: $port,
-                fromEmail: $fromEmail,
-                fromName: $fromName,
-                toEmail: $toEmail,
-                toName: $companyName,
-                subject: $subject,
-                textBody: $text,
-                htmlBody: $html,
-                baseResult: $result
-            );
-        }
-
+        // Mesmo com porta 2525 configurada, este helper usa API v3 por cURL.
         return sendGridApiDispatch(
             apiKey: $apiKey,
             fromEmail: $fromEmail,
@@ -110,6 +139,7 @@ function sendGridNotifyBoard(PDO $pdo, string $section, string $action, string $
             subject: $subject,
             textBody: $text,
             htmlBody: $html,
+            attachments: $attachments,
             baseResult: $result
         );
     } catch (Throwable $e) {
@@ -128,6 +158,7 @@ function sendGridApiDispatch(
     string $subject,
     string $textBody,
     string $htmlBody,
+    array $attachments,
     array $baseResult
 ): array {
     $result = $baseResult;
@@ -149,6 +180,10 @@ function sendGridApiDispatch(
             ['type' => 'text/html', 'value' => $htmlBody],
         ],
     ];
+
+    if (!empty($attachments)) {
+        $payload['attachments'] = $attachments;
+    }
 
     $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE);
     if ($jsonPayload === false) {
@@ -204,8 +239,8 @@ function sendGridApiDispatch(
 
     $result['status_code'] = $status;
     $result['provider_response'] = $responseBody;
-    $result['ok'] = ($status >= 200 && $status < 300);
-    $result['message'] = $result['ok'] ? 'E-mail enviado com sucesso via API v3.' : 'Falha ao enviar e-mail via API v3.';
+    $result['ok'] = ($status === 202);
+    $result['message'] = $result['ok'] ? 'E-mail enviado com sucesso via API v3.' : 'Falha ao enviar e-mail via API v3. HTTP ' . $status;
 
     if ($curlError !== '') {
         $result['message'] .= ' cURL: ' . $curlError;
@@ -214,184 +249,39 @@ function sendGridApiDispatch(
     return $result;
 }
 
-function sendGridSmtpDispatch(
-    string $apiKey,
-    string $host,
-    int $port,
-    string $fromEmail,
-    string $fromName,
-    string $toEmail,
-    string $toName,
-    string $subject,
-    string $textBody,
-    string $htmlBody,
-    array $baseResult
-): array {
-    $result = $baseResult;
-    $result['mode'] = 'smtp';
-
-    $socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, 20);
-    if (!$socket) {
-        $result['message'] = 'Falha na conexão SMTP: ' . $errstr;
-        $result['provider_response'] = (string)$errno;
-        return $result;
+function resolveEmailImagePath(string $path): ?string
+{
+    $candidate = trim($path);
+    if ($candidate === '') {
+        return null;
     }
 
-    stream_set_timeout($socket, 20);
-
-    $read = static function () use ($socket): string {
-        $response = '';
-        while (($line = fgets($socket, 515)) !== false) {
-            $response .= $line;
-            if (preg_match('/^\d{3}\s/', $line)) {
-                break;
-            }
-        }
-        return trim($response);
-    };
-
-    $write = static function (string $command) use ($socket): void {
-        fwrite($socket, $command . "\r\n");
-    };
-
-    $expect = static function (string $response, array $acceptedCodes): bool {
-        foreach ($acceptedCodes as $code) {
-            if (str_starts_with($response, (string)$code)) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    try {
-        $banner = $read();
-        if (!$expect($banner, [220])) {
-            $result['message'] = 'SMTP banner inválido.';
-            $result['provider_response'] = $banner;
-            fclose($socket);
-            return $result;
-        }
-
-        $write('EHLO crm-terreiro.local');
-        $ehlo = $read();
-        if (!$expect($ehlo, [250])) {
-            $result['message'] = 'EHLO rejeitado.';
-            $result['provider_response'] = $ehlo;
-            fclose($socket);
-            return $result;
-        }
-
-        $write('STARTTLS');
-        $startTls = $read();
-        if ($expect($startTls, [220])) {
-            @stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-            $write('EHLO crm-terreiro.local');
-            $ehlo = $read();
-        }
-
-        $write('AUTH LOGIN');
-        $authStart = $read();
-        if (!$expect($authStart, [334])) {
-            $result['message'] = 'AUTH LOGIN rejeitado.';
-            $result['provider_response'] = $authStart;
-            fclose($socket);
-            return $result;
-        }
-
-        $write(base64_encode('apikey'));
-        $authUser = $read();
-        if (!$expect($authUser, [334])) {
-            $result['message'] = 'Usuário SMTP rejeitado.';
-            $result['provider_response'] = $authUser;
-            fclose($socket);
-            return $result;
-        }
-
-        $write(base64_encode($apiKey));
-        $authPass = $read();
-        if (!$expect($authPass, [235])) {
-            $result['message'] = 'Senha SMTP rejeitada.';
-            $result['provider_response'] = $authPass;
-            $result['status_code'] = 401;
-            fclose($socket);
-            return $result;
-        }
-
-        $write("MAIL FROM:<{$fromEmail}>");
-        $mailFrom = $read();
-        if (!$expect($mailFrom, [250])) {
-            $result['message'] = 'MAIL FROM rejeitado.';
-            $result['provider_response'] = $mailFrom;
-            fclose($socket);
-            return $result;
-        }
-
-        $write("RCPT TO:<{$toEmail}>");
-        $rcptTo = $read();
-        if (!$expect($rcptTo, [250, 251])) {
-            $result['message'] = 'RCPT TO rejeitado.';
-            $result['provider_response'] = $rcptTo;
-            fclose($socket);
-            return $result;
-        }
-
-        $write('DATA');
-        $dataResp = $read();
-        if (!$expect($dataResp, [354])) {
-            $result['message'] = 'DATA rejeitado.';
-            $result['provider_response'] = $dataResp;
-            fclose($socket);
-            return $result;
-        }
-
-        $boundary = 'crm_' . md5((string)microtime(true));
-        $headers = [
-            'From: ' . formatMailbox($fromEmail, $fromName),
-            'To: ' . formatMailbox($toEmail, $toName),
-            'Subject: =?UTF-8?B?' . base64_encode($subject) . '?=',
-            'Date: ' . date(DATE_RFC2822),
-            'MIME-Version: 1.0',
-            'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
-        ];
-
-        $body = "--{$boundary}\r\n"
-            . "Content-Type: text/plain; charset=UTF-8\r\n"
-            . "Content-Transfer-Encoding: 8bit\r\n\r\n"
-            . $textBody . "\r\n"
-            . "--{$boundary}\r\n"
-            . "Content-Type: text/html; charset=UTF-8\r\n"
-            . "Content-Transfer-Encoding: 8bit\r\n\r\n"
-            . $htmlBody . "\r\n"
-            . "--{$boundary}--\r\n";
-
-        $rawMail = implode("\r\n", $headers) . "\r\n\r\n" . $body;
-        fwrite($socket, $rawMail . "\r\n.\r\n");
-
-        $queued = $read();
-        $result['provider_response'] = $queued;
-        $result['ok'] = $expect($queued, [250]);
-        $result['status_code'] = $result['ok'] ? 250 : 500;
-        $result['message'] = $result['ok'] ? 'E-mail enviado com sucesso via SMTP.' : 'Falha ao enviar e-mail via SMTP.';
-
-        $write('QUIT');
-        $read();
-        fclose($socket);
-
-        return $result;
-    } catch (Throwable $e) {
-        $result['message'] = 'Exceção no envio SMTP: ' . $e->getMessage();
-        fclose($socket);
-        return $result;
+    if (preg_match('~^[A-Za-z]:[\\/]~', $candidate) || str_starts_with($candidate, '/')) {
+        return $candidate;
     }
+
+    $basePath = dirname(__DIR__, 2);
+    $cleanRelative = ltrim(str_replace('../', '', str_replace('..\\', '', $candidate)), '/\\');
+    return $basePath . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $cleanRelative);
 }
 
-function formatMailbox(string $email, string $name): string
+function detectMimeTypeByPath(string $path): ?string
 {
-    $safeName = trim($name) !== '' ? str_replace(['"', "\r", "\n"], '', $name) : '';
-    if ($safeName === '') {
-        return '<' . $email . '>';
+    if (function_exists('mime_content_type')) {
+        $mime = @mime_content_type($path);
+        if (is_string($mime) && $mime !== '') {
+            return $mime;
+        }
     }
-    return '"' . $safeName . '" <' . $email . '>';
+
+    $ext = strtolower((string)pathinfo($path, PATHINFO_EXTENSION));
+    return match ($ext) {
+        'jpg', 'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        default => null,
+    };
 }
 
 function ensureSendGridLogsTable(PDO $pdo): void

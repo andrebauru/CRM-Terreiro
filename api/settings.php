@@ -67,9 +67,21 @@ try {
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
 
-    if ($action === 'test_sendgrid') {
+    if ($action === 'test_sendgrid' || $action === 'testar_envio') {
         if ($_apiUserRole !== 'admin') {
             jsonResponse(['ok' => false, 'message' => 'Acesso restrito a administradores'], 403);
+        }
+
+        $baseUrl = rtrim((string)($_ENV['BASE_URL'] ?? ''), '/');
+        $ctaLink = $baseUrl !== '' ? $baseUrl . '/configuracoes.php' : null;
+        $imagePath = null;
+        try {
+            $logo = trim((string)($pdo->query('SELECT logo_path FROM settings ORDER BY id ASC LIMIT 1')->fetchColumn() ?: ''));
+            if ($logo !== '') {
+                $imagePath = $logo;
+            }
+        } catch (Throwable $e) {
+            $imagePath = null;
         }
 
         $result = sendGridNotifyBoard(
@@ -77,7 +89,9 @@ try {
             'SendGrid',
             'test',
             'Teste de integração',
-            'Disparo de teste executado em ' . date('Y-m-d H:i:s')
+            'Disparo de teste executado em ' . date('Y-m-d H:i:s'),
+            $ctaLink,
+            $imagePath
         );
         ensureSendGridLogsTable($pdo);
         persistSendGridLog(
