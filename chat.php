@@ -8,12 +8,12 @@ $currentUserName = (string)($_SESSION['user_name'] ?? ($_SESSION['user_email'] ?
 
 $chatUsers = [];
 try {
-    $stmt = db()->prepare('SELECT id, name, email FROM users WHERE id <> ? AND is_active = 1 ORDER BY name');
+  $stmt = db()->prepare('SELECT id, name, email, foto_perfil FROM users WHERE id <> ? AND is_active = 1 ORDER BY name');
     $stmt->execute([$currentUserId]);
     $chatUsers = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 } catch (Throwable $e) {
     try {
-        $stmt = db()->prepare('SELECT id, name, email FROM users WHERE id <> ? ORDER BY name');
+    $stmt = db()->prepare('SELECT id, name, email, foto_perfil FROM users WHERE id <> ? ORDER BY name');
         $stmt->execute([$currentUserId]);
         $chatUsers = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e2) {
@@ -48,9 +48,13 @@ try {
 
           <div class="flex flex-col min-h-[70vh]">
             <div id="chatHeader" class="px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25] flex items-center justify-between">
-              <div>
+              <div class="flex items-center gap-3">
+                <div id="chatAvatarWrap" class="h-10 w-10 rounded-full bg-fuchsia-500/25 overflow-hidden flex items-center justify-center text-xs font-bold text-pink-100">--</div>
+                <div>
                 <div id="chatWithName" class="font-bold text-pink-200">Selecione alguém para conversar</div>
                 <div id="chatWithSub" class="text-xs text-pink-100/60">Nenhuma conversa selecionada</div>
+                <div id="typingIndicator" class="text-[11px] text-pink-300/80 hidden">Digitando...</div>
+                </div>
               </div>
               <div id="chatStatus" class="text-xs text-fuchsia-200/70">Aguardando seleção</div>
             </div>
@@ -106,6 +110,7 @@ try {
         'id' => (int)($u['id'] ?? 0),
         'name' => (string)($u['name'] ?? ''),
         'email' => (string)($u['email'] ?? ''),
+        'foto_perfil' => (string)($u['foto_perfil'] ?? ''),
       ];
     }, $chatUsers), JSON_UNESCAPED_UNICODE) ?>;
 
@@ -113,6 +118,8 @@ try {
     const searchEl = document.getElementById('chatUserSearch');
     const chatWithNameEl = document.getElementById('chatWithName');
     const chatWithSubEl = document.getElementById('chatWithSub');
+    const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
+    const typingIndicatorEl = document.getElementById('typingIndicator');
     const chatStatusEl = document.getElementById('chatStatus');
     const messagesEl = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
@@ -127,10 +134,28 @@ try {
 
     let currentChatUser = null;
     let unsubscribeMessages = null;
+    let unsubscribeTyping = null;
+    let typingResetTimer = null;
+    let typingStaleTimer = null;
     let pendingFile = null;
     let pendingAudioBlob = null;
     let mediaRecorder = null;
     let recordingChunks = [];
+    const TYPING_TTL_MS = 5000;
+
+    function initials(name) {
+      const n = String(name || '').trim();
+      if (!n) return '??';
+      const parts = n.split(/\s+/).slice(0, 2).map((p) => p.charAt(0).toUpperCase());
+      return parts.join('');
+    }
+
+    function avatarHtml(user, className = 'h-10 w-10 rounded-full object-cover') {
+      if (user && user.foto_perfil) {
+        return `<img src="${esc(user.foto_perfil)}" class="${className}" alt="${esc(user.name || 'Usuário')}" />`;
+      }
+      return `<div class="${className} bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100">${esc(initials((user && user.name) ? user.name : ''))}</div>`;
+    }
 
     function esc(v) {
       return String(v || '')
@@ -193,8 +218,13 @@ try {
         const active = currentChatUser && currentChatUser.id === u.id;
         return `
           <button data-user-id="${u.id}" class="chat-user-btn w-full text-left rounded-xl px-3 py-3 mb-2 border transition ${active ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
-            <div class="font-semibold text-pink-100">${esc(u.name || ('Usuário #' + u.id))}</div>
-            <div class="text-xs text-pink-100/60 truncate">${esc(u.email || '')}</div>
+            <div class="flex items-center gap-3">
+              ${avatarHtml(u, 'h-10 w-10 rounded-full object-cover')}
+              <div class="min-w-0">
+                <div class="font-semibold text-pink-100 truncate">${esc(u.name || ('Usuário #' + u.id))}</div>
+                <div class="text-xs text-pink-100/60 truncate">${esc(u.email || '')}</div>
+              </div>
+            </div>
           </button>
         `;
       }).join('');
@@ -273,11 +303,17 @@ try {
 
       chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
       chatWithSubEl.textContent = user.email || 'Sem e-mail';
+      chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-10 w-10 rounded-full object-cover');
+      typingIndicatorEl.classList.add('hidden');
       chatStatusEl.textContent = 'Conectando...';
 
       if (unsubscribeMessages) {
         unsubscribeMessages();
         unsubscribeMessages = null;
+      }
+      if (unsubscribeTyping) {
+        unsubscribeTyping();
+        unsubscribeTyping = null;
       }
 
       try {
@@ -286,6 +322,7 @@ try {
         const convo = conversationId(CURRENT_USER.id, user.id);
         const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
         const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
+        const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(user.id));
 
         unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
           const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -295,10 +332,68 @@ try {
           console.error(err);
           chatStatusEl.textContent = 'Erro de conexão';
         });
+
+        unsubscribeTyping = f.onSnapshot(typingDocRef, (snap) => {
+          const data = snap.exists() ? snap.data() : null;
+          const isTyping = !!(data && data.isTyping);
+          if (!isTyping) {
+            if (typingStaleTimer) {
+              clearTimeout(typingStaleTimer);
+              typingStaleTimer = null;
+            }
+            typingIndicatorEl.classList.add('hidden');
+            return;
+          }
+
+          let baseMs = 0;
+          if (data.at && typeof data.at.toDate === 'function') {
+            baseMs = data.at.toDate().getTime();
+          } else {
+            baseMs = Number(data.atMs || 0);
+          }
+
+          const nowMs = Date.now();
+          const expired = !baseMs || (nowMs - baseMs > TYPING_TTL_MS);
+          if (expired) {
+            typingIndicatorEl.classList.add('hidden');
+            return;
+          }
+
+          typingIndicatorEl.classList.remove('hidden');
+          if (typingStaleTimer) {
+            clearTimeout(typingStaleTimer);
+          }
+          const remaining = Math.max(300, TYPING_TTL_MS - (nowMs - baseMs));
+          typingStaleTimer = setTimeout(() => {
+            typingIndicatorEl.classList.add('hidden');
+          }, remaining);
+        }, () => {
+          typingIndicatorEl.classList.add('hidden');
+        });
       } catch (e) {
         console.error(e);
         chatStatusEl.textContent = 'Firebase indisponível';
       }
+    }
+
+    async function setTyping(isTyping) {
+      if (!currentChatUser) return;
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
+        const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(CURRENT_USER.id));
+        if (isTyping) {
+          await f.setDoc(typingDocRef, {
+            isTyping: true,
+            userId: CURRENT_USER.id,
+            at: f.serverTimestamp(),
+            atMs: Date.now(),
+          }, { merge: true });
+          return;
+        }
+        await f.deleteDoc(typingDocRef);
+      } catch (_) {}
     }
 
     async function sendMessage(payload = {}) {
@@ -360,6 +455,7 @@ try {
       });
 
       messageInput.value = '';
+      await setTyping(false);
       clearMediaPreview();
       setUploadProgress(100);
     }
@@ -451,6 +547,7 @@ try {
       try {
         await sendMessage({ type: 'text', text });
         messageInput.value = '';
+        await setTyping(false);
       } catch (e) {
         console.error(e);
         alert('Falha ao enviar mensagem.');
@@ -462,6 +559,27 @@ try {
         e.preventDefault();
         sendBtn.click();
       }
+    });
+
+    messageInput.addEventListener('input', async () => {
+      if (!currentChatUser) return;
+      const hasText = messageInput.value.trim().length > 0;
+      if (!hasText) {
+        if (typingResetTimer) {
+          clearTimeout(typingResetTimer);
+          typingResetTimer = null;
+        }
+        await setTyping(false);
+        return;
+      }
+
+      await setTyping(true);
+      if (typingResetTimer) {
+        clearTimeout(typingResetTimer);
+      }
+      typingResetTimer = setTimeout(() => {
+        setTyping(false);
+      }, 1200);
     });
 
     emojiBtn.addEventListener('click', () => {
@@ -488,6 +606,10 @@ try {
       usersListEl.innerHTML = '<div class="p-3 text-sm text-pink-100/70">Nenhum outro usuário disponível no momento.</div>';
       messagesEl.innerHTML = '<div class="text-center text-sm text-pink-100/50 mt-8">Convide usuários ativos para começar a conversar.</div>';
     }
+
+    window.addEventListener('beforeunload', () => {
+      setTyping(false);
+    });
   </script>
 </body>
 </html>

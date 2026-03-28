@@ -38,6 +38,7 @@ function runAutoMigrate(PDO $pdo): void
             }
         } catch (Throwable $e) { /* ignore */ }
         ensureColumn($pdo, 'users', 'phone', "VARCHAR(50) NULL AFTER email");
+        ensureColumn($pdo, 'users', 'foto_perfil', "VARCHAR(512) NULL AFTER phone");
         ensureColumn($pdo, 'users', 'allowed_pages', "TEXT NULL AFTER is_active");
 
         // ── login_attempts (brute force protection) ──
