@@ -279,6 +279,7 @@ function runAutoMigrate(PDO $pdo): void
                 tipo_gira_id INT NOT NULL,
                 plataforma VARCHAR(255) NOT NULL DEFAULT 'Instagram',
                 foto_path VARCHAR(512) NULL,
+                link_postagem VARCHAR(512) NULL,
                 data_postagem DATE NULL,
                 data_realizacao DATE NOT NULL,
                 descricao TEXT NULL,
@@ -287,6 +288,7 @@ function runAutoMigrate(PDO $pdo): void
                 FOREIGN KEY (tipo_gira_id) REFERENCES tipos_gira(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+        ensureColumn($pdo, 'giras', 'link_postagem', 'VARCHAR(512) NULL');
 
         // ── filhos ──
         $pdo->exec("
@@ -346,6 +348,8 @@ function runAutoMigrate(PDO $pdo): void
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     titulo VARCHAR(255) NOT NULL,
                     mensagem TEXT NOT NULL,
+                    imagem_path VARCHAR(512) NULL,
+                    link_postagem VARCHAR(512) NULL,
                     is_active TINYINT(1) NOT NULL DEFAULT 1,
                     created_by INT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -353,6 +357,8 @@ function runAutoMigrate(PDO $pdo): void
                     INDEX idx_avisos_active_date (is_active, created_at)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ");
+            ensureColumn($pdo, 'avisos', 'imagem_path', 'VARCHAR(512) NULL');
+            ensureColumn($pdo, 'avisos', 'link_postagem', 'VARCHAR(512) NULL');
             ensureColumn($pdo, 'avisos', 'titulo', 'VARCHAR(255) NOT NULL');
             ensureColumn($pdo, 'avisos', 'mensagem', 'TEXT NOT NULL');
             ensureColumn($pdo, 'avisos', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1');

@@ -36,7 +36,7 @@ $isAdminAvisos = ($_SESSION['user_role'] ?? '') === 'admin';
 
   <?php if ($isAdminAvisos): ?>
   <div id="avisoModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
-    <div class="bg-white rounded-3xl w-full max-w-2xl p-6 border border-slate-200 shadow-2xl">
+    <div class="bg-white rounded-3xl w-full max-w-2xl p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="avisoModalTitle">Novo Aviso</h2>
         <button id="closeAvisoModal" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -50,6 +50,15 @@ $isAdminAvisos = ($_SESSION['user_role'] ?? '') === 'admin';
         <div>
           <label class="text-sm font-medium text-slate-700">Mensagem</label>
           <textarea id="avisoMensagem" rows="6" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" required></textarea>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Link da Postagem (opcional)</label>
+          <input id="avisoLinkPostagem" type="url" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="https://..." />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Imagem do Aviso (opcional)</label>
+          <input id="avisoImagem" type="file" accept="image/*" class="mt-2 w-full text-sm" />
+          <div id="avisoImagemPreview" class="mt-2"></div>
         </div>
         <label class="flex items-center gap-2 text-sm text-slate-700">
           <input id="avisoAtivo" type="checkbox" checked /> Aviso ativo
@@ -120,7 +129,9 @@ $isAdminAvisos = ($_SESSION['user_role'] ?? '') === 'admin';
               </div>
             ` : ''}
           </div>
+          ${aviso.imagem_path ? `<div class="mb-3"><img src="${escapeHtml(aviso.imagem_path)}" class="max-h-56 w-full object-cover rounded-xl border border-slate-200" /></div>` : ''}
           <div class="text-slate-700 whitespace-pre-wrap leading-7">${escapeHtml(aviso.mensagem)}</div>
+          ${aviso.link_postagem ? `<div class="mt-3"><a href="${escapeHtml(aviso.link_postagem)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 font-semibold hover:bg-red-100"><i class="fa-solid fa-link"></i> Ver postagem</a></div>` : ''}
         </article>
       `).join('');
     }
@@ -132,6 +143,9 @@ $isAdminAvisos = ($_SESSION['user_role'] ?? '') === 'admin';
       const avisoId = document.getElementById('avisoId');
       const avisoTitulo = document.getElementById('avisoTitulo');
       const avisoMensagem = document.getElementById('avisoMensagem');
+      const avisoLinkPostagem = document.getElementById('avisoLinkPostagem');
+      const avisoImagem = document.getElementById('avisoImagem');
+      const avisoImagemPreview = document.getElementById('avisoImagemPreview');
       const avisoAtivo = document.getElementById('avisoAtivo');
 
       function toggleAvisoModal(show) { toggleModal(avisoModal, show); }
@@ -139,6 +153,9 @@ $isAdminAvisos = ($_SESSION['user_role'] ?? '') === 'admin';
         avisoId.value = '';
         avisoTitulo.value = '';
         avisoMensagem.value = '';
+        avisoLinkPostagem.value = '';
+        avisoImagem.value = '';
+        avisoImagemPreview.innerHTML = '';
         avisoAtivo.checked = true;
         avisoModalTitle.textContent = 'Novo Aviso';
       }
@@ -156,10 +173,26 @@ $isAdminAvisos = ($_SESSION['user_role'] ?? '') === 'admin';
         avisoId.value = aviso.id;
         avisoTitulo.value = aviso.titulo || '';
         avisoMensagem.value = aviso.mensagem || '';
+        avisoLinkPostagem.value = aviso.link_postagem || '';
+        avisoImagem.value = '';
+        avisoImagemPreview.innerHTML = aviso.imagem_path ? `<img src="${escapeHtml(aviso.imagem_path)}" class="h-24 rounded-xl border border-slate-200" />` : '';
         avisoAtivo.checked = Number(aviso.is_active) === 1;
         avisoModalTitle.textContent = 'Editar Aviso';
         toggleAvisoModal(true);
       };
+
+      avisoImagem.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+          avisoImagemPreview.innerHTML = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          avisoImagemPreview.innerHTML = `<img src="${ev.target?.result || ''}" class="h-24 rounded-xl border border-slate-200" />`;
+        };
+        reader.readAsDataURL(file);
+      });
 
       window.deleteAviso = async function deleteAviso(id) {
         if (!confirm('Excluir este aviso?')) return;
@@ -175,13 +208,17 @@ $isAdminAvisos = ($_SESSION['user_role'] ?? '') === 'admin';
 
       avisoForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const body = new URLSearchParams({
-          action: avisoId.value ? 'update' : 'create',
-          id: avisoId.value,
-          titulo: avisoTitulo.value.trim(),
-          mensagem: avisoMensagem.value.trim(),
-          is_active: avisoAtivo.checked ? '1' : '0',
-        });
+        const body = new FormData();
+        body.append('action', avisoId.value ? 'update' : 'create');
+        body.append('id', avisoId.value);
+        body.append('titulo', avisoTitulo.value.trim());
+        body.append('mensagem', avisoMensagem.value.trim());
+        body.append('link_postagem', avisoLinkPostagem.value.trim());
+        body.append('is_active', avisoAtivo.checked ? '1' : '0');
+        if (avisoImagem.files.length) {
+          body.append('imagem', avisoImagem.files[0]);
+        }
+
         const response = await fetch('api/avisos.php', { method: 'POST', body });
         const data = await response.json();
         if (!data.ok) {

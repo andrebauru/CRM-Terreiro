@@ -44,6 +44,7 @@ try {
             tipo_gira_id INT NOT NULL,
             plataforma VARCHAR(255) NOT NULL DEFAULT 'Instagram',
             foto_path VARCHAR(512) NULL,
+            link_postagem VARCHAR(512) NULL,
             data_postagem DATE NULL,
             data_realizacao DATE NOT NULL,
             descricao TEXT NULL,
@@ -52,6 +53,7 @@ try {
             FOREIGN KEY (tipo_gira_id) REFERENCES tipos_gira(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+    ensureColumn($pdo, 'giras', 'link_postagem', 'VARCHAR(512) NULL');
 
     // Migrate ENUM → VARCHAR if needed
     try {
@@ -107,8 +109,13 @@ try {
         // Accept comma-separated platforms from multi-select
         if (empty($plataforma)) $plataforma = 'Instagram';
         $dataPostagem = trim((string)($_POST['data_postagem'] ?? '')) ?: null;
+        $linkPostagem = trim((string)($_POST['link_postagem'] ?? '')) ?: null;
         $dataRealizacao = trim((string)($_POST['data_realizacao'] ?? ''));
         $descricao = trim((string)($_POST['descricao'] ?? '')) ?: null;
+
+        if ($linkPostagem !== null && !preg_match('~^https?://~i', $linkPostagem)) {
+            jsonResponse(['ok' => false, 'message' => 'Link da postagem inválido. Use URL iniciando com http:// ou https://'], 422);
+        }
 
         if (!$tipoId || !$dataRealizacao) {
             jsonResponse(['ok' => false, 'message' => 'Tipo de gira e data de realização são obrigatórios'], 400);
@@ -129,10 +136,10 @@ try {
         }
 
         $stmt = $pdo->prepare('
-            INSERT INTO giras (tipo_gira_id, plataforma, foto_path, data_postagem, data_realizacao, descricao)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO giras (tipo_gira_id, plataforma, foto_path, link_postagem, data_postagem, data_realizacao, descricao)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ');
-        $stmt->execute([$tipoId, $plataforma, $fotoPath, $dataPostagem, $dataRealizacao, $descricao]);
+        $stmt->execute([$tipoId, $plataforma, $fotoPath, $linkPostagem, $dataPostagem, $dataRealizacao, $descricao]);
 
         $tipoNomeStmt = $pdo->prepare('SELECT nome FROM tipos_gira WHERE id = ? LIMIT 1');
         $tipoNomeStmt->execute([$tipoId]);
@@ -148,8 +155,8 @@ try {
                 'create',
                 $tipoNome,
                 $detalhes,
-                buildGirasCtaLink(),
-                getTerreiroDefaultImagePath($pdo)
+                $linkPostagem ?: buildGirasCtaLink(),
+                $fotoPath
             );
             ensureSendGridLogsTable($pdo);
             persistSendGridLog(
@@ -173,8 +180,13 @@ try {
         $plataforma = trim((string)($_POST['plataforma'] ?? 'Instagram'));
         if (empty($plataforma)) $plataforma = 'Instagram';
         $dataPostagem = trim((string)($_POST['data_postagem'] ?? '')) ?: null;
+        $linkPostagem = trim((string)($_POST['link_postagem'] ?? '')) ?: null;
         $dataRealizacao = trim((string)($_POST['data_realizacao'] ?? ''));
         $descricao = trim((string)($_POST['descricao'] ?? '')) ?: null;
+
+        if ($linkPostagem !== null && !preg_match('~^https?://~i', $linkPostagem)) {
+            jsonResponse(['ok' => false, 'message' => 'Link da postagem inválido. Use URL iniciando com http:// ou https://'], 422);
+        }
 
         if (!$id || !$tipoId || !$dataRealizacao) {
             jsonResponse(['ok' => false, 'message' => 'Dados obrigatórios faltando'], 400);
@@ -196,16 +208,16 @@ try {
 
         if ($fotoPath) {
             $stmt = $pdo->prepare('
-                UPDATE giras SET tipo_gira_id = ?, plataforma = ?, foto_path = ?, data_postagem = ?, data_realizacao = ?, descricao = ?
+                UPDATE giras SET tipo_gira_id = ?, plataforma = ?, foto_path = ?, link_postagem = ?, data_postagem = ?, data_realizacao = ?, descricao = ?
                 WHERE id = ?
             ');
-            $stmt->execute([$tipoId, $plataforma, $fotoPath, $dataPostagem, $dataRealizacao, $descricao, $id]);
+            $stmt->execute([$tipoId, $plataforma, $fotoPath, $linkPostagem, $dataPostagem, $dataRealizacao, $descricao, $id]);
         } else {
             $stmt = $pdo->prepare('
-                UPDATE giras SET tipo_gira_id = ?, plataforma = ?, data_postagem = ?, data_realizacao = ?, descricao = ?
+                UPDATE giras SET tipo_gira_id = ?, plataforma = ?, link_postagem = ?, data_postagem = ?, data_realizacao = ?, descricao = ?
                 WHERE id = ?
             ');
-            $stmt->execute([$tipoId, $plataforma, $dataPostagem, $dataRealizacao, $descricao, $id]);
+            $stmt->execute([$tipoId, $plataforma, $linkPostagem, $dataPostagem, $dataRealizacao, $descricao, $id]);
         }
 
         $tipoNomeStmt = $pdo->prepare('SELECT nome FROM tipos_gira WHERE id = ? LIMIT 1');
@@ -222,8 +234,8 @@ try {
                 'update',
                 $tipoNome,
                 $detalhes,
-                buildGirasCtaLink(),
-                getTerreiroDefaultImagePath($pdo)
+                $linkPostagem ?: buildGirasCtaLink(),
+                $fotoPath
             );
             ensureSendGridLogsTable($pdo);
             persistSendGridLog(
@@ -248,7 +260,7 @@ try {
         }
 
         $giraStmt = $pdo->prepare(
-            'SELECT g.data_realizacao, g.data_postagem, g.plataforma, g.descricao, t.nome AS tipo_nome
+            'SELECT g.data_realizacao, g.data_postagem, g.link_postagem, g.foto_path, g.plataforma, g.descricao, t.nome AS tipo_nome
              FROM giras g
              JOIN tipos_gira t ON t.id = g.tipo_gira_id
              WHERE g.id = ? LIMIT 1'
@@ -271,8 +283,8 @@ try {
                     'delete',
                     (string)($gira['tipo_nome'] ?? 'Gira'),
                     $detalhes,
-                    buildGirasCtaLink(),
-                    getTerreiroDefaultImagePath($pdo)
+                    !empty($gira['link_postagem']) ? (string)$gira['link_postagem'] : buildGirasCtaLink(),
+                    !empty($gira['foto_path']) ? (string)$gira['foto_path'] : null
                 );
                 ensureSendGridLogsTable($pdo);
                 persistSendGridLog(

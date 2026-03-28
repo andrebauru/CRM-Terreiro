@@ -42,7 +42,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       </div>
 
       <!-- CARDS GRID -->
-      <section id="girasGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto" style="max-height: calc(100vh - 250px);">
+      <section id="girasGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <div class="col-span-full text-center text-slate-400 py-12">Carregando...</div>
       </section>
     </main>
@@ -54,8 +54,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </button>
 
   <!-- MODAL NOVA/EDITAR GIRA -->
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
-    <div class="bg-white rounded-3xl w-full max-w-lg p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+  <div id="modal" class="fixed inset-0 hidden items-start md:items-center justify-center bg-black/60 px-4 py-4 z-[60] overflow-y-auto">
+    <div class="bg-white rounded-3xl w-full max-w-lg p-6 border border-slate-200 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto my-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="modalTitle">Nova Gira</h2>
         <button id="closeModal" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -98,6 +98,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <input id="giraDataPostagem" type="date" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
         <div>
+          <label class="text-sm font-medium text-slate-700">Link da Postagem (opcional)</label>
+          <input id="giraLinkPostagem" type="url" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="https://..." />
+        </div>
+        <div>
           <label class="text-sm font-medium text-slate-700">Foto da Postagem</label>
           <input id="giraFoto" type="file" accept="image/*" class="mt-2 w-full text-sm" />
           <div id="fotoPreview" class="mt-2"></div>
@@ -115,7 +119,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL TIPOS DE GIRA -->
-  <div id="tiposModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
+  <div id="tiposModal" class="fixed inset-0 hidden items-start md:items-center justify-center bg-black/60 px-4 py-4 z-[60] overflow-y-auto">
     <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Tipos de Gira</h2>
@@ -144,8 +148,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
   </div>
 
   <!-- MODAL DETALHE -->
-  <div id="detalheModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 px-4 z-[60]">
-    <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+  <div id="detalheModal" class="fixed inset-0 hidden items-start md:items-center justify-center bg-black/60 px-4 py-4 z-[60] overflow-y-auto">
+    <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto my-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold" id="detalheTitle">Detalhe da Gira</h2>
         <button id="closeDetalheModal" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -270,6 +274,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <span><i class="fa-solid fa-calendar text-red-400 mr-0.5"></i>${fmtDate(g.data_realizacao)}</span>
               ${g.data_postagem ? `<span><i class="fa-solid fa-share text-blue-400 mr-0.5"></i>${fmtDate(g.data_postagem)}</span>` : ''}
             </div>
+            ${g.link_postagem ? `<a href="${g.link_postagem}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline"><i class="fa-solid fa-link"></i> Postagem</a>` : ''}
             ${g.descricao ? `<p class="text-[10px] text-slate-400 line-clamp-1">${g.descricao}</p>` : ''}
           </div>
         </div>
@@ -307,6 +312,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       setSelectedPlatforms('Instagram');
       document.getElementById('giraDataRealizacao').value = new Date().toISOString().split('T')[0];
       document.getElementById('giraDataPostagem').value = '';
+      document.getElementById('giraLinkPostagem').value = '';
       document.getElementById('giraDescricao').value = '';
       document.getElementById('giraFoto').value = '';
       document.getElementById('fotoPreview').innerHTML = '';
@@ -347,6 +353,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       formData.append('plataforma', plataformas);
       formData.append('data_realizacao', document.getElementById('giraDataRealizacao').value);
       formData.append('data_postagem', document.getElementById('giraDataPostagem').value);
+      formData.append('link_postagem', document.getElementById('giraLinkPostagem').value.trim());
       formData.append('descricao', document.getElementById('giraDescricao').value);
       const fotoFile = document.getElementById('giraFoto').files[0];
       if (fotoFile) formData.append('foto', fotoFile);
@@ -402,6 +409,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div class="flex justify-between"><span class="text-slate-500">Plataformas:</span> <span class="font-medium flex gap-2">${platformBadges(g.plataforma)}</span></div>
         <div class="flex justify-between"><span class="text-slate-500">Data da Gira:</span> <span class="font-medium"><i class="fa-regular fa-calendar text-red-500 mr-1"></i>${fmtDate(g.data_realizacao)}</span></div>
         ${g.data_postagem ? `<div class="flex justify-between"><span class="text-slate-500">Data da Postagem:</span> <span class="font-medium">${fmtDate(g.data_postagem)}</span></div>` : ''}
+        ${g.link_postagem ? `<div class="pt-1"><a href="${g.link_postagem}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 hover:underline"><i class="fa-solid fa-link"></i> Abrir postagem</a></div>` : ''}
         ${g.descricao ? `<div class="pt-2 border-t border-slate-100"><p class="text-slate-500 mb-1">Descrição:</p><p>${g.descricao}</p></div>` : ''}
       `;
       toggleModal(detalheModal, true);
@@ -425,6 +433,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       setSelectedPlatforms(g.plataforma);
       document.getElementById('giraDataRealizacao').value = g.data_realizacao;
       document.getElementById('giraDataPostagem').value = g.data_postagem || '';
+      document.getElementById('giraLinkPostagem').value = g.link_postagem || '';
       document.getElementById('giraDescricao').value = g.descricao || '';
       document.getElementById('giraFoto').value = '';
       document.getElementById('fotoPreview').innerHTML = g.foto_path

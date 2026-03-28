@@ -45,6 +45,8 @@ try {
             id         INT AUTO_INCREMENT PRIMARY KEY,
             titulo     VARCHAR(255) NOT NULL,
             mensagem   TEXT NOT NULL,
+            imagem_path VARCHAR(512) NULL,
+            link_postagem VARCHAR(512) NULL,
             is_active  TINYINT(1) NOT NULL DEFAULT 1,
             created_by INT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -459,6 +461,8 @@ try {
     ensureColumn($pdo, 'settings', 'sendgrid_from_email', "VARCHAR(255) NULL AFTER sendgrid_api_key");
     ensureColumn($pdo, 'settings', 'sendgrid_from_name', "VARCHAR(255) NULL AFTER sendgrid_from_email");
     ensureColumn($pdo, 'settings', 'sendgrid_port', "INT NULL AFTER sendgrid_from_name");
+    ensureColumn($pdo, 'avisos', 'imagem_path', "VARCHAR(512) NULL AFTER mensagem");
+    ensureColumn($pdo, 'avisos', 'link_postagem', "VARCHAR(512) NULL AFTER imagem_path");
 
     // ── 6. SEEDS ──────────────────────────────────────────────────────────
 
