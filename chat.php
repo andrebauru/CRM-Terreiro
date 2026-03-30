@@ -36,20 +36,28 @@ try {
       </header>
 
       <!-- Container Principal do Chat -->
-      <div class="flex-1 flex flex-col overflow-hidden min-h-0">
-        <!-- Header do Chat Geral -->
-        <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25] flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-              <i class="fa-solid fa-comments text-sm"></i>
-            </div>
-            <div class="min-w-0">
-              <div class="font-semibold text-pink-200">Chat Geral</div>
-              <div id="typingIndicator" class="text-[11px] text-pink-300/80 hidden">Alguém está digitando...</div>
-            </div>
+      <div class="flex-1 flex overflow-hidden min-h-0">
+        <!-- Coluna Esquerda: Contatos -->
+        <aside class="shrink-0 w-80 border-r border-fuchsia-400/20 bg-[#140d22] flex flex-col">
+          <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
+            <input id="chatUserSearch" type="text" placeholder="Pesquisar..." class="w-full rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
-          <div id="chatStatus" class="text-xs text-fuchsia-200/70 shrink-0">🟢 Ativo</div>
-        </div>
+          <div id="chatUsersList" class="flex-1 overflow-y-auto p-2"></div>
+        </aside>
+
+        <!-- Coluna Direita: Conversa -->
+        <div class="flex-1 flex flex-col overflow-hidden bg-[#0f0819]">
+          <!-- Header do Chat -->
+          <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25] flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div id="chatAvatarWrap" class="h-10 w-10 rounded-full bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100 shrink-0">--</div>
+              <div class="min-w-0">
+                <div id="chatWithName" class="font-semibold text-pink-200 truncate">Selecione um chat</div>
+                <div id="typingIndicator" class="text-[11px] text-pink-300/80 hidden">Digitando...</div>
+              </div>
+            </div>
+            <div id="chatStatus" class="text-xs text-fuchsia-200/70 shrink-0">🟢 Ativo</div>
+          </div>
 
           <!-- Área de Mensagens -->
           <div id="chatMessages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col-reverse"></div>
@@ -96,8 +104,19 @@ try {
       name: <?= json_encode($currentUserName, JSON_UNESCAPED_UNICODE) ?>
     };
 
+    const USERS = <?= json_encode(array_map(static function ($u) {
+      return [
+        'id' => (int)($u['id'] ?? 0),
+        'name' => (string)($u['name'] ?? ''),
+        'email' => (string)($u['email'] ?? ''),
+        'foto_perfil' => (string)($u['foto_perfil'] ?? ''),
+      ];
+    }, $chatUsers), JSON_UNESCAPED_UNICODE) ?>;
+
     const usersListEl = document.getElementById('chatUsersList');
     const searchEl = document.getElementById('chatUserSearch');
+    const chatWithNameEl = document.getElementById('chatWithName');
+    const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
     const messagesEl = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -122,6 +141,8 @@ try {
     const TYPING_TTL_MS = 5000;
     const DEBUG = true;
     const GENERAL_CHAT_ID = 'general';
+    let currentChatUser = null;
+    let currentChatMode = null; // 'general' ou 'private'
 
     function log(...args) {
       if (DEBUG) console.log('[CHAT]', ...args);
@@ -148,6 +169,11 @@ try {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+    }
+
+    function conversationId(a, b) {
+      const p = [Number(a), Number(b)].sort((x, y) => x - y);
+      return \`\${p[0]}_\${p[1]}\`;
     }
 
     function formatTime(ts) {
@@ -182,7 +208,81 @@ try {
     }
 
     function renderUsersList(filter = '') {
-      log('General chat mode - no user list needed');
+      log('renderUsersList called, filter:', filter);
+      const term = String(filter || '').toLowerCase();
+      
+      // Renderizar opção de Chat Geral primeiro
+      let html = `
+        <button data-chat-mode="general" class="chat-user-btn w-full text-left rounded-lg px-2 py-2 mb-2 border transition ${currentChatMode === 'general' ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="h-8 w-8 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              <i class="fa-solid fa-comments text-xs"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="font-semibold text-pink-100 truncate text-sm">Chat Geral</div>
+              <div class="text-xs text-pink-100/60 truncate">Todos</div>
+            </div>
+          </div>
+        </button>
+      `;
+
+      const rows = USERS.filter((u) => {
+        const text = \`\${u.name} \${u.email}\`.toLowerCase();
+        return text.includes(term);
+      });
+
+      if (rows.length === 0 && !term) {
+        usersListEl.innerHTML = html + '<div class="p-3 text-sm text-pink-100/60">Nenhum outro usuário disponível.</div>';
+        attachUserListeners();
+        return;
+      }
+
+      html += rows.map((u) => {
+        const active = currentChatMode === 'private' && currentChatUser && currentChatUser.id === u.id;
+        return \`
+          <button data-user-id="\${u.id}" class="chat-user-btn w-full text-left rounded-lg px-2 py-2 mb-1 border transition \${active ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
+            <div class="flex items-center gap-2 min-w-0">
+              \${avatarHtml(u, 'h-8 w-8 rounded-full object-cover shrink-0')}
+              <div class="min-w-0">
+                <div class="font-semibold text-pink-100 truncate text-sm">\${esc(u.name || ('Usuário #' + u.id))}</div>
+                <div class="text-xs text-pink-100/60 truncate">\${esc(u.email || '')}</div>
+              </div>
+            </div>
+          </button>
+        \`;
+      }).join('');
+
+      usersListEl.innerHTML = html;
+      attachUserListeners();
+    }
+
+    function attachUserListeners() {
+      // Chat Geral button
+      const generalBtn = usersListEl.querySelector('[data-chat-mode="general"]');
+      if (generalBtn) {
+        generalBtn.addEventListener('click', () => {
+          log('General chat clicked');
+          currentChatMode = 'general';
+          currentChatUser = null;
+          openGeneralChat();
+          renderUsersList(searchEl.value);
+        });
+      }
+
+      // User buttons
+      document.querySelectorAll('[data-user-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.getAttribute('data-user-id') || 0);
+          const user = USERS.find((u) => u.id === id);
+          if (user) {
+            log('User clicked:', user.name);
+            currentChatMode = 'private';
+            currentChatUser = user;
+            openPrivateChat(user);
+            renderUsersList(searchEl.value);
+          }
+        });
+      });
     }
 
     function renderMessages(docs) {
@@ -199,7 +299,8 @@ try {
           : 'mr-auto bg-[#2a1b3f] border border-fuchsia-500/25 text-pink-50 rounded-b-2xl rounded-tr-2xl';
 
         let body = '';
-        if (!mine) {
+        // Mostrar nome do remetente apenas no chat geral e se não for minha mensagem
+        if (currentChatMode === 'general' && !mine) {
           body += `<div class="text-xs text-pink-200/90 font-semibold mb-1">${esc(msg.senderName || `Usuário #${msg.senderId}`)}</div>`;
         }
 
@@ -252,26 +353,25 @@ try {
     }
 
     async function openConversation(user) {
-      log('General chat - conversation with all users');
-      initGeneralChat();
+      log('Legacy function - use openGeneralChat or openPrivateChat');
     }
 
-    async function initGeneralChat() {
-      log('Initializing general chat');
-      try {
-        await ensureFirebaseReady();
-        loadGeneralChatMessages();
-      } catch (e) {
-        console.error('Error initializing general chat:', e);
-        chatStatusEl.textContent = '✗ Erro ao conectar';
-      }
-    }
+    async function openGeneralChat() {
+      log('Opening general chat');
+      chatWithNameEl.textContent = 'Chat Geral';
+      chatAvatarWrapEl.innerHTML = '<div class="h-10 w-10 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
+      typingIndicatorEl.classList.add('hidden');
+      chatStatusEl.textContent = '🟢 Ativo';
 
-    async function loadGeneralChatMessages() {
       if (unsubscribeMessages) {
         log('Unsubscribing from previous messages listener');
         unsubscribeMessages();
         unsubscribeMessages = null;
+      }
+      if (unsubscribeTyping) {
+        log('Unsubscribing from previous typing listener');
+        unsubscribeTyping();
+        unsubscribeTyping = null;
       }
 
       try {
@@ -290,14 +390,94 @@ try {
           chatStatusEl.textContent = '✗ Erro';
         });
 
-        setupTypingListener();
+        setupGeneralTypingListener();
       } catch (e) {
-        console.error('Error loading messages:', e);
+        console.error('Error opening general chat:', e);
         chatStatusEl.textContent = '✗ Indisponível';
       }
     }
 
-    async function setupTypingListener() {
+    async function openPrivateChat(user) {
+      log('Opening private chat with:', user.id, user.name);
+      chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
+      chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-10 w-10 rounded-full object-cover');
+      typingIndicatorEl.classList.add('hidden');
+      chatStatusEl.textContent = '...conectando';
+
+      if (unsubscribeMessages) {
+        log('Unsubscribing from previous messages listener');
+        unsubscribeMessages();
+        unsubscribeMessages = null;
+      }
+      if (unsubscribeTyping) {
+        log('Unsubscribing from previous typing listener');
+        unsubscribeTyping();
+        unsubscribeTyping = null;
+      }
+
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        const convo = conversationId(CURRENT_USER.id, user.id);
+        log('Conversation ID:', convo);
+        const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
+        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
+        const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(user.id));
+
+        unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
+          log('Messages snapshot received:', snapshot.docs.length, 'messages');
+          const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          renderMessages(rows);
+          chatStatusEl.textContent = '✓ Online';
+        }, (err) => {
+          console.error('Messages listener error:', err);
+          chatStatusEl.textContent = '✗ Erro';
+        });
+
+        unsubscribeTyping = f.onSnapshot(typingDocRef, (snap) => {
+          const data = snap.exists() ? snap.data() : null;
+          const isTyping = !!(data && data.isTyping);
+          if (!isTyping) {
+            if (typingStaleTimer) {
+              clearTimeout(typingStaleTimer);
+              typingStaleTimer = null;
+            }
+            typingIndicatorEl.classList.add('hidden');
+            return;
+          }
+
+          let baseMs = 0;
+          if (data.at && typeof data.at.toDate === 'function') {
+            baseMs = data.at.toDate().getTime();
+          } else {
+            baseMs = Number(data.atMs || 0);
+          }
+
+          const nowMs = Date.now();
+          const expired = !baseMs || (nowMs - baseMs > TYPING_TTL_MS);
+          if (expired) {
+            typingIndicatorEl.classList.add('hidden');
+            return;
+          }
+
+          typingIndicatorEl.classList.remove('hidden');
+          if (typingStaleTimer) {
+            clearTimeout(typingStaleTimer);
+          }
+          const remaining = Math.max(300, TYPING_TTL_MS - (nowMs - baseMs));
+          typingStaleTimer = setTimeout(() => {
+            typingIndicatorEl.classList.add('hidden');
+          }, remaining);
+        }, () => {
+          typingIndicatorEl.classList.add('hidden');
+        });
+      } catch (e) {
+        console.error('Error opening private chat:', e);
+        chatStatusEl.textContent = '✗ Indisponível';
+      }
+    }
+
+    async function setupGeneralTypingListener() {
       if (unsubscribeTyping) {
         unsubscribeTyping();
         unsubscribeTyping = null;
@@ -326,7 +506,7 @@ try {
           typingIndicatorEl.classList.add('hidden');
         });
       } catch (e) {
-        console.error('Error setting up typing listener:', e);
+        console.error('Error setting up general typing listener:', e);
       }
     }
 
@@ -334,18 +514,34 @@ try {
       try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
-        const typingDocRef = f.doc(window.db, 'conversations', GENERAL_CHAT_ID, 'typing', String(CURRENT_USER.id));
-        if (isTyping) {
-          await f.setDoc(typingDocRef, {
-            isTyping: true,
-            userId: CURRENT_USER.id,
-            userName: CURRENT_USER.name,
-            at: f.serverTimestamp(),
-            atMs: Date.now(),
-          }, { merge: true });
-          return;
+        
+        if (currentChatMode === 'general') {
+          const typingDocRef = f.doc(window.db, 'conversations', GENERAL_CHAT_ID, 'typing', String(CURRENT_USER.id));
+          if (isTyping) {
+            await f.setDoc(typingDocRef, {
+              isTyping: true,
+              userId: CURRENT_USER.id,
+              userName: CURRENT_USER.name,
+              at: f.serverTimestamp(),
+              atMs: Date.now(),
+            }, { merge: true });
+            return;
+          }
+          await f.deleteDoc(typingDocRef);
+        } else if (currentChatMode === 'private' && currentChatUser) {
+          const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
+          const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(CURRENT_USER.id));
+          if (isTyping) {
+            await f.setDoc(typingDocRef, {
+              isTyping: true,
+              userId: CURRENT_USER.id,
+              at: f.serverTimestamp(),
+              atMs: Date.now(),
+            }, { merge: true });
+            return;
+          }
+          await f.deleteDoc(typingDocRef);
         }
-        await f.deleteDoc(typingDocRef);
       } catch (_) {}
     }
 
@@ -354,18 +550,32 @@ try {
       try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
-        const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
-
-        const base = {
-          senderId: CURRENT_USER.id,
-          senderName: CURRENT_USER.name,
-          conversationId: GENERAL_CHAT_ID,
-          createdAt: f.serverTimestamp(),
-          createdAtMs: Date.now(),
-        };
-
-        const doc = await f.addDoc(messagesRef, { ...base, ...payload });
-        log('Message sent with ID:', doc.id);
+        
+        if (currentChatMode === 'general') {
+          const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
+          const base = {
+            senderId: CURRENT_USER.id,
+            senderName: CURRENT_USER.name,
+            conversationId: GENERAL_CHAT_ID,
+            createdAt: f.serverTimestamp(),
+            createdAtMs: Date.now(),
+          };
+          const doc = await f.addDoc(messagesRef, { ...base, ...payload });
+          log('Message sent with ID:', doc.id);
+        } else if (currentChatMode === 'private' && currentChatUser) {
+          const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
+          const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
+          const base = {
+            senderId: CURRENT_USER.id,
+            senderName: CURRENT_USER.name,
+            receiverId: currentChatUser.id,
+            conversationId: convo,
+            createdAt: f.serverTimestamp(),
+            createdAtMs: Date.now(),
+          };
+          const doc = await f.addDoc(messagesRef, { ...base, ...payload });
+          log('Message sent with ID:', doc.id);
+        }
       } catch (e) {
         console.error('sendMessage error:', e);
         throw e;
@@ -380,7 +590,16 @@ try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
         const ext = (fileOrBlob.name && fileOrBlob.name.split('.').pop()) || (typeHint === 'audio' ? 'webm' : 'bin');
-        const path = `chat_uploads/${GENERAL_CHAT_ID}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const chatId = currentChatMode === 'general' 
+          ? GENERAL_CHAT_ID 
+          : (currentChatUser ? conversationId(CURRENT_USER.id, currentChatUser.id) : null);
+        
+        if (!chatId) {
+          alert('Selecione um chat para enviar arquivo.');
+          return;
+        }
+        
+        const path = `chat_uploads/${chatId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         log('Upload path:', path);
         const storageRef = f.ref(window.storage, path);
 
@@ -566,9 +785,26 @@ try {
 
     recordBtn.addEventListener('click', toggleRecording);
 
-    // Initialize general chat
-    log('Initializing general chat');
-    initGeneralChat();
+    searchEl.addEventListener('input', () => {
+      renderUsersList(searchEl.value);
+    });
+
+    // Initialize
+    log('Initializing chat');
+    renderUsersList('');
+    if (USERS.length > 0) {
+      log('Initializing with first user');
+      currentChatMode = 'private';
+      currentChatUser = USERS[0];
+      openPrivateChat(USERS[0]);
+      renderUsersList('');
+    } else {
+      log('No other users available, initializing general chat');
+      currentChatMode = 'general';
+      currentChatUser = null;
+      openGeneralChat();
+      renderUsersList('');
+    }
 
     window.addEventListener('beforeunload', () => {
       log('Page unloading, clearing typing status');
