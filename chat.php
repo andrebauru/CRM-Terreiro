@@ -37,8 +37,8 @@ try {
 
       <!-- Container Principal do Chat -->
       <div class="flex-1 flex overflow-hidden min-h-0">
-        <!-- Coluna Esquerda: Contatos (respons iva) -->
-        <aside id="chatUsersPanel" class="shrink-0 w-full md:w-80 border-r border-gray-700/70 bg-[#140d22]/95 backdrop-blur flex flex-col max-h-full overflow-y-auto">
+        <!-- Coluna Esquerda: Contatos (Fixa 30%) -->
+        <aside id="chatUsersPanel" class="shrink-0 w-96 border-r border-gray-700/70 bg-[#140d22]/95 backdrop-blur flex flex-col max-h-full overflow-y-auto">
           <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
             <input id="chatUserSearch" type="text" placeholder="Pesquisar..." class="w-full rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
@@ -46,13 +46,10 @@ try {
         </aside>
 
         <!-- Coluna Direita: Conversa -->
-        <div id="chatConversationArea" class="hidden md:flex flex-1 flex-col overflow-hidden bg-[#0f0819]/95 backdrop-blur">
+        <div id="chatConversationArea" class="flex flex-1 flex-col overflow-hidden bg-[#0f0819]/95 backdrop-blur">
           <!-- Header do Chat -->
           <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25]/90 flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <button id="chatBackBtn" class="md:hidden h-8 w-8 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] flex items-center justify-center" title="Voltar">
-                <i class="fa-solid fa-arrow-left text-xs"></i>
-              </button>
               <div id="chatAvatarWrap" class="h-10 w-10 rounded-full bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100 shrink-0">--</div>
               <div class="min-w-0">
                 <div id="chatWithName" class="font-semibold text-pink-200 truncate">Selecione um chat</div>
@@ -127,7 +124,6 @@ try {
     const usersListEl = document.getElementById('chatUsersList');
     const chatUsersPanelEl = document.getElementById('chatUsersPanel');
     const chatConversationAreaEl = document.getElementById('chatConversationArea');
-    const chatBackBtn = document.getElementById('chatBackBtn');
     const searchEl = document.getElementById('chatUserSearch');
     const chatWithNameEl = document.getElementById('chatWithName');
     const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
@@ -219,21 +215,8 @@ try {
 
     function setMobileView(inConversation) {
       if (!chatUsersPanelEl || !chatConversationAreaEl) return;
-      if (window.innerWidth >= 768) {
-        chatUsersPanelEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('flex');
-        return;
-      }
-
-      if (inConversation) {
-        chatUsersPanelEl.classList.add('hidden');
-        chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('flex');
-      } else {
-        chatUsersPanelEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('hidden');
-      }
+      // Não fazer nada em desktop: ambos sempre visíveis
+      // Em mobile pequena tela seria responsivo, mas mantém 30/70 em desktop
     }
 
     function setUploadProgress(percent) {
@@ -308,7 +291,7 @@ try {
           currentChatMode = 'general';
           currentChatUser = null;
           openGeneralChat();
-          renderUsersList(searchEl.value);
+          setMobileView(true);
         });
       }
 
@@ -322,7 +305,7 @@ try {
             currentChatMode = 'private';
             currentChatUser = user;
             openPrivateChat(user);
-            renderUsersList(searchEl.value);
+            setMobileView(true);
           }
         });
       });
@@ -847,14 +830,8 @@ try {
       renderUsersList(searchEl.value);
     });
 
-    if (chatBackBtn) {
-      chatBackBtn.addEventListener('click', () => {
-        setMobileView(false);
-      });
-    }
-
     window.addEventListener('resize', () => {
-      setMobileView(!!currentChatMode);
+      // Sem necessidade de setMobileView em layout 30/70 fixo
     });
 
     // Initialize

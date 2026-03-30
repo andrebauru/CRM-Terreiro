@@ -46,7 +46,7 @@ if (typeof window.formatBRL === 'undefined') {
     return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
   };
 }
-var formatBRL = window.formatBRL;
+if (typeof formatBRL === 'undefined') var formatBRL = window.formatBRL;
 
 if (typeof window.formatBRLOrZero === 'undefined') {
   window.formatBRLOrZero = function(v) {
@@ -59,7 +59,7 @@ if (typeof window.formatBRLOrZero === 'undefined') {
     return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
   };
 }
-var formatBRLOrZero = window.formatBRLOrZero;
+if (typeof formatBRLOrZero === 'undefined') var formatBRLOrZero = window.formatBRLOrZero;
 
 if (typeof parseBRL === 'undefined') var parseBRL = function(v) { return _currInt(v); };
 
