@@ -97,6 +97,7 @@ try {
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
+    console.log('🎯 Chat inicializado - script iniciado');
     initSensitivePageProtection('chat');
 
     const CURRENT_USER = {
@@ -173,7 +174,7 @@ try {
 
     function conversationId(a, b) {
       const p = [Number(a), Number(b)].sort((x, y) => x - y);
-      return \`\${p[0]}_\${p[1]}\`;
+      return `${p[0]}_${p[1]}`;
     }
 
     function formatTime(ts) {
@@ -227,7 +228,7 @@ try {
       `;
 
       const rows = USERS.filter((u) => {
-        const text = \`\${u.name} \${u.email}\`.toLowerCase();
+        const text = `${u.name} ${u.email}`.toLowerCase();
         return text.includes(term);
       });
 
@@ -239,17 +240,17 @@ try {
 
       html += rows.map((u) => {
         const active = currentChatMode === 'private' && currentChatUser && currentChatUser.id === u.id;
-        return \`
-          <button data-user-id="\${u.id}" class="chat-user-btn w-full text-left rounded-lg px-2 py-2 mb-1 border transition \${active ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
+        return `
+          <button data-user-id="${u.id}" class="chat-user-btn w-full text-left rounded-lg px-2 py-2 mb-1 border transition ${active ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
             <div class="flex items-center gap-2 min-w-0">
-              \${avatarHtml(u, 'h-8 w-8 rounded-full object-cover shrink-0')}
+              ${avatarHtml(u, 'h-8 w-8 rounded-full object-cover shrink-0')}
               <div class="min-w-0">
-                <div class="font-semibold text-pink-100 truncate text-sm">\${esc(u.name || ('Usuário #' + u.id))}</div>
-                <div class="text-xs text-pink-100/60 truncate">\${esc(u.email || '')}</div>
+                <div class="font-semibold text-pink-100 truncate text-sm">${esc(u.name || ('Usuário #' + u.id))}</div>
+                <div class="text-xs text-pink-100/60 truncate">${esc(u.email || '')}</div>
               </div>
             </div>
           </button>
-        \`;
+        `;
       }).join('');
 
       usersListEl.innerHTML = html;
@@ -546,12 +547,13 @@ try {
     }
 
     async function sendMessage(payload = {}) {
-      log('sendMessage called with payload:', payload);
+      log('📤 sendMessage chamado com payload:', payload);
       try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
         
         if (currentChatMode === 'general') {
+          log('📤 Modo GERAL - enviando para conversationId=general');
           const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
           const base = {
             senderId: CURRENT_USER.id,
@@ -561,8 +563,9 @@ try {
             createdAtMs: Date.now(),
           };
           const doc = await f.addDoc(messagesRef, { ...base, ...payload });
-          log('Message sent with ID:', doc.id);
+          log('✅ Mensagem geral enviada com ID:', doc.id);
         } else if (currentChatMode === 'private' && currentChatUser) {
+          log('📤 Modo PRIVADO - enviando para usuário:', currentChatUser.name);
           const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
           const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
           const base = {
@@ -574,10 +577,10 @@ try {
             createdAtMs: Date.now(),
           };
           const doc = await f.addDoc(messagesRef, { ...base, ...payload });
-          log('Message sent with ID:', doc.id);
+          log('✅ Mensagem privada enviada com ID:', doc.id);
         }
       } catch (e) {
-        console.error('sendMessage error:', e);
+        console.error('❌ Erro em sendMessage:', e);
         throw e;
       }
     }
@@ -585,7 +588,7 @@ try {
     async function uploadAndSendFile(fileOrBlob, typeHint = 'file') {
       if (!fileOrBlob) return;
 
-      log('uploadAndSendFile started:', fileOrBlob.name, 'type:', typeHint);
+      console.log('📤 uploadAndSendFile iniciado:', fileOrBlob.name, 'tipo:', typeHint);
       try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
@@ -595,12 +598,13 @@ try {
           : (currentChatUser ? conversationId(CURRENT_USER.id, currentChatUser.id) : null);
         
         if (!chatId) {
+          console.error('❌ Nenhum chat selecionado para upload');
           alert('Selecione um chat para enviar arquivo.');
           return;
         }
         
         const path = `chat_uploads/${chatId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        log('Upload path:', path);
+        console.log('📂 Caminho de upload:', path);
         const storageRef = f.ref(window.storage, path);
 
         const uploadTask = f.uploadBytesResumable(storageRef, fileOrBlob, {
@@ -616,7 +620,7 @@ try {
         });
 
         const url = await f.getDownloadURL(uploadTask.snapshot.ref);
-        log('Upload complete, URL:', url.substring(0, 50) + '...');
+        console.log('✅ Upload completo, URL:', url.substring(0, 50) + '...');
         const mime = String(fileOrBlob.type || '');
         const messageType = typeHint === 'audio'
           ? 'audio'
@@ -713,41 +717,43 @@ try {
     }
 
     sendBtn.addEventListener('click', async () => {
-      log('Send button clicked');
+      console.log('🔘 Botão enviar clicado');
       const text = messageInput.value.trim();
+      
       if (pendingFile) {
-        log('Sending file...');
+        console.log('📎 Enviando arquivo pendente');
         try {
           await uploadAndSendFile(pendingFile);
         } catch (e) {
-          console.error(e);
+          console.error('❌ Erro ao enviar anexo:', e);
           alert('Falha ao enviar anexo.');
         }
         return;
       }
 
       if (!text) {
-        log('Input is empty, ignoring');
+        console.log('⚠️ Input vazio, ignorando');
         return;
       }
 
       try {
-        log('Sending text message:', text.substring(0, 50));
+        console.log('✉️ Enviando mensagem de texto:', text.substring(0, 30) + '...');
         await sendMessage({ type: 'text', text });
         messageInput.value = '';
         messageInput.focus();
         await setTyping(false);
-        log('Message sent successfully');
+        console.log('✅ Mensagem enviada com sucesso');
       } catch (e) {
-        console.error(e);
+        console.error('❌ Erro ao enviar mensagem:', e);
         alert('Falha ao enviar mensagem.');
       }
     });
 
     messageInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        log('Enter pressed without Shift');
+        console.log('⏎ Enter pressionado - enviando mensagem');
         e.preventDefault();
+        e.stopPropagation();
         sendBtn.click();
       }
     });
@@ -811,6 +817,7 @@ try {
       setTyping(false);
     });
 
+    console.log('✅ Chat completamente inicializado - aguardando interações');
     log('Chat initialized successfully');
   </script>
 </body>
