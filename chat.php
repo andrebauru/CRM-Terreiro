@@ -37,8 +37,8 @@ try {
 
       <!-- Container Principal do Chat -->
       <div class="flex-1 flex overflow-hidden min-h-0">
-        <!-- Coluna Esquerda: Contatos -->
-        <aside class="shrink-0 w-80 border-r border-fuchsia-400/20 bg-[#140d22] flex flex-col">
+        <!-- Coluna Esquerda: Contatos (respons iva) -->
+        <aside class="shrink-0 w-full md:w-80 border-r border-fuchsia-400/20 bg-[#140d22] flex flex-col max-h-full overflow-hidden">
           <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
             <input id="chatUserSearch" type="text" placeholder="Pesquisar..." class="w-full rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
@@ -818,6 +818,11 @@ try {
     });
 
     console.log('✅ Chat completamente inicializado - aguardando interações');
+    console.log('%c🎯 Dicas para debugging:', 'color: #FF1493; font-size: 14px; font-weight: bold;');
+    console.log('%c📤 Enviar mensagem: veja logs "sendMessage chamado", "Mensagem enviada"', 'color: #00FF00');
+    console.log('%c📎 Upload de arquivo: veja logs "uploadAndSendFile iniciado", "Upload completo"', 'color: #00FF00');
+    console.log('%c⏎ Enter: log "Enter pressionado" - enviando mensagem', 'color: #00FF00');
+    console.log('%c🔘 Botão: log "Botão enviar clicado"', 'color: #00FF00');
     log('Chat initialized successfully');
   </script>
 </body>
