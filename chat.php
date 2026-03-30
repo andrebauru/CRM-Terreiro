@@ -21,78 +21,69 @@ try {
     }
 }
 ?>
-<body class="bg-[#0f0b16] font-sans text-slate-100">
-  <div class="min-h-screen flex overflow-x-hidden">
+<body class="bg-[#0f0b16] font-sans text-slate-100 overflow-hidden">
+  <div class="h-screen flex overflow-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
-    <main class="flex-1 min-w-0 p-4 pt-16 md:p-8">
-      <header class="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div>
-          <h1 class="text-2xl md:text-3xl font-black text-pink-300">Chat Interno</h1>
-          <p class="text-pink-100/70 text-sm">Conversas em tempo real com anexos, áudio e progresso de upload.</p>
-        </div>
-        <div class="text-xs bg-white/10 border border-pink-400/30 rounded-xl px-3 py-2">
-          Conectado como <span class="font-bold text-pink-200"><?= htmlspecialchars($currentUserName) ?></span>
+    <main class="flex-1 flex flex-col min-w-0">
+      <!-- Header do Chat -->
+      <header class="shrink-0 px-4 py-3 bg-[#160d25] border-b border-fuchsia-400/20 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-black text-pink-300">Chat Interno</h1>
+          <span class="text-xs text-pink-100/50">•</span>
+          <span class="text-xs text-pink-200"><?= htmlspecialchars($currentUserName) ?></span>
         </div>
       </header>
 
-      <section class="rounded-3xl border border-fuchsia-500/30 bg-gradient-to-br from-[#1b1228] to-[#10091b] shadow-2xl overflow-hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-[70vh]">
-          <aside class="border-r border-fuchsia-400/20 bg-[#140d22]">
-            <div class="p-4 border-b border-fuchsia-400/20">
-              <label class="block text-xs uppercase tracking-wide text-pink-200/70 mb-2">Pesquisar</label>
-              <input id="chatUserSearch" type="text" placeholder="Nome ou e-mail" class="w-full rounded-xl bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
+      <!-- Container Principal do Chat -->
+      <div class="flex-1 flex flex-col overflow-hidden min-h-0">
+        <!-- Header do Chat Geral -->
+        <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25] flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              <i class="fa-solid fa-comments text-sm"></i>
             </div>
-            <div id="chatUsersList" class="overflow-y-auto max-h-[62vh] p-2"></div>
-          </aside>
+            <div class="min-w-0">
+              <div class="font-semibold text-pink-200">Chat Geral</div>
+              <div id="typingIndicator" class="text-[11px] text-pink-300/80 hidden">Alguém está digitando...</div>
+            </div>
+          </div>
+          <div id="chatStatus" class="text-xs text-fuchsia-200/70 shrink-0">🟢 Ativo</div>
+        </div>
 
-          <div class="flex flex-col min-h-[70vh]">
-            <div id="chatHeader" class="px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25] flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div id="chatAvatarWrap" class="h-10 w-10 rounded-full bg-fuchsia-500/25 overflow-hidden flex items-center justify-center text-xs font-bold text-pink-100">--</div>
-                <div>
-                <div id="chatWithName" class="font-bold text-pink-200">Selecione alguém para conversar</div>
-                <div id="chatWithSub" class="text-xs text-pink-100/60">Nenhuma conversa selecionada</div>
-                <div id="typingIndicator" class="text-[11px] text-pink-300/80 hidden">Digitando...</div>
-                </div>
+          <!-- Área de Mensagens -->
+          <div id="chatMessages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col-reverse"></div>
+
+          <!-- Rodapé: Input de Mensagem (Fixo) -->
+          <div class="shrink-0 border-t border-fuchsia-400/20 bg-[#160d25] p-3 space-y-2">
+
+            <div id="uploadProgressWrap" class="hidden">
+              <div class="flex items-center justify-between text-xs text-pink-100/70 mb-1">
+                <span>Upload...</span>
+                <span id="uploadProgressText">0%</span>
               </div>
-              <div id="chatStatus" class="text-xs text-fuchsia-200/70">Aguardando seleção</div>
+              <div class="h-1 rounded bg-white/10 overflow-hidden">
+                <div id="uploadProgressBar" class="h-1 bg-gradient-to-r from-pink-500 to-fuchsia-500 w-0 transition-all"></div>
+              </div>
             </div>
 
-            <div id="chatMessages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#0f0819]"></div>
-
-            <div class="border-t border-fuchsia-400/20 bg-[#160d25] p-3">
-              <div id="mediaPreview" class="hidden mb-3 rounded-xl border border-fuchsia-400/30 bg-black/30 p-3"></div>
-
-              <div id="uploadProgressWrap" class="hidden mb-3">
-                <div class="flex items-center justify-between text-xs text-pink-100/70 mb-1">
-                  <span>Enviando arquivo...</span>
-                  <span id="uploadProgressText">0%</span>
-                </div>
-                <div class="h-2 rounded bg-white/10 overflow-hidden">
-                  <div id="uploadProgressBar" class="h-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 w-0"></div>
-                </div>
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <textarea id="messageInput" rows="2" placeholder="Mensagem..." class="w-full resize-none rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60"></textarea>
               </div>
-
-              <div class="flex flex-col gap-2 md:flex-row md:items-end">
-                <div class="flex-1">
-                  <label class="text-xs text-pink-100/70 mb-1 block">Mensagem</label>
-                  <textarea id="messageInput" rows="2" placeholder="Digite sua mensagem..." class="w-full resize-none rounded-xl bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60"></textarea>
-                </div>
-                <div class="flex gap-2">
-                  <button id="emojiBtn" class="h-10 w-10 rounded-xl bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47]" title="Emoji"><i class="fa-regular fa-face-smile"></i></button>
-                  <label class="h-10 w-10 rounded-xl bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] grid place-items-center cursor-pointer" title="Anexar imagem ou vídeo">
-                    <i class="fa-solid fa-paperclip"></i>
-                    <input id="fileInput" type="file" class="hidden" accept="image/*,video/*,audio/*" />
-                  </label>
-                  <button id="recordBtn" class="h-10 px-3 rounded-xl bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] text-xs font-semibold" title="Gravar áudio">🎤 Áudio</button>
-                  <button id="sendBtn" class="h-10 px-4 rounded-xl bg-pink-600 hover:bg-pink-500 font-bold">Enviar</button>
-                </div>
+              <div class="flex flex-col gap-2">
+                <button id="emojiBtn" class="h-10 w-10 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] flex items-center justify-center" title="Emoji"><i class="fa-regular fa-face-smile text-sm"></i></button>
+                <label class="h-10 w-10 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] cursor-pointer flex items-center justify-center" title="Anexo">
+                  <i class="fa-solid fa-paperclip text-sm"></i>
+                  <input id="fileInput" type="file" class="hidden" accept="image/*,video/*,audio/*" />
+                </label>
+                <button id="recordBtn" class="h-10 px-2 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] text-[10px] font-semibold" title="Áudio">🎤</button>
+                <button id="sendBtn" class="h-10 w-10 rounded-lg bg-pink-600 hover:bg-pink-500 flex items-center justify-center" title="Enviar"><i class="fa-solid fa-paper-plane text-sm"></i></button>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </main>
   </div>
 
@@ -105,22 +96,8 @@ try {
       name: <?= json_encode($currentUserName, JSON_UNESCAPED_UNICODE) ?>
     };
 
-    const USERS = <?= json_encode(array_map(static function ($u) {
-      return [
-        'id' => (int)($u['id'] ?? 0),
-        'name' => (string)($u['name'] ?? ''),
-        'email' => (string)($u['email'] ?? ''),
-        'foto_perfil' => (string)($u['foto_perfil'] ?? ''),
-      ];
-    }, $chatUsers), JSON_UNESCAPED_UNICODE) ?>;
-
     const usersListEl = document.getElementById('chatUsersList');
     const searchEl = document.getElementById('chatUserSearch');
-    const chatWithNameEl = document.getElementById('chatWithName');
-    const chatWithSubEl = document.getElementById('chatWithSub');
-    const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
-    const typingIndicatorEl = document.getElementById('typingIndicator');
-    const chatStatusEl = document.getElementById('chatStatus');
     const messagesEl = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -131,8 +108,9 @@ try {
     const uploadWrap = document.getElementById('uploadProgressWrap');
     const uploadBar = document.getElementById('uploadProgressBar');
     const uploadText = document.getElementById('uploadProgressText');
+    const typingIndicatorEl = document.getElementById('typingIndicator');
+    const chatStatusEl = document.getElementById('chatStatus');
 
-    let currentChatUser = null;
     let unsubscribeMessages = null;
     let unsubscribeTyping = null;
     let typingResetTimer = null;
@@ -142,6 +120,12 @@ try {
     let mediaRecorder = null;
     let recordingChunks = [];
     const TYPING_TTL_MS = 5000;
+    const DEBUG = true;
+    const GENERAL_CHAT_ID = 'general';
+
+    function log(...args) {
+      if (DEBUG) console.log('[CHAT]', ...args);
+    }
 
     function initials(name) {
       const n = String(name || '').trim();
@@ -164,11 +148,6 @@ try {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-    }
-
-    function conversationId(a, b) {
-      const p = [Number(a), Number(b)].sort((x, y) => x - y);
-      return `${p[0]}_${p[1]}`;
     }
 
     function formatTime(ts) {
@@ -203,58 +182,29 @@ try {
     }
 
     function renderUsersList(filter = '') {
-      const term = String(filter || '').toLowerCase();
-      const rows = USERS.filter((u) => {
-        const text = `${u.name} ${u.email}`.toLowerCase();
-        return text.includes(term);
-      });
-
-      if (!rows.length) {
-        usersListEl.innerHTML = '<div class="p-3 text-sm text-pink-100/60">Nenhum usuário encontrado.</div>';
-        return;
-      }
-
-      usersListEl.innerHTML = rows.map((u) => {
-        const active = currentChatUser && currentChatUser.id === u.id;
-        return `
-          <button data-user-id="${u.id}" class="chat-user-btn w-full text-left rounded-xl px-3 py-3 mb-2 border transition ${active ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
-            <div class="flex items-center gap-3">
-              ${avatarHtml(u, 'h-10 w-10 rounded-full object-cover')}
-              <div class="min-w-0">
-                <div class="font-semibold text-pink-100 truncate">${esc(u.name || ('Usuário #' + u.id))}</div>
-                <div class="text-xs text-pink-100/60 truncate">${esc(u.email || '')}</div>
-              </div>
-            </div>
-          </button>
-        `;
-      }).join('');
-
-      document.querySelectorAll('.chat-user-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = Number(btn.getAttribute('data-user-id') || 0);
-          const user = USERS.find((u) => u.id === id);
-          if (user) {
-            openConversation(user);
-          }
-        });
-      });
+      log('General chat mode - no user list needed');
     }
 
     function renderMessages(docs) {
+      log('renderMessages called with', docs.length, 'messages');
       if (!docs.length) {
-        messagesEl.innerHTML = '<div class="text-center text-sm text-pink-100/50 mt-8">Sem mensagens ainda. Envie a primeira mensagem ✨</div>';
+        messagesEl.innerHTML = '<div class="text-center text-sm text-pink-100/50">Nenhuma mensagem ainda. Comece a conversa! 💬</div>';
         return;
       }
 
-      messagesEl.innerHTML = docs.map((msg) => {
+      const html = docs.map((msg) => {
         const mine = Number(msg.senderId) === CURRENT_USER.id;
         const bubbleClass = mine
-          ? 'ml-auto bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white'
-          : 'mr-auto bg-[#2a1b3f] border border-fuchsia-500/25 text-pink-50';
+          ? 'ml-auto bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white rounded-b-2xl rounded-tl-2xl'
+          : 'mr-auto bg-[#2a1b3f] border border-fuchsia-500/25 text-pink-50 rounded-b-2xl rounded-tr-2xl';
 
         let body = '';
+        if (!mine) {
+          body += `<div class="text-xs text-pink-200/90 font-semibold mb-1">${esc(msg.senderName || `Usuário #${msg.senderId}`)}</div>`;
+        }
+
         if (msg.type === 'image' && msg.mediaUrl) {
-          body += `<a href="${esc(msg.mediaUrl)}" target="_blank" rel="noopener"><img src="${esc(msg.mediaUrl)}" class="rounded-lg max-h-64 object-cover" /></a>`;
+          body += `<a href="${esc(msg.mediaUrl)}" target="_blank" rel="noopener"><img src="${esc(msg.mediaUrl)}" class="rounded-lg max-h-64 object-cover" loading="lazy" /></a>`;
         } else if (msg.type === 'video' && msg.mediaUrl) {
           body += `<video controls class="rounded-lg max-h-72 w-full"><source src="${esc(msg.mediaUrl)}" /></video>`;
         } else if (msg.type === 'audio' && msg.mediaUrl) {
@@ -264,7 +214,7 @@ try {
         }
 
         if (msg.text) {
-          body += `<div class="whitespace-pre-wrap break-words text-sm mt-1">${esc(msg.text)}</div>`;
+          body += `<div class="whitespace-pre-wrap break-words text-sm${msg.mediaUrl ? ' mt-1' : ''}">${esc(msg.text)}</div>`;
         }
 
         const date = msg.createdAt && typeof msg.createdAt.toDate === 'function'
@@ -272,14 +222,18 @@ try {
           : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date());
 
         return `
-          <div class="max-w-[85%] md:max-w-[70%] px-3 py-2 rounded-2xl ${bubbleClass}">
-            ${body}
-            <div class="text-[11px] mt-1 opacity-80 text-right">${formatTime(date)}</div>
+          <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
+            <div class="max-w-xs px-3 py-2 ${bubbleClass}">
+              ${body}
+              <div class="text-[11px] mt-1 opacity-80 text-right">${formatTime(date)}</div>
+            </div>
           </div>
         `;
-      }).join('');
+      }).reverse().join('');
 
+      messagesEl.innerHTML = html;
       messagesEl.scrollTop = messagesEl.scrollHeight;
+      log('Messages rendered, scrolled to bottom');
     }
 
     function ensureFirebaseReady() {
@@ -298,19 +252,52 @@ try {
     }
 
     async function openConversation(user) {
-      currentChatUser = user;
-      renderUsersList(searchEl.value);
+      log('General chat - conversation with all users');
+      initGeneralChat();
+    }
 
-      chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
-      chatWithSubEl.textContent = user.email || 'Sem e-mail';
-      chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-10 w-10 rounded-full object-cover');
-      typingIndicatorEl.classList.add('hidden');
-      chatStatusEl.textContent = 'Conectando...';
+    async function initGeneralChat() {
+      log('Initializing general chat');
+      try {
+        await ensureFirebaseReady();
+        loadGeneralChatMessages();
+      } catch (e) {
+        console.error('Error initializing general chat:', e);
+        chatStatusEl.textContent = '✗ Erro ao conectar';
+      }
+    }
 
+    async function loadGeneralChatMessages() {
       if (unsubscribeMessages) {
+        log('Unsubscribing from previous messages listener');
         unsubscribeMessages();
         unsubscribeMessages = null;
       }
+
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
+        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
+
+        unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
+          log('Messages snapshot received:', snapshot.docs.length, 'messages');
+          const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          renderMessages(rows);
+          chatStatusEl.textContent = '🟢 Ativo';
+        }, (err) => {
+          console.error('Messages listener error:', err);
+          chatStatusEl.textContent = '✗ Erro';
+        });
+
+        setupTypingListener();
+      } catch (e) {
+        console.error('Error loading messages:', e);
+        chatStatusEl.textContent = '✗ Indisponível';
+      }
+    }
+
+    async function setupTypingListener() {
       if (unsubscribeTyping) {
         unsubscribeTyping();
         unsubscribeTyping = null;
@@ -319,74 +306,40 @@ try {
       try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
-        const convo = conversationId(CURRENT_USER.id, user.id);
-        const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
-        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
-        const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(user.id));
+        const typingRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'typing');
+        const q = f.query(typingRef, f.where('isTyping', '==', true));
 
-        unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
-          const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-          renderMessages(rows);
-          chatStatusEl.textContent = 'Em tempo real';
-        }, (err) => {
-          console.error(err);
-          chatStatusEl.textContent = 'Erro de conexão';
-        });
-
-        unsubscribeTyping = f.onSnapshot(typingDocRef, (snap) => {
-          const data = snap.exists() ? snap.data() : null;
-          const isTyping = !!(data && data.isTyping);
-          if (!isTyping) {
-            if (typingStaleTimer) {
-              clearTimeout(typingStaleTimer);
-              typingStaleTimer = null;
-            }
-            typingIndicatorEl.classList.add('hidden');
-            return;
-          }
-
-          let baseMs = 0;
-          if (data.at && typeof data.at.toDate === 'function') {
-            baseMs = data.at.toDate().getTime();
+        unsubscribeTyping = f.onSnapshot(q, (snapshot) => {
+          const hasTyping = snapshot.docs.length > 0;
+          log('Typing snapshot:', snapshot.docs.length, 'users typing');
+          
+          if (hasTyping) {
+            typingIndicatorEl.classList.remove('hidden');
+            if (typingStaleTimer) clearTimeout(typingStaleTimer);
+            typingStaleTimer = setTimeout(() => {
+              typingIndicatorEl.classList.add('hidden');
+            }, TYPING_TTL_MS + 1000);
           } else {
-            baseMs = Number(data.atMs || 0);
-          }
-
-          const nowMs = Date.now();
-          const expired = !baseMs || (nowMs - baseMs > TYPING_TTL_MS);
-          if (expired) {
             typingIndicatorEl.classList.add('hidden');
-            return;
           }
-
-          typingIndicatorEl.classList.remove('hidden');
-          if (typingStaleTimer) {
-            clearTimeout(typingStaleTimer);
-          }
-          const remaining = Math.max(300, TYPING_TTL_MS - (nowMs - baseMs));
-          typingStaleTimer = setTimeout(() => {
-            typingIndicatorEl.classList.add('hidden');
-          }, remaining);
         }, () => {
           typingIndicatorEl.classList.add('hidden');
         });
       } catch (e) {
-        console.error(e);
-        chatStatusEl.textContent = 'Firebase indisponível';
+        console.error('Error setting up typing listener:', e);
       }
     }
 
     async function setTyping(isTyping) {
-      if (!currentChatUser) return;
       try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
-        const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
-        const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(CURRENT_USER.id));
+        const typingDocRef = f.doc(window.db, 'conversations', GENERAL_CHAT_ID, 'typing', String(CURRENT_USER.id));
         if (isTyping) {
           await f.setDoc(typingDocRef, {
             isTyping: true,
             userId: CURRENT_USER.id,
+            userName: CURRENT_USER.name,
             at: f.serverTimestamp(),
             atMs: Date.now(),
           }, { merge: true });
@@ -397,67 +350,76 @@ try {
     }
 
     async function sendMessage(payload = {}) {
-      if (!currentChatUser) {
-        alert('Selecione um usuário para conversar.');
-        return;
+      log('sendMessage called with payload:', payload);
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
+
+        const base = {
+          senderId: CURRENT_USER.id,
+          senderName: CURRENT_USER.name,
+          conversationId: GENERAL_CHAT_ID,
+          createdAt: f.serverTimestamp(),
+          createdAtMs: Date.now(),
+        };
+
+        const doc = await f.addDoc(messagesRef, { ...base, ...payload });
+        log('Message sent with ID:', doc.id);
+      } catch (e) {
+        console.error('sendMessage error:', e);
+        throw e;
       }
-
-      await ensureFirebaseReady();
-      const f = window.firebaseFns;
-      const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
-      const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
-
-      const base = {
-        senderId: CURRENT_USER.id,
-        senderName: CURRENT_USER.name,
-        receiverId: currentChatUser.id,
-        conversationId: convo,
-        createdAt: f.serverTimestamp(),
-        createdAtMs: Date.now(),
-      };
-
-      await f.addDoc(messagesRef, { ...base, ...payload });
     }
 
     async function uploadAndSendFile(fileOrBlob, typeHint = 'file') {
-      if (!fileOrBlob || !currentChatUser) return;
+      if (!fileOrBlob) return;
 
-      await ensureFirebaseReady();
-      const f = window.firebaseFns;
-      const ext = (fileOrBlob.name && fileOrBlob.name.split('.').pop()) || (typeHint === 'audio' ? 'webm' : 'bin');
-      const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
-      const path = `chat_uploads/${convo}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const storageRef = f.ref(window.storage, path);
+      log('uploadAndSendFile started:', fileOrBlob.name, 'type:', typeHint);
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        const ext = (fileOrBlob.name && fileOrBlob.name.split('.').pop()) || (typeHint === 'audio' ? 'webm' : 'bin');
+        const path = `chat_uploads/${GENERAL_CHAT_ID}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        log('Upload path:', path);
+        const storageRef = f.ref(window.storage, path);
 
-      const uploadTask = f.uploadBytesResumable(storageRef, fileOrBlob, {
-        contentType: fileOrBlob.type || 'application/octet-stream'
-      });
+        const uploadTask = f.uploadBytesResumable(storageRef, fileOrBlob, {
+          contentType: fileOrBlob.type || 'application/octet-stream'
+        });
 
-      await new Promise((resolve, reject) => {
-        uploadTask.on('state_changed', (snap) => {
-          const pct = (snap.bytesTransferred / Math.max(1, snap.totalBytes)) * 100;
-          setUploadProgress(pct);
-        }, reject, resolve);
-      });
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', (snap) => {
+            const pct = (snap.bytesTransferred / Math.max(1, snap.totalBytes)) * 100;
+            log('Upload progress:', Math.round(pct) + '%');
+            setUploadProgress(pct);
+          }, reject, resolve);
+        });
 
-      const url = await f.getDownloadURL(uploadTask.snapshot.ref);
-      const mime = String(fileOrBlob.type || '');
-      const messageType = typeHint === 'audio'
-        ? 'audio'
-        : (mime.startsWith('image/') ? 'image' : (mime.startsWith('video/') ? 'video' : 'file'));
+        const url = await f.getDownloadURL(uploadTask.snapshot.ref);
+        log('Upload complete, URL:', url.substring(0, 50) + '...');
+        const mime = String(fileOrBlob.type || '');
+        const messageType = typeHint === 'audio'
+          ? 'audio'
+          : (mime.startsWith('image/') ? 'image' : (mime.startsWith('video/') ? 'video' : 'file'));
 
-      await sendMessage({
-        type: messageType,
-        text: messageInput.value.trim() || '',
-        mediaUrl: url,
-        mediaMime: mime,
-        mediaName: fileOrBlob.name || `audio_${Date.now()}.webm`,
-      });
+        await sendMessage({
+          type: messageType,
+          text: messageInput.value.trim() || '',
+          mediaUrl: url,
+          mediaMime: mime,
+          mediaName: fileOrBlob.name || `audio_${Date.now()}.webm`,
+        });
 
-      messageInput.value = '';
-      await setTyping(false);
-      clearMediaPreview();
-      setUploadProgress(100);
+        messageInput.value = '';
+        messageInput.focus();
+        await setTyping(false);
+        clearMediaPreview();
+        setUploadProgress(100);
+      } catch (e) {
+        console.error('uploadAndSendFile error:', e);
+        throw e;
+      }
     }
 
     function buildPreviewForFile(file) {
@@ -532,8 +494,10 @@ try {
     }
 
     sendBtn.addEventListener('click', async () => {
+      log('Send button clicked');
       const text = messageInput.value.trim();
       if (pendingFile) {
+        log('Sending file...');
         try {
           await uploadAndSendFile(pendingFile);
         } catch (e) {
@@ -543,11 +507,18 @@ try {
         return;
       }
 
-      if (!text) return;
+      if (!text) {
+        log('Input is empty, ignoring');
+        return;
+      }
+
       try {
+        log('Sending text message:', text.substring(0, 50));
         await sendMessage({ type: 'text', text });
         messageInput.value = '';
+        messageInput.focus();
         await setTyping(false);
+        log('Message sent successfully');
       } catch (e) {
         console.error(e);
         alert('Falha ao enviar mensagem.');
@@ -556,13 +527,13 @@ try {
 
     messageInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
+        log('Enter pressed without Shift');
         e.preventDefault();
         sendBtn.click();
       }
     });
 
     messageInput.addEventListener('input', async () => {
-      if (!currentChatUser) return;
       const hasText = messageInput.value.trim().length > 0;
       if (!hasText) {
         if (typingResetTimer) {
@@ -595,21 +566,16 @@ try {
 
     recordBtn.addEventListener('click', toggleRecording);
 
-    searchEl.addEventListener('input', () => {
-      renderUsersList(searchEl.value);
-    });
-
-    renderUsersList('');
-    if (USERS.length) {
-      openConversation(USERS[0]);
-    } else {
-      usersListEl.innerHTML = '<div class="p-3 text-sm text-pink-100/70">Nenhum outro usuário disponível no momento.</div>';
-      messagesEl.innerHTML = '<div class="text-center text-sm text-pink-100/50 mt-8">Convide usuários ativos para começar a conversar.</div>';
-    }
+    // Initialize general chat
+    log('Initializing general chat');
+    initGeneralChat();
 
     window.addEventListener('beforeunload', () => {
+      log('Page unloading, clearing typing status');
       setTyping(false);
     });
+
+    log('Chat initialized successfully');
   </script>
 </body>
 </html>
