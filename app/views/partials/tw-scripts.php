@@ -1,13 +1,3 @@
-<?php
-// Load external app.js (single source for formatBRL and helpers)
-$_appJsPath = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3)) . '/public/assets/js/app.js';
-if (file_exists($_appJsPath)):
-  $_appJsVer  = @filemtime($_appJsPath) ?: time();
-  $_appJsHash = @md5_file($_appJsPath) ?: '';
-?>
-<script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js?v=<?= $_appJsVer ?>&h=<?= substr($_appJsHash, 0, 8) ?>"></script>
-<?php endif; ?>
-
 <script type="module">
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAnalytics, isSupported as analyticsIsSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";

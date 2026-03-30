@@ -110,6 +110,14 @@ $_crmCurrentUserLabel = (string)(
   </script>
   <?php endif; ?>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <?php
+    $_appJsPath = BASE_PATH . '/public/assets/js/app.js';
+    if (file_exists($_appJsPath)):
+      $_jsVer  = @filemtime($_appJsPath) ?: time();
+      $_jsHash = substr(@md5_file($_appJsPath) ?: '', 0, 8);
+  ?>
+  <script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js?v=<?= $_jsVer ?>&h=<?= $_jsHash ?>" defer></script>
+  <?php endif; ?>
   <!-- Critical inline CSS: garante sidebar responsiva e layout mesmo se app.css estiver desatualizado -->
   <style>
     /* Sidebar responsive (mobile=fixed hidden, desktop=static visible) */

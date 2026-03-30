@@ -38,7 +38,7 @@ try {
       <!-- Container Principal do Chat -->
       <div class="flex-1 flex overflow-hidden min-h-0">
         <!-- Coluna Esquerda: Contatos (respons iva) -->
-        <aside id="chatUsersPanel" class="shrink-0 w-full md:w-80 border-r border-fuchsia-400/20 bg-[#140d22] flex flex-col max-h-full overflow-hidden">
+        <aside id="chatUsersPanel" class="shrink-0 w-full md:w-80 border-r border-gray-700 bg-[#140d22] flex flex-col max-h-full overflow-y-auto">
           <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
             <input id="chatUserSearch" type="text" placeholder="Pesquisar..." class="w-full rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
@@ -106,7 +106,7 @@ try {
   </div>
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
-  <script>
+  <script type="module">
     console.log('🎯 Chat inicializado - script iniciado');
     initSensitivePageProtection('chat');
 
@@ -603,6 +603,7 @@ try {
         
         if (currentChatMode === 'general') {
           log('📤 Modo GERAL - enviando para conversationId=general');
+          console.log('Enviando para ID:', GENERAL_CHAT_ID);
           const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
           const base = {
             senderId: CURRENT_USER.id,
@@ -616,6 +617,7 @@ try {
         } else if (currentChatMode === 'private' && currentChatUser) {
           log('📤 Modo PRIVADO - enviando para usuário:', currentChatUser.name);
           const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
+          console.log('Enviando para ID:', currentChatUser.id);
           const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
           const base = {
             senderId: CURRENT_USER.id,
@@ -877,6 +879,7 @@ try {
     console.log('%c📎 Upload de arquivo: veja logs "uploadAndSendFile iniciado", "Upload completo"', 'color: #00FF00');
     console.log('%c⏎ Enter: log "Enter pressionado" - enviando mensagem', 'color: #00FF00');
     console.log('%c🔘 Botão: log "Botão enviar clicado"', 'color: #00FF00');
+    console.log('Sistema de Chat Pronto');
     log('Chat initialized successfully');
   </script>
 </body>
