@@ -36,68 +36,85 @@ try {
       </header>
 
       <!-- Container Principal do Chat -->
-      <div class="flex h-[calc(100vh-100px)] overflow-hidden">
-        <!-- Coluna Esquerda: Contatos (Fixa 30%) -->
-        <aside id="chatUsersPanel" class="shrink-0 w-96 border-r border-gray-700/70 bg-[#140d22]/95 backdrop-blur flex flex-col max-h-full overflow-y-auto">
-          <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
-            <input id="chatUserSearch" type="text" placeholder="Pesquisar..." class="w-full rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
+      <div class="flex h-[calc(100vh-100px)] overflow-hidden gap-4 p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
+        <aside id="chatUsersPanel" class="w-[30%] min-w-[320px] max-w-[420px] rounded-3xl border border-fuchsia-400/20 bg-[#140d22]/95 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
+          <div class="shrink-0 border-b border-fuchsia-400/15 p-4 bg-gradient-to-b from-white/5 to-transparent">
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-sm font-semibold text-pink-100">Conversas</div>
+                <div class="text-xs text-pink-200/60">Histórico em tempo real</div>
+              </div>
+              <div class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300">Online</div>
+            </div>
+            <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#241635] border border-fuchsia-500/30 px-4 py-3 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
-          <div id="chatUsersList" class="flex-1 overflow-y-auto p-2"></div>
+          <div id="chatUsersList" class="flex-1 overflow-y-auto px-3 py-3 space-y-2"></div>
         </aside>
 
-        <!-- Coluna Direita: Conversa -->
-        <div id="chatConversationArea" class="flex flex-1 flex-col overflow-hidden bg-[#0f0819]/95 backdrop-blur">
-          <!-- Header do Chat -->
-          <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25]/90 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div id="chatAvatarWrap" class="h-10 w-10 rounded-full bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100 shrink-0">--</div>
+        <section id="chatConversationArea" class="flex min-w-0 flex-[0_0_70%] flex-col overflow-hidden rounded-3xl border border-fuchsia-400/20 bg-[#0f0819]/95 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
+          <div id="chatHeader" class="shrink-0 border-b border-fuchsia-400/15 bg-[#160d25]/90 px-5 py-4 flex items-center justify-between">
+            <div class="flex min-w-0 items-center gap-3">
+              <div id="chatAvatarWrap" class="h-11 w-11 rounded-full bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100 shrink-0">--</div>
               <div class="min-w-0">
-                <div id="chatWithName" class="font-semibold text-pink-200 truncate">Selecione um chat</div>
-                <div id="typingIndicator" class="text-[11px] text-pink-300/80 hidden">Digitando...</div>
+                <div id="chatWithName" class="truncate text-base font-semibold text-pink-100">Selecione um chat</div>
+                <div class="flex items-center gap-2 text-[11px] text-pink-200/65">
+                  <span id="chatStatusDot" class="inline-block h-2.5 w-2.5 rounded-full bg-slate-500"></span>
+                  <span id="chatStatus" class="shrink-0">Aguardando conversa</span>
+                  <span id="typingIndicator" class="hidden text-pink-300/80">Digitando...</span>
+                </div>
               </div>
             </div>
-            <div id="chatStatus" class="text-xs text-fuchsia-200/70 shrink-0">🟢 Ativo</div>
+            <div class="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-pink-100/60">
+              <i class="fa-solid fa-lock"></i>
+              Chat seguro
+            </div>
           </div>
 
-          <!-- Estado vazio -->
-          <div id="chatEmptyState" class="flex-1 flex items-center justify-center px-6 text-center text-pink-100/70">
-            Selecione um contato ou o Chat Geral para abrir a conversa.
+          <div id="chatEmptyState" class="flex flex-1 items-center justify-center px-8 text-center text-pink-100/70 bg-[linear-gradient(180deg,rgba(255,255,255,.02),transparent)]">
+            <div class="max-w-md">
+              <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-500/25 to-fuchsia-600/25 text-2xl text-pink-200">
+                <i class="fa-solid fa-comments"></i>
+              </div>
+              <div class="text-lg font-semibold text-pink-100">Seu chat premium está pronto</div>
+              <div class="mt-2 text-sm text-pink-100/55">Abra uma conversa à esquerda para carregar as últimas mensagens e continuar em tempo real.</div>
+            </div>
           </div>
 
-          <!-- Área de Mensagens -->
-          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col-reverse bg-[radial-gradient(circle_at_20%_20%,rgba(236,72,153,.06),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(217,70,239,.06),transparent_35%)]"></div>
+          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
+            <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-3"></div>
+          </div>
 
-          <!-- Rodapé: Input de Mensagem (Fixo) -->
-          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/20 bg-[#160d25]/90 p-3 space-y-2">
+          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/15 bg-[#160d25]/90 p-4">
+            <div id="mediaPreview" class="hidden rounded-2xl border border-fuchsia-400/30 bg-black/25 p-3 text-sm text-pink-100"></div>
 
-            <div id="mediaPreview" class="hidden rounded-lg border border-fuchsia-400/30 bg-black/30 p-2 text-sm"></div>
-
-            <div id="uploadProgressWrap" class="hidden">
-              <div class="flex items-center justify-between text-xs text-pink-100/70 mb-1">
-                <span>Upload...</span>
+            <div id="uploadProgressWrap" class="hidden mt-3">
+              <div class="mb-1 flex items-center justify-between text-xs text-pink-100/70">
+                <span>Enviando mídia</span>
                 <span id="uploadProgressText">0%</span>
               </div>
-              <div class="h-1 rounded bg-white/10 overflow-hidden">
-                <div id="uploadProgressBar" class="h-1 bg-gradient-to-r from-pink-500 to-fuchsia-500 w-0 transition-all"></div>
+              <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div id="uploadProgressBar" class="h-1.5 w-0 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 transition-all"></div>
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <div class="flex-1">
-                <textarea id="messageInput" rows="2" placeholder="Mensagem..." class="w-full resize-none rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60"></textarea>
-              </div>
-              <div class="flex flex-col gap-2">
-                <button id="emojiBtn" class="h-10 w-10 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] flex items-center justify-center" title="Emoji"><i class="fa-regular fa-face-smile text-sm"></i></button>
-                <label class="h-10 w-10 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] cursor-pointer flex items-center justify-center" title="Anexo">
-                  <i class="fa-solid fa-paperclip text-sm"></i>
+            <div class="mt-3 flex items-end gap-3 rounded-3xl border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/10">
+              <div class="flex items-center gap-2">
+                <button id="emojiBtn" class="flex h-11 w-11 items-center justify-center rounded-2xl border border-fuchsia-500/25 bg-[#241635] text-pink-200 transition hover:bg-[#301d47] hover:text-white" title="Emoji"><i class="fa-regular fa-face-smile text-base"></i></button>
+                <label class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-fuchsia-500/25 bg-[#241635] text-pink-200 transition hover:bg-[#301d47] hover:text-white" title="Anexo">
+                  <i class="fa-solid fa-paperclip text-base"></i>
                   <input id="fileInput" type="file" class="hidden" accept="image/*,video/*,audio/*" />
                 </label>
-                <button id="recordBtn" class="h-10 px-2 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] text-[10px] font-semibold" title="Áudio">🎤</button>
-                <button id="sendBtn" class="h-10 w-10 rounded-lg bg-pink-600 hover:bg-pink-500 flex items-center justify-center" title="Enviar"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+              </div>
+              <div class="flex-1">
+                <textarea id="messageInput" rows="1" placeholder="Digite uma mensagem..." class="min-h-[52px] w-full resize-none rounded-2xl border border-fuchsia-500/20 bg-[#241635] px-4 py-3 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60"></textarea>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="recordBtn" class="flex h-11 min-w-[44px] items-center justify-center rounded-2xl border border-fuchsia-500/25 bg-[#241635] px-3 text-sm font-semibold text-pink-200 transition hover:bg-[#301d47] hover:text-white" title="Áudio"><i class="fa-solid fa-microphone"></i></button>
+                <button id="sendBtn" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white shadow-[0_10px_25px_rgba(236,72,153,.35)] transition hover:scale-[1.02] hover:from-pink-500 hover:to-fuchsia-500" title="Enviar"><i class="fa-solid fa-paper-plane text-sm"></i></button>
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   </div>
@@ -141,9 +158,12 @@ try {
     const uploadText = document.getElementById('uploadProgressText');
     const typingIndicatorEl = document.getElementById('typingIndicator');
     const chatStatusEl = document.getElementById('chatStatus');
+    const chatStatusDotEl = document.getElementById('chatStatusDot');
+    const messagesInnerEl = document.getElementById('chatMessagesInner');
 
     let unsubscribeMessages = null;
     let unsubscribeTyping = null;
+    let unsubscribePresence = null;
     let typingResetTimer = null;
     let typingStaleTimer = null;
     let pendingFile = null;
@@ -151,10 +171,13 @@ try {
     let mediaRecorder = null;
     let recordingChunks = [];
     const TYPING_TTL_MS = 5000;
+    const ONLINE_TTL_MS = 70000;
     const DEBUG = true;
     const GENERAL_CHAT_ID = 'general';
     let currentChatUser = null;
     let currentChatMode = null; // 'general' ou 'private'
+    let presenceHeartbeatTimer = null;
+    const userPresenceMap = new Map();
 
     function log(...args) {
       if (DEBUG) console.log('[CHAT]', ...args);
@@ -197,6 +220,42 @@ try {
       }
     }
 
+    function formatLastSeen(ts) {
+      if (!ts) return 'Offline';
+      const date = ts instanceof Date ? ts : new Date(ts);
+      const diff = Date.now() - date.getTime();
+      if (diff < ONLINE_TTL_MS) return 'Online agora';
+      return `Visto ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    function isUserOnline(userId) {
+      const presence = userPresenceMap.get(String(userId));
+      if (!presence) return false;
+      const lastActiveMs = Number(presence.lastActiveMs || 0);
+      return !!lastActiveMs && (Date.now() - lastActiveMs) < ONLINE_TTL_MS;
+    }
+
+    function getUserPresenceLabel(userId) {
+      const presence = userPresenceMap.get(String(userId));
+      if (!presence) return 'Offline';
+      return formatLastSeen(Number(presence.lastActiveMs || 0));
+    }
+
+    function updateHeaderPresence(isOnline, label) {
+      if (chatStatusDotEl) {
+        chatStatusDotEl.className = `inline-block h-2.5 w-2.5 rounded-full ${isOnline ? 'bg-emerald-400 shadow-[0_0_12px_rgba(74,222,128,.65)]' : 'bg-slate-500'}`;
+      }
+      chatStatusEl.textContent = label;
+    }
+
+    function scrollMessagesToBottom(force = false) {
+      if (!messagesEl) return;
+      const nearBottom = (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight) < 120;
+      if (force || nearBottom) {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+    }
+
     function clearMediaPreview() {
       pendingFile = null;
       pendingAudioBlob = null;
@@ -211,6 +270,7 @@ try {
       messagesEl.classList.remove('hidden');
       if (chatComposerEl) chatComposerEl.classList.remove('hidden');
       setMobileView(true);
+      scrollMessagesToBottom(true);
     }
 
     function setMobileView(inConversation) {
@@ -239,14 +299,18 @@ try {
       
       // Renderizar opção de Chat Geral primeiro
       let html = `
-        <button data-chat-mode="general" class="chat-user-btn w-full text-left rounded-lg px-2 py-2 mb-2 border transition ${currentChatMode === 'general' ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
-          <div class="flex items-center gap-2 min-w-0">
-            <div class="h-8 w-8 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-              <i class="fa-solid fa-comments text-xs"></i>
+        <button data-chat-mode="general" class="chat-user-btn w-full rounded-2xl border px-3 py-3 text-left transition ${currentChatMode === 'general' ? 'border-pink-400/70 bg-gradient-to-r from-pink-600/25 to-fuchsia-600/20 shadow-[0_8px_22px_rgba(236,72,153,.18)]' : 'border-fuchsia-500/15 bg-[#1b112b] hover:bg-[#241635]'}">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="relative h-12 w-12 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-lg shadow-fuchsia-900/30">
+              <i class="fa-solid fa-comments text-sm"></i>
+              <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#1b112b] bg-emerald-400"></span>
             </div>
-            <div class="min-w-0">
-              <div class="font-semibold text-pink-100 truncate text-sm">Chat Geral</div>
-              <div class="text-xs text-pink-100/60 truncate">Todos</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <div class="font-semibold text-pink-100 truncate text-sm">Chat Geral</div>
+                <div class="text-[11px] text-pink-100/45">Ao vivo</div>
+              </div>
+              <div class="text-xs text-pink-100/60 truncate">Canal principal da equipe</div>
             </div>
           </div>
         </button>
@@ -258,20 +322,29 @@ try {
       });
 
       if (rows.length === 0 && !term) {
-        usersListEl.innerHTML = html + '<div class="p-3 text-sm text-pink-100/60">Nenhum outro usuário disponível.</div>';
+        usersListEl.innerHTML = html + '<div class="rounded-2xl border border-dashed border-fuchsia-500/20 p-4 text-sm text-pink-100/60">Nenhum outro usuário disponível.</div>';
         attachUserListeners();
         return;
       }
 
       html += rows.map((u) => {
         const active = currentChatMode === 'private' && currentChatUser && currentChatUser.id === u.id;
+        const online = isUserOnline(u.id);
+        const presenceLabel = getUserPresenceLabel(u.id);
         return `
-          <button data-user-id="${u.id}" class="chat-user-btn w-full text-left rounded-lg px-2 py-2 mb-1 border transition ${active ? 'bg-pink-600/20 border-pink-400/70' : 'bg-[#1f1330] border-fuchsia-500/20 hover:bg-[#2a1a40]'}">
-            <div class="flex items-center gap-2 min-w-0">
-              ${avatarHtml(u, 'h-8 w-8 rounded-full object-cover shrink-0')}
-              <div class="min-w-0">
-                <div class="font-semibold text-pink-100 truncate text-sm">${esc(u.name || ('Usuário #' + u.id))}</div>
+          <button data-user-id="${u.id}" class="chat-user-btn w-full rounded-2xl border px-3 py-3 text-left transition ${active ? 'border-pink-400/70 bg-gradient-to-r from-pink-600/20 to-fuchsia-600/15 shadow-[0_8px_22px_rgba(236,72,153,.18)]' : 'border-fuchsia-500/15 bg-[#1b112b] hover:bg-[#241635]'}">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="relative shrink-0">
+                ${avatarHtml(u, 'h-12 w-12 rounded-full object-cover shrink-0 ring-2 ring-white/5')}
+                <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#1b112b] ${online ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="font-semibold text-pink-100 truncate text-sm">${esc(u.name || ('Usuário #' + u.id))}</div>
+                  <div class="text-[11px] ${online ? 'text-emerald-300' : 'text-pink-100/35'}">${online ? 'Online' : 'Off'}</div>
+                </div>
                 <div class="text-xs text-pink-100/60 truncate">${esc(u.email || '')}</div>
+                <div class="mt-1 text-[11px] ${online ? 'text-emerald-300/90' : 'text-pink-100/40'} truncate">${esc(presenceLabel)}</div>
               </div>
             </div>
           </button>
@@ -313,54 +386,59 @@ try {
 
     function renderMessages(docs) {
       log('renderMessages called with', docs.length, 'messages');
+      if (!messagesInnerEl) return;
+
+      messagesInnerEl.innerHTML = '';
+
       if (!docs.length) {
-        messagesEl.innerHTML = '<div class="text-center text-sm text-pink-100/50">Nenhuma mensagem ainda. Comece a conversa! 💬</div>';
+        messagesInnerEl.innerHTML = '<div class="flex min-h-full items-center justify-center rounded-3xl border border-dashed border-fuchsia-500/15 bg-white/5 px-6 py-10 text-center text-sm text-pink-100/50">Nenhuma mensagem ainda. Comece a conversa! 💬</div>';
+        scrollMessagesToBottom(true);
         return;
       }
 
-      const html = docs.map((msg) => {
+      docs.forEach((msg) => {
+        console.log('Exibindo mensagem de:', msg.senderId);
         const mine = Number(msg.senderId) === CURRENT_USER.id;
-        const bubbleClass = mine
-          ? 'ml-auto bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white rounded-b-2xl rounded-tl-2xl'
-          : 'mr-auto bg-[#2a1b3f] border border-fuchsia-500/25 text-pink-50 rounded-b-2xl rounded-tr-2xl';
+        const row = document.createElement('div');
+        row.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = mine
+          ? 'max-w-[78%] rounded-[24px] rounded-br-md bg-gradient-to-r from-pink-600 to-fuchsia-600 px-4 py-3 text-white shadow-[0_12px_30px_rgba(236,72,153,.28)]'
+          : 'max-w-[78%] rounded-[24px] rounded-bl-md border border-white/10 bg-[#2b2337] px-4 py-3 text-slate-100 shadow-[0_12px_30px_rgba(0,0,0,.18)]';
 
         let body = '';
-        // Mostrar nome do remetente apenas no chat geral e se não for minha mensagem
         if (currentChatMode === 'general' && !mine) {
-          body += `<div class="text-xs text-pink-200/90 font-semibold mb-1">${esc(msg.senderName || `Usuário #${msg.senderId}`)}</div>`;
+          body += `<div class="mb-1 text-xs font-semibold text-pink-200/90">${esc(msg.senderName || `Usuário #${msg.senderId}`)}</div>`;
         }
 
-        if (msg.type === 'image' && msg.mediaUrl) {
-          body += `<a href="${esc(msg.mediaUrl)}" target="_blank" rel="noopener"><img src="${esc(msg.mediaUrl)}" class="rounded-lg max-h-64 object-cover" loading="lazy" /></a>`;
-        } else if (msg.type === 'video' && msg.mediaUrl) {
-          body += `<video controls class="rounded-lg max-h-72 w-full"><source src="${esc(msg.mediaUrl)}" /></video>`;
-        } else if (msg.type === 'audio' && msg.mediaUrl) {
-          body += `<audio controls class="w-full"><source src="${esc(msg.mediaUrl)}" /></audio>`;
-        } else if (msg.mediaUrl) {
-          body += `<a href="${esc(msg.mediaUrl)}" target="_blank" rel="noopener" class="underline text-pink-100">📎 ${esc(msg.mediaName || 'Arquivo')}</a>`;
+        const fileType = String(msg.file_type || msg.type || '').toLowerCase();
+        const mediaUrl = msg.mediaUrl || msg.file_url || '';
+
+        if ((fileType === 'image' || String(msg.mediaMime || '').startsWith('image/')) && mediaUrl) {
+          body += `<a href="${esc(mediaUrl)}" target="_blank" rel="noopener"><img src="${esc(mediaUrl)}" class="max-h-72 w-full rounded-2xl object-cover" loading="lazy" /></a>`;
+        } else if (fileType === 'video' && mediaUrl) {
+          body += `<video controls class="w-full rounded-2xl max-h-80"><source src="${esc(mediaUrl)}" /></video>`;
+        } else if (fileType === 'audio' && mediaUrl) {
+          body += `<audio controls class="w-full"><source src="${esc(mediaUrl)}" /></audio>`;
+        } else if (mediaUrl) {
+          body += `<a href="${esc(mediaUrl)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-xl bg-black/15 px-3 py-2 text-sm underline">📎 ${esc(msg.mediaName || msg.file_name || 'Arquivo')}</a>`;
         }
 
         if (msg.text) {
-          body += `<div class="whitespace-pre-wrap break-words text-sm${msg.mediaUrl ? ' mt-1' : ''}">${esc(msg.text)}</div>`;
+          body += `<div class="whitespace-pre-wrap break-words text-sm leading-6${mediaUrl ? ' mt-2' : ''}">${esc(msg.text)}</div>`;
         }
 
         const date = msg.createdAt && typeof msg.createdAt.toDate === 'function'
           ? msg.createdAt.toDate()
           : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date());
 
-        return `
-          <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
-            <div class="relative max-w-xs px-3 py-2 ${bubbleClass}">
-              <span class="absolute ${mine ? '-right-1 bottom-1 border-l-pink-600' : '-left-1 bottom-1 border-r-[#2a1b3f]'} w-0 h-0 border-y-[6px] border-y-transparent ${mine ? 'border-l-[8px]' : 'border-r-[8px]'}"></span>
-              ${body}
-              <div class="text-[11px] mt-1 opacity-80 text-right">${formatTime(date)}</div>
-            </div>
-          </div>
-        `;
-      }).reverse().join('');
+        bubble.innerHTML = `${body}<div class="mt-2 text-right text-[11px] ${mine ? 'text-white/75' : 'text-pink-100/45'}">${formatTime(date)}</div>`;
+        row.appendChild(bubble);
+        messagesInnerEl.appendChild(row);
+      });
 
-      messagesEl.innerHTML = html;
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      scrollMessagesToBottom(true);
       log('Messages rendered, scrolled to bottom');
     }
 
@@ -379,6 +457,58 @@ try {
       });
     }
 
+    async function setupPresenceTracking() {
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        const myPresenceRef = f.doc(window.db, 'chat_presence', String(CURRENT_USER.id));
+
+        const publishPresence = async (state = 'online') => {
+          await f.setDoc(myPresenceRef, {
+            userId: CURRENT_USER.id,
+            userName: CURRENT_USER.name,
+            state,
+            lastActiveAt: f.serverTimestamp(),
+            lastActiveMs: Date.now(),
+          }, { merge: true });
+        };
+
+        await publishPresence('online');
+
+        if (presenceHeartbeatTimer) {
+          clearInterval(presenceHeartbeatTimer);
+        }
+        presenceHeartbeatTimer = setInterval(() => {
+          publishPresence(document.hidden ? 'away' : 'online').catch((err) => console.warn('Presence heartbeat failed:', err));
+        }, 30000);
+
+        if (unsubscribePresence) {
+          unsubscribePresence();
+          unsubscribePresence = null;
+        }
+
+        const presenceRef = f.collection(window.db, 'chat_presence');
+        unsubscribePresence = f.onSnapshot(presenceRef, (snapshot) => {
+          userPresenceMap.clear();
+          snapshot.docs.forEach((snap) => {
+            userPresenceMap.set(String(snap.id), snap.data() || {});
+          });
+          renderUsersList(searchEl.value);
+          if (currentChatMode === 'private' && currentChatUser) {
+            updateHeaderPresence(isUserOnline(currentChatUser.id), getUserPresenceLabel(currentChatUser.id));
+          }
+        }, (err) => {
+          console.warn('Presence listener error:', err);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          publishPresence(document.hidden ? 'away' : 'online').catch(() => {});
+        });
+      } catch (e) {
+        console.warn('Presence tracking unavailable:', e);
+      }
+    }
+
     async function openConversation(user) {
       log('Legacy function - use openGeneralChat or openPrivateChat');
     }
@@ -387,9 +517,9 @@ try {
       log('Opening general chat');
       showConversationArea();
       chatWithNameEl.textContent = 'Chat Geral';
-      chatAvatarWrapEl.innerHTML = '<div class="h-10 w-10 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
+      chatAvatarWrapEl.innerHTML = '<div class="h-11 w-11 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
       typingIndicatorEl.classList.add('hidden');
-      chatStatusEl.textContent = '🟢 Ativo';
+      updateHeaderPresence(true, 'Canal geral online');
 
       if (unsubscribeMessages) {
         log('Unsubscribing from previous messages listener');
@@ -408,23 +538,23 @@ try {
         const chatId = GENERAL_CHAT_ID;
         console.log('💬 Abrindo chat com ID:', chatId);
         const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
-        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
+        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limitToLast(50));
 
         unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
           console.log('Buscando mensagens para:', chatId);
           log('Messages snapshot received:', snapshot.docs.length, 'messages');
           const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
           renderMessages(rows);
-          chatStatusEl.textContent = '🟢 Ativo';
+          updateHeaderPresence(true, 'Canal geral online');
         }, (err) => {
           console.error('Messages listener error:', err);
-          chatStatusEl.textContent = '✗ Erro';
+          updateHeaderPresence(false, 'Erro ao carregar');
         });
 
         setupGeneralTypingListener();
       } catch (e) {
         console.error('Error opening general chat:', e);
-        chatStatusEl.textContent = '✗ Indisponível';
+        updateHeaderPresence(false, 'Indisponível');
       }
     }
 
@@ -432,9 +562,9 @@ try {
       log('Opening private chat with:', user.id, user.name);
       showConversationArea();
       chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
-      chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-10 w-10 rounded-full object-cover');
+      chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-11 w-11 rounded-full object-cover');
       typingIndicatorEl.classList.add('hidden');
-      chatStatusEl.textContent = '...conectando';
+      updateHeaderPresence(isUserOnline(user.id), isUserOnline(user.id) ? 'Online agora' : 'Conectando histórico...');
 
       if (unsubscribeMessages) {
         log('Unsubscribing from previous messages listener');
@@ -454,7 +584,7 @@ try {
         console.log('💬 Abrindo chat com ID:', convo);
         log('Conversation ID:', convo);
         const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
-        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
+        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limitToLast(50));
         const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(user.id));
 
         unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
@@ -462,10 +592,10 @@ try {
           log('Messages snapshot received:', snapshot.docs.length, 'messages');
           const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
           renderMessages(rows);
-          chatStatusEl.textContent = '✓ Online';
+          updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
         }, (err) => {
           console.error('Messages listener error:', err);
-          chatStatusEl.textContent = '✗ Erro';
+          updateHeaderPresence(false, 'Erro ao carregar');
         });
 
         unsubscribeTyping = f.onSnapshot(typingDocRef, (snap) => {
@@ -477,6 +607,7 @@ try {
               typingStaleTimer = null;
             }
             typingIndicatorEl.classList.add('hidden');
+            updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
             return;
           }
 
@@ -491,23 +622,27 @@ try {
           const expired = !baseMs || (nowMs - baseMs > TYPING_TTL_MS);
           if (expired) {
             typingIndicatorEl.classList.add('hidden');
+            updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
             return;
           }
 
           typingIndicatorEl.classList.remove('hidden');
+          updateHeaderPresence(true, 'Digitando...');
           if (typingStaleTimer) {
             clearTimeout(typingStaleTimer);
           }
           const remaining = Math.max(300, TYPING_TTL_MS - (nowMs - baseMs));
           typingStaleTimer = setTimeout(() => {
             typingIndicatorEl.classList.add('hidden');
+            updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
           }, remaining);
         }, () => {
           typingIndicatorEl.classList.add('hidden');
+          updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
         });
       } catch (e) {
         console.error('Error opening private chat:', e);
-        chatStatusEl.textContent = '✗ Indisponível';
+        updateHeaderPresence(false, 'Indisponível');
       }
     }
 
@@ -663,6 +798,7 @@ try {
 
         await sendMessage({
           type: messageType,
+          file_type: messageType,
           text: messageInput.value.trim() || '',
           mediaUrl: url,
           mediaMime: mime,
@@ -837,6 +973,7 @@ try {
     // Initialize
     log('Initializing chat');
     setMobileView(false);
+    setupPresenceTracking();
     renderUsersList('');
     if (USERS.length === 0) {
       log('No other users available, initializing general chat');
@@ -848,6 +985,7 @@ try {
 
     window.addEventListener('beforeunload', () => {
       log('Page unloading, clearing typing status');
+      if (presenceHeartbeatTimer) clearInterval(presenceHeartbeatTimer);
       setTyping(false);
     });
 

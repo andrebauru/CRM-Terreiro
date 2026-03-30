@@ -13,6 +13,7 @@ import {
   where,
   orderBy,
   limit,
+  limitToLast,
   onSnapshot,
   serverTimestamp,
   Timestamp
@@ -53,6 +54,7 @@ try {
     where,
     orderBy,
     limit,
+    limitToLast,
     onSnapshot,
     serverTimestamp,
     Timestamp,
