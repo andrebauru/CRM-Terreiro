@@ -60,6 +60,12 @@ try {
     uploadBytesResumable,
     getDownloadURL
   };
+  window.firebaseContext = {
+    app,
+    db,
+    storage,
+    fns: window.firebaseFns,
+  };
 
   analyticsIsSupported().then((ok) => {
     if (!ok) return;
@@ -69,9 +75,11 @@ try {
     } catch (_) {}
   }).catch(() => {});
 
+  window.firebaseReady = true;
   console.log('🔥 Firebase Iniciado com Sucesso');
   window.dispatchEvent(new CustomEvent('firebase-ready'));
 } catch (e) {
+  window.firebaseReady = false;
   console.error('Falha ao inicializar Firebase:', e);
 }
 </script>

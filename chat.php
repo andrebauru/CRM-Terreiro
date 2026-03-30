@@ -21,13 +21,13 @@ try {
     }
 }
 ?>
-<body class="bg-[#0f0b16] font-sans text-slate-100 overflow-hidden">
+<body class="bg-[radial-gradient(circle_at_top,#211133_0%,#0f0b16_40%,#0b0712_100%)] font-sans text-slate-100 overflow-hidden">
   <div class="h-screen flex overflow-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <main class="flex-1 flex flex-col min-w-0">
       <!-- Header do Chat -->
-      <header class="shrink-0 px-4 py-3 bg-[#160d25] border-b border-fuchsia-400/20 flex items-center justify-between">
+      <header class="shrink-0 px-4 py-3 bg-[#160d25]/95 backdrop-blur border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
           <h1 class="text-lg font-black text-pink-300">Chat Interno</h1>
           <span class="text-xs text-pink-100/50">•</span>
@@ -38,7 +38,7 @@ try {
       <!-- Container Principal do Chat -->
       <div class="flex-1 flex overflow-hidden min-h-0">
         <!-- Coluna Esquerda: Contatos (respons iva) -->
-        <aside id="chatUsersPanel" class="shrink-0 w-full md:w-80 border-r border-gray-700 bg-[#140d22] flex flex-col max-h-full overflow-y-auto">
+        <aside id="chatUsersPanel" class="shrink-0 w-full md:w-80 border-r border-gray-700/70 bg-[#140d22]/95 backdrop-blur flex flex-col max-h-full overflow-y-auto">
           <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
             <input id="chatUserSearch" type="text" placeholder="Pesquisar..." class="w-full rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
@@ -46,9 +46,9 @@ try {
         </aside>
 
         <!-- Coluna Direita: Conversa -->
-        <div id="chatConversationArea" class="hidden md:flex flex-1 flex-col overflow-hidden bg-[#0f0819]">
+        <div id="chatConversationArea" class="hidden md:flex flex-1 flex-col overflow-hidden bg-[#0f0819]/95 backdrop-blur">
           <!-- Header do Chat -->
-          <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25] flex items-center justify-between">
+          <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25]/90 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <button id="chatBackBtn" class="md:hidden h-8 w-8 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] flex items-center justify-center" title="Voltar">
                 <i class="fa-solid fa-arrow-left text-xs"></i>
@@ -68,10 +68,10 @@ try {
           </div>
 
           <!-- Área de Mensagens -->
-          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col-reverse"></div>
+          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col-reverse bg-[radial-gradient(circle_at_20%_20%,rgba(236,72,153,.06),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(217,70,239,.06),transparent_35%)]"></div>
 
           <!-- Rodapé: Input de Mensagem (Fixo) -->
-          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/20 bg-[#160d25] p-3 space-y-2">
+          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/20 bg-[#160d25]/90 p-3 space-y-2">
 
             <div id="mediaPreview" class="hidden rounded-lg border border-fuchsia-400/30 bg-black/30 p-2 text-sm"></div>
 
@@ -367,7 +367,8 @@ try {
 
         return `
           <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
-            <div class="max-w-xs px-3 py-2 ${bubbleClass}">
+            <div class="relative max-w-xs px-3 py-2 ${bubbleClass}">
+              <span class="absolute ${mine ? '-right-1 bottom-1 border-l-pink-600' : '-left-1 bottom-1 border-r-[#2a1b3f]'} w-0 h-0 border-y-[6px] border-y-transparent ${mine ? 'border-l-[8px]' : 'border-r-[8px]'}"></span>
               ${body}
               <div class="text-[11px] mt-1 opacity-80 text-right">${formatTime(date)}</div>
             </div>
