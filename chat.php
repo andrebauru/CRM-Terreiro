@@ -36,7 +36,7 @@ try {
       </header>
 
       <!-- Container Principal do Chat -->
-      <div class="flex-1 flex overflow-hidden min-h-0">
+      <div class="flex h-[calc(100vh-100px)] overflow-hidden">
         <!-- Coluna Esquerda: Contatos (Fixa 30%) -->
         <aside id="chatUsersPanel" class="shrink-0 w-96 border-r border-gray-700/70 bg-[#140d22]/95 backdrop-blur flex flex-col max-h-full overflow-y-auto">
           <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
