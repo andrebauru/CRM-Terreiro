@@ -38,7 +38,7 @@ try {
       <!-- Container Principal do Chat -->
       <div class="flex-1 flex overflow-hidden min-h-0">
         <!-- Coluna Esquerda: Contatos (respons iva) -->
-        <aside class="shrink-0 w-full md:w-80 border-r border-fuchsia-400/20 bg-[#140d22] flex flex-col max-h-full overflow-hidden">
+        <aside id="chatUsersPanel" class="shrink-0 w-full md:w-80 border-r border-fuchsia-400/20 bg-[#140d22] flex flex-col max-h-full overflow-hidden">
           <div class="shrink-0 p-3 border-b border-fuchsia-400/20">
             <input id="chatUserSearch" type="text" placeholder="Pesquisar..." class="w-full rounded-lg bg-[#241635] border border-fuchsia-500/30 px-3 py-2 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
@@ -46,10 +46,13 @@ try {
         </aside>
 
         <!-- Coluna Direita: Conversa -->
-        <div class="flex-1 flex flex-col overflow-hidden bg-[#0f0819]">
+        <div id="chatConversationArea" class="hidden md:flex flex-1 flex-col overflow-hidden bg-[#0f0819]">
           <!-- Header do Chat -->
           <div id="chatHeader" class="shrink-0 px-4 py-3 border-b border-fuchsia-400/20 bg-[#160d25] flex items-center justify-between">
             <div class="flex items-center gap-3">
+              <button id="chatBackBtn" class="md:hidden h-8 w-8 rounded-lg bg-[#241635] border border-fuchsia-500/30 hover:bg-[#301d47] flex items-center justify-center" title="Voltar">
+                <i class="fa-solid fa-arrow-left text-xs"></i>
+              </button>
               <div id="chatAvatarWrap" class="h-10 w-10 rounded-full bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100 shrink-0">--</div>
               <div class="min-w-0">
                 <div id="chatWithName" class="font-semibold text-pink-200 truncate">Selecione um chat</div>
@@ -59,11 +62,18 @@ try {
             <div id="chatStatus" class="text-xs text-fuchsia-200/70 shrink-0">🟢 Ativo</div>
           </div>
 
+          <!-- Estado vazio -->
+          <div id="chatEmptyState" class="flex-1 flex items-center justify-center px-6 text-center text-pink-100/70">
+            Selecione um contato ou o Chat Geral para abrir a conversa.
+          </div>
+
           <!-- Área de Mensagens -->
-          <div id="chatMessages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col-reverse"></div>
+          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col-reverse"></div>
 
           <!-- Rodapé: Input de Mensagem (Fixo) -->
-          <div class="shrink-0 border-t border-fuchsia-400/20 bg-[#160d25] p-3 space-y-2">
+          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/20 bg-[#160d25] p-3 space-y-2">
+
+            <div id="mediaPreview" class="hidden rounded-lg border border-fuchsia-400/30 bg-black/30 p-2 text-sm"></div>
 
             <div id="uploadProgressWrap" class="hidden">
               <div class="flex items-center justify-between text-xs text-pink-100/70 mb-1">
@@ -115,9 +125,14 @@ try {
     }, $chatUsers), JSON_UNESCAPED_UNICODE) ?>;
 
     const usersListEl = document.getElementById('chatUsersList');
+    const chatUsersPanelEl = document.getElementById('chatUsersPanel');
+    const chatConversationAreaEl = document.getElementById('chatConversationArea');
+    const chatBackBtn = document.getElementById('chatBackBtn');
     const searchEl = document.getElementById('chatUserSearch');
     const chatWithNameEl = document.getElementById('chatWithName');
     const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
+    const chatEmptyStateEl = document.getElementById('chatEmptyState');
+    const chatComposerEl = document.getElementById('chatComposer');
     const messagesEl = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -189,9 +204,36 @@ try {
     function clearMediaPreview() {
       pendingFile = null;
       pendingAudioBlob = null;
+      if (!mediaPreviewEl) return;
       mediaPreviewEl.classList.add('hidden');
       mediaPreviewEl.innerHTML = '';
       fileInput.value = '';
+    }
+
+    function showConversationArea() {
+      if (chatEmptyStateEl) chatEmptyStateEl.classList.add('hidden');
+      messagesEl.classList.remove('hidden');
+      if (chatComposerEl) chatComposerEl.classList.remove('hidden');
+      setMobileView(true);
+    }
+
+    function setMobileView(inConversation) {
+      if (!chatUsersPanelEl || !chatConversationAreaEl) return;
+      if (window.innerWidth >= 768) {
+        chatUsersPanelEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.add('flex');
+        return;
+      }
+
+      if (inConversation) {
+        chatUsersPanelEl.classList.add('hidden');
+        chatConversationAreaEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.add('flex');
+      } else {
+        chatUsersPanelEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.add('hidden');
+      }
     }
 
     function setUploadProgress(percent) {
@@ -359,6 +401,7 @@ try {
 
     async function openGeneralChat() {
       log('Opening general chat');
+      showConversationArea();
       chatWithNameEl.textContent = 'Chat Geral';
       chatAvatarWrapEl.innerHTML = '<div class="h-10 w-10 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
       typingIndicatorEl.classList.add('hidden');
@@ -378,10 +421,13 @@ try {
       try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
+        const chatId = GENERAL_CHAT_ID;
+        console.log('💬 Abrindo chat com ID:', chatId);
         const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
         const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
 
         unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
+          console.log('Buscando mensagens para:', chatId);
           log('Messages snapshot received:', snapshot.docs.length, 'messages');
           const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
           renderMessages(rows);
@@ -400,6 +446,7 @@ try {
 
     async function openPrivateChat(user) {
       log('Opening private chat with:', user.id, user.name);
+      showConversationArea();
       chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
       chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-10 w-10 rounded-full object-cover');
       typingIndicatorEl.classList.add('hidden');
@@ -420,12 +467,14 @@ try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
         const convo = conversationId(CURRENT_USER.id, user.id);
+        console.log('💬 Abrindo chat com ID:', convo);
         log('Conversation ID:', convo);
         const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
         const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limit(500));
         const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(user.id));
 
         unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
+          console.log('Buscando mensagens para:', convo);
           log('Messages snapshot received:', snapshot.docs.length, 'messages');
           const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
           renderMessages(rows);
@@ -795,16 +844,21 @@ try {
       renderUsersList(searchEl.value);
     });
 
+    if (chatBackBtn) {
+      chatBackBtn.addEventListener('click', () => {
+        setMobileView(false);
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      setMobileView(!!currentChatMode);
+    });
+
     // Initialize
     log('Initializing chat');
+    setMobileView(false);
     renderUsersList('');
-    if (USERS.length > 0) {
-      log('Initializing with first user');
-      currentChatMode = 'private';
-      currentChatUser = USERS[0];
-      openPrivateChat(USERS[0]);
-      renderUsersList('');
-    } else {
+    if (USERS.length === 0) {
       log('No other users available, initializing general chat');
       currentChatMode = 'general';
       currentChatUser = null;

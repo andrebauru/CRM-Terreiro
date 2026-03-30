@@ -180,6 +180,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
+    console.log('Página de configurações carregada');
     const settingsForm = document.getElementById('settingsForm');
     const companyName = document.getElementById('companyName');
     const logoInput = document.getElementById('logoInput');
