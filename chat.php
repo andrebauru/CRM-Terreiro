@@ -21,13 +21,13 @@ try {
     }
 }
 ?>
-<body class="bg-[radial-gradient(circle_at_top,#211133_0%,#0f0b16_40%,#0b0712_100%)] font-sans text-slate-100 overflow-hidden">
+<body class="bg-slate-950 font-sans text-slate-100 overflow-hidden">
   <div class="h-screen flex overflow-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <main class="flex-1 flex flex-col min-w-0">
       <!-- Header do Chat -->
-      <header class="shrink-0 px-4 py-3 bg-[#160d25]/95 backdrop-blur border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
+      <header class="shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
           <h1 class="text-lg font-black text-pink-300">Chat Interno</h1>
           <span class="text-xs text-pink-100/50">•</span>
@@ -36,8 +36,8 @@ try {
       </header>
 
       <!-- Container Principal do Chat -->
-      <div class="flex h-[calc(100vh-100px)] overflow-hidden gap-4 p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
-        <aside id="chatUsersPanel" class="w-[30%] min-w-[320px] max-w-[420px] rounded-3xl border border-fuchsia-400/20 bg-[#140d22]/95 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
+      <div class="flex h-[calc(100vh-100px)] flex-col md:flex-row overflow-hidden md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
+        <aside id="chatUsersPanel" class="w-full md:w-[30%] md:min-w-[320px] md:max-w-[420px] border-r md:border md:rounded-3xl border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
           <div class="shrink-0 border-b border-fuchsia-400/15 p-4 bg-gradient-to-b from-white/5 to-transparent">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
@@ -51,16 +51,26 @@ try {
           <div id="chatUsersList" class="flex-1 overflow-y-auto px-3 py-3 space-y-2"></div>
         </aside>
 
-        <section id="chatConversationArea" class="flex min-w-0 flex-[0_0_70%] flex-col overflow-hidden rounded-3xl border border-fuchsia-400/20 bg-[#0f0819]/95 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
-          <div id="chatHeader" class="shrink-0 border-b border-fuchsia-400/15 bg-[#160d25]/90 px-5 py-4 flex items-center justify-between">
+        <section id="chatConversationArea" class="hidden md:flex min-w-0 w-full md:flex-[0_0_70%] flex-col overflow-hidden md:rounded-3xl border-fuchsia-400/20 md:border bg-slate-900/75 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
+          <div id="chatHeader" class="shrink-0 border-b border-fuchsia-400/15 bg-slate-900/65 backdrop-blur-xl px-5 py-4 flex items-center justify-between">
             <div class="flex min-w-0 items-center gap-3">
+              <button id="chatBackBtn" class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-fuchsia-500/25 bg-[#241635] text-pink-100" title="Voltar">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
               <div id="chatAvatarWrap" class="h-11 w-11 rounded-full bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100 shrink-0">--</div>
               <div class="min-w-0">
                 <div id="chatWithName" class="truncate text-base font-semibold text-pink-100">Selecione um chat</div>
                 <div class="flex items-center gap-2 text-[11px] text-pink-200/65">
                   <span id="chatStatusDot" class="inline-block h-2.5 w-2.5 rounded-full bg-slate-500"></span>
                   <span id="chatStatus" class="shrink-0">Aguardando conversa</span>
-                  <span id="typingIndicator" class="hidden text-pink-300/80">Digitando...</span>
+                  <span id="typingIndicator" class="hidden text-pink-300/80 items-center gap-1">
+                    <span>Digitando</span>
+                    <span class="inline-flex gap-0.5">
+                      <span class="h-1 w-1 rounded-full bg-pink-300 animate-bounce"></span>
+                      <span class="h-1 w-1 rounded-full bg-pink-300 animate-bounce [animation-delay:120ms]"></span>
+                      <span class="h-1 w-1 rounded-full bg-pink-300 animate-bounce [animation-delay:240ms]"></span>
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -80,7 +90,7 @@ try {
             </div>
           </div>
 
-          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
+          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-4 md:px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
             <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-3"></div>
           </div>
 
@@ -141,6 +151,7 @@ try {
     const usersListEl = document.getElementById('chatUsersList');
     const chatUsersPanelEl = document.getElementById('chatUsersPanel');
     const chatConversationAreaEl = document.getElementById('chatConversationArea');
+    const chatBackBtn = document.getElementById('chatBackBtn');
     const searchEl = document.getElementById('chatUserSearch');
     const chatWithNameEl = document.getElementById('chatWithName');
     const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
@@ -178,6 +189,7 @@ try {
     let currentChatMode = null; // 'general' ou 'private'
     let presenceHeartbeatTimer = null;
     const userPresenceMap = new Map();
+    let currentFcmToken = null;
 
     function log(...args) {
       if (DEBUG) console.log('[CHAT]', ...args);
@@ -220,6 +232,16 @@ try {
       }
     }
 
+    function getDayLabel(date) {
+      const now = new Date();
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const t = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diffDays = Math.round((t - d) / 86400000);
+      if (diffDays === 0) return 'Hoje';
+      if (diffDays === 1) return 'Ontem';
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
     function formatLastSeen(ts) {
       if (!ts) return 'Offline';
       const date = ts instanceof Date ? ts : new Date(ts);
@@ -252,7 +274,7 @@ try {
       if (!messagesEl) return;
       const nearBottom = (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight) < 120;
       if (force || nearBottom) {
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
       }
     }
 
@@ -275,8 +297,22 @@ try {
 
     function setMobileView(inConversation) {
       if (!chatUsersPanelEl || !chatConversationAreaEl) return;
-      // Não fazer nada em desktop: ambos sempre visíveis
-      // Em mobile pequena tela seria responsivo, mas mantém 30/70 em desktop
+      const isDesktop = window.innerWidth >= 768;
+      if (isDesktop) {
+        chatUsersPanelEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.add('flex');
+        return;
+      }
+
+      if (inConversation) {
+        chatUsersPanelEl.classList.add('hidden');
+        chatConversationAreaEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.add('flex');
+      } else {
+        chatUsersPanelEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.add('hidden');
+      }
     }
 
     function setUploadProgress(percent) {
@@ -396,16 +432,33 @@ try {
         return;
       }
 
+      let lastDateKey = '';
       docs.forEach((msg) => {
         console.log('Exibindo mensagem de:', msg.senderId);
         const mine = Number(msg.senderId) === CURRENT_USER.id;
+
+        const date = msg.timestamp && typeof msg.timestamp.toDate === 'function'
+          ? msg.timestamp.toDate()
+          : (msg.createdAt && typeof msg.createdAt.toDate === 'function'
+            ? msg.createdAt.toDate()
+            : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date()));
+
+        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        if (dateKey !== lastDateKey) {
+          const separator = document.createElement('div');
+          separator.className = 'my-2 flex justify-center';
+          separator.innerHTML = `<span class="rounded-full border border-white/10 bg-slate-800/80 px-3 py-1 text-[11px] text-slate-200 shadow">${getDayLabel(date)}</span>`;
+          messagesInnerEl.appendChild(separator);
+          lastDateKey = dateKey;
+        }
+
         const row = document.createElement('div');
         row.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
 
         const bubble = document.createElement('div');
         bubble.className = mine
-          ? 'max-w-[78%] rounded-[24px] rounded-br-md bg-gradient-to-r from-pink-600 to-fuchsia-600 px-4 py-3 text-white shadow-[0_12px_30px_rgba(236,72,153,.28)]'
-          : 'max-w-[78%] rounded-[24px] rounded-bl-md border border-white/10 bg-[#2b2337] px-4 py-3 text-slate-100 shadow-[0_12px_30px_rgba(0,0,0,.18)]';
+          ? 'max-w-[82%] rounded-[22px] rounded-br-md bg-gradient-to-r from-pink-600 to-fuchsia-600 px-4 py-3 text-white shadow-[0_12px_30px_rgba(236,72,153,.30)]'
+          : 'max-w-[82%] rounded-[22px] rounded-bl-md border border-white/10 bg-slate-800 px-4 py-3 text-slate-100 shadow-[0_10px_26px_rgba(0,0,0,.22)]';
 
         let body = '';
         if (currentChatMode === 'general' && !mine) {
@@ -429,13 +482,12 @@ try {
           body += `<div class="whitespace-pre-wrap break-words text-sm leading-6${mediaUrl ? ' mt-2' : ''}">${esc(msg.text)}</div>`;
         }
 
-        const date = msg.timestamp && typeof msg.timestamp.toDate === 'function'
-          ? msg.timestamp.toDate()
-          : (msg.createdAt && typeof msg.createdAt.toDate === 'function'
-            ? msg.createdAt.toDate()
-            : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date()));
+        const isRead = !!(msg.readAt || msg.read_at || msg.read === true);
+        const readIndicator = mine
+          ? `<span class="inline-flex items-center gap-0.5 ${isRead ? 'text-sky-300' : 'text-white/70'}"><i class="fa-solid fa-check text-[10px]"></i><i class="fa-solid fa-check -ml-1 text-[10px]"></i></span>`
+          : '';
 
-        bubble.innerHTML = `${body}<div class="mt-2 text-right text-[11px] ${mine ? 'text-white/75' : 'text-pink-100/45'}">${formatTime(date)}</div>`;
+        bubble.innerHTML = `${body}<div class="mt-2 flex items-center justify-end gap-1 text-[11px] ${mine ? 'text-white/80' : 'text-slate-300/70'}"><span>${formatTime(date)}</span>${readIndicator}</div>`;
         row.appendChild(bubble);
         messagesInnerEl.appendChild(row);
       });
@@ -508,6 +560,65 @@ try {
         });
       } catch (e) {
         console.warn('Presence tracking unavailable:', e);
+      }
+    }
+
+    async function setupPushNotifications() {
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        if (!window.firebaseMessaging || !f.getToken) {
+          console.warn('FCM não suportado neste navegador/ambiente.');
+          return;
+        }
+        if (!('Notification' in window)) {
+          console.warn('Notificações não suportadas neste navegador.');
+          return;
+        }
+
+        let permission = Notification.permission;
+        if (permission === 'default') {
+          permission = await Notification.requestPermission();
+        }
+        if (permission !== 'granted') {
+          console.warn('Permissão de notificação não concedida.');
+          return;
+        }
+
+        const vapidKey = window.__FCM_VAPID_KEY || window.__crmSettings?.fcm_vapid_key || '';
+        if (!vapidKey) {
+          console.warn('Defina __FCM_VAPID_KEY para habilitar token FCM web.');
+          return;
+        }
+
+        const token = await f.getToken(window.firebaseMessaging, { vapidKey });
+        if (!token) {
+          console.warn('Token FCM não retornado.');
+          return;
+        }
+
+        if (currentFcmToken === token) return;
+        currentFcmToken = token;
+
+        const tokenDocId = `web_${CURRENT_USER.id}_${token.slice(0, 24)}`;
+        const tokenDoc = f.doc(window.db, 'users', String(CURRENT_USER.id), 'tokens', tokenDocId);
+        await f.setDoc(tokenDoc, {
+          token,
+          platform: 'web',
+          userId: CURRENT_USER.id,
+          updatedAt: f.serverTimestamp(),
+          userAgent: navigator.userAgent || 'unknown',
+        }, { merge: true });
+
+        if (f.onMessage) {
+          f.onMessage(window.firebaseMessaging, (payload) => {
+            console.log('🔔 Push recebida (foreground):', payload?.notification?.title || payload);
+          });
+        }
+
+        console.log('✅ Token FCM salvo no Firestore');
+      } catch (err) {
+        console.warn('Falha ao configurar notificações push:', err);
       }
     }
 
@@ -619,6 +730,7 @@ try {
               typingStaleTimer = null;
             }
             typingIndicatorEl.classList.add('hidden');
+            typingIndicatorEl.classList.remove('inline-flex');
             updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
             return;
           }
@@ -634,11 +746,13 @@ try {
           const expired = !baseMs || (nowMs - baseMs > TYPING_TTL_MS);
           if (expired) {
             typingIndicatorEl.classList.add('hidden');
+            typingIndicatorEl.classList.remove('inline-flex');
             updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
             return;
           }
 
           typingIndicatorEl.classList.remove('hidden');
+          typingIndicatorEl.classList.add('inline-flex');
           updateHeaderPresence(true, 'Digitando...');
           if (typingStaleTimer) {
             clearTimeout(typingStaleTimer);
@@ -646,10 +760,12 @@ try {
           const remaining = Math.max(300, TYPING_TTL_MS - (nowMs - baseMs));
           typingStaleTimer = setTimeout(() => {
             typingIndicatorEl.classList.add('hidden');
+            typingIndicatorEl.classList.remove('inline-flex');
             updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
           }, remaining);
         }, () => {
           typingIndicatorEl.classList.add('hidden');
+          typingIndicatorEl.classList.remove('inline-flex');
           updateHeaderPresence(isUserOnline(user.id), getUserPresenceLabel(user.id));
         });
       } catch (e) {
@@ -676,15 +792,19 @@ try {
           
           if (hasTyping) {
             typingIndicatorEl.classList.remove('hidden');
+            typingIndicatorEl.classList.add('inline-flex');
             if (typingStaleTimer) clearTimeout(typingStaleTimer);
             typingStaleTimer = setTimeout(() => {
               typingIndicatorEl.classList.add('hidden');
+              typingIndicatorEl.classList.remove('inline-flex');
             }, TYPING_TTL_MS + 1000);
           } else {
             typingIndicatorEl.classList.add('hidden');
+            typingIndicatorEl.classList.remove('inline-flex');
           }
         }, () => {
           typingIndicatorEl.classList.add('hidden');
+          typingIndicatorEl.classList.remove('inline-flex');
         });
       } catch (e) {
         console.error('Error setting up general typing listener:', e);
@@ -843,9 +963,9 @@ try {
 
       let mediaHtml = `<div class="text-sm text-pink-100 mb-2">${esc(file.name || 'Arquivo')}</div>`;
       if (mime.startsWith('image/')) {
-        mediaHtml += `<img src="${esc(url)}" class="rounded-lg max-h-56" />`;
+        mediaHtml += `<img src="${esc(url)}" class="rounded-lg max-h-56 w-full object-cover" />`;
       } else if (mime.startsWith('video/')) {
-        mediaHtml += `<video controls class="rounded-lg max-h-56"><source src="${esc(url)}" /></video>`;
+        mediaHtml += `<video controls class="rounded-lg max-h-56 w-full"><source src="${esc(url)}" /></video>`;
       } else if (mime.startsWith('audio/')) {
         mediaHtml += `<audio controls class="w-full"><source src="${esc(url)}" /></audio>`;
       } else {
@@ -985,14 +1105,21 @@ try {
       renderUsersList(searchEl.value);
     });
 
+    if (chatBackBtn) {
+      chatBackBtn.addEventListener('click', () => {
+        setMobileView(false);
+      });
+    }
+
     window.addEventListener('resize', () => {
-      // Sem necessidade de setMobileView em layout 30/70 fixo
+      setMobileView(!!currentChatMode);
     });
 
     // Initialize
     log('Initializing chat');
     setMobileView(false);
     setupPresenceTracking();
+    setupPushNotifications();
     renderUsersList('');
     if (USERS.length === 0) {
       log('No other users available, initializing general chat');

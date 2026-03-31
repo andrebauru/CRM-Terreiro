@@ -1,6 +1,7 @@
 <script type="module">
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAnalytics, isSupported as analyticsIsSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+import { getMessaging, getToken, onMessage, isSupported as messagingIsSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging.js";
 import {
   getFirestore,
   collection,
@@ -40,6 +41,19 @@ try {
   // Firestore explícito com SDK v10
   const db = getFirestore(app);
   const storage = getStorage(app);
+  let messaging = null;
+
+  messagingIsSupported().then((supported) => {
+    window.firebaseMessagingSupported = supported;
+    if (!supported) return;
+    try {
+      messaging = getMessaging(app);
+      window.firebaseMessaging = messaging;
+      if (window.firebaseContext) window.firebaseContext.messaging = messaging;
+    } catch (err) {
+      console.warn('FCM indisponível neste ambiente:', err);
+    }
+  }).catch(() => {});
 
   window.firebaseApp = app;
   window.db = db;
@@ -59,6 +73,8 @@ try {
     onSnapshot,
     serverTimestamp,
     Timestamp,
+    getToken,
+    onMessage,
     ref,
     uploadBytesResumable,
     getDownloadURL
@@ -67,6 +83,7 @@ try {
     app,
     db,
     storage,
+    messaging,
     fns: window.firebaseFns,
   };
 
