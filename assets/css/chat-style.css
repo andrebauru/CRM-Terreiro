@@ -205,6 +205,10 @@
   display: none !important;
 }
 
+.chat-messages.flex {
+  display: flex !important;
+}
+
 .chat-messages.visible {
   display: flex !important;
 }

@@ -115,7 +115,7 @@ try {
       </header>
 
       <!-- Chat Conversation Area -->
-      <section id="chatConversationArea" class="chat-conversation-area hidden">
+      <section id="chatConversationArea" class="chat-conversation-area hidden flex">
         
         <!-- Chat Header (70px fixed height) -->
         <header class="chat-header">
@@ -158,7 +158,7 @@ try {
           </div>
 
           <!-- Messages Container (CRITICAL: flex-1 overflow-y-auto) -->
-          <div id="messages-container" class="chat-messages hidden">
+          <div id="messages-container" class="chat-messages hidden flex">
             <div id="chatMessagesInner" class="chat-messages-inner"></div>
           </div>
 
@@ -223,7 +223,8 @@ try {
     const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
     const chatEmptyStateEl = document.getElementById('chatEmptyState');
     const chatComposerEl = document.getElementById('chatComposer');
-    const messagesEl = document.getElementById('messages-container');
+    const messagesEl = document.querySelector('.chat-messages');  // CORRIGIDO: seleciona .chat-messages para scroll real
+    const messagesInnerEl = document.getElementById('chatMessagesInner');  // Container interno das mensagens
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
     const emojiBtn = document.getElementById('emojiBtn');
