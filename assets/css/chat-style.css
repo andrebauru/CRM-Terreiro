@@ -6,7 +6,7 @@
 /* === ROOT VIEWPORT LOCK === */
 .chat-wrapper {
   display: flex;
-  height: 100dvh;
+  height: 100dvh;  /* Dynamic viewport height - previne que teclado empurre conteúdo */
   width: 100vw;
   overflow: hidden;
   position: fixed;
@@ -46,6 +46,26 @@
   background-color: #1e293b;
   border-right: 2px solid #334155;
   overflow: hidden;
+  transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out;
+}
+
+/* Sidebar Retrátil - Modo Colapsado (70px) */
+.chat-sidebar.sidebar-collapsed {
+  width: 70px;
+  min-width: 70px;
+}
+
+/* Esconder detalhes do usuário quando sidebar está colapsada */
+.chat-sidebar.sidebar-collapsed .chat-sidebar-header,
+.chat-sidebar.sidebar-collapsed .user-details,
+.chat-sidebar.sidebar-collapsed #chatUserSearch {
+  display: none;
+}
+
+/* Ajustar ícones quando colapsado */
+.chat-sidebar.sidebar-collapsed .chat-user-btn {
+  padding: 0.75rem;
+  justify-content: center;
 }
 
 .chat-sidebar.hidden {
@@ -62,6 +82,12 @@
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100%;
+  }
+  
+  /* Não aplicar collapse em mobile */
+  .chat-sidebar.sidebar-collapsed {
+    width: 100% !important;
+    min-width: 100% !important;
   }
 }
 

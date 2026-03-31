@@ -100,9 +100,15 @@ try {
             <div class="text-sm font-semibold text-white">Conversas</div>
             <div class="text-xs text-slate-400">Histórico em tempo real</div>
           </div>
-          <button id="createGroupBtn" class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300 hover:bg-emerald-500/20 transition" title="Criar grupo">
-            <i class="fa-solid fa-plus"></i>
-          </button>
+          <div class="flex gap-1">
+            <!-- Botão Colapsar Sidebar (apenas desktop) -->
+            <button id="collapseSidebarBtn" class="hidden md:flex rounded-lg border border-slate-600/30 bg-slate-700/20 p-2 text-slate-300 hover:bg-slate-600/40 hover:text-pink-400 transition" title="Colapsar sidebar">
+              <i class="fa-solid fa-angle-left text-sm"></i>
+            </button>
+            <button id="createGroupBtn" class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300 hover:bg-emerald-500/20 transition" title="Criar grupo">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
         </div>
         <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#334155] border border-slate-600 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
       </header>
@@ -269,6 +275,7 @@ try {
     const chatStatusEl = document.getElementById('chatStatus');
     const chatStatusDotEl = document.getElementById('chatStatusDot');
     const createGroupBtn = document.getElementById('createGroupBtn');
+    const collapseSidebarBtn = document.getElementById('collapseSidebarBtn');
     const createGroupModal = document.getElementById('createGroupModal');
     const groupNameInput = document.getElementById('groupNameInput');
     const groupMembersContainer = document.getElementById('groupMembersContainer');
@@ -421,8 +428,19 @@ try {
         chatComposerEl.classList.remove('hidden');
         chatComposerEl.classList.add('flex');
       }
-      selectedUserId = currentChatUser ? currentChatUser.id : null;
+      // FIX: Garantir que Chat Geral funcione também no mobile
+      if (currentChatMode === 'general') {
+        selectedUserId = GENERAL_CHAT_ID;
+      } else {
+        selectedUserId = currentChatUser ? currentChatUser.id : null;
+      }
+      // FIX: Force mobile view para esconder sidebar em telas pequenas
       setMobileView(true);
+      // Trigger CSS para móvel: mudar de show-list para show-chat
+      if (window.innerWidth < 768 && chatUsersPanelEl && chatConversationAreaEl) {
+        chatUsersPanelEl.classList.add('hidden');
+        chatConversationAreaEl.classList.remove('hidden');
+      }
       scrollMessagesToBottom(true);
     }
 
@@ -1195,13 +1213,14 @@ try {
       }
     }
 
+    // Admin Command: /cleanall - Delete all messages
     async function cleanAllMessages() {
       if (CURRENT_USER.role !== 'admin') {
-        alert('Apenas administradores podem limpar o chat');
+        alert('⛔ Apenas administradores podem limpar o chat');
         return;
       }
       
-      if (!confirm('⚠️ AVISO: Isto vai deletar TODAS as mensagens do chat atual. Continue?')) {
+      if (!confirm('⚠️ AVISO: Isto vai deletar TODAS as mensagens do chat atual. Esta ação NÃO pode ser desfeita!\n\nTem certeza?')) {
         return;
       }
       
@@ -1228,18 +1247,18 @@ try {
           deletedCount++;
         }
         
-        log(`✅ ${deletedCount} mensagens deletadas`);
-        alert(`✅ ${deletedCount} mensagens foram deletadas com sucesso`);
+        console.log(`✅ ${deletedCount} mensagens deletadas com sucesso`);
+        alert(`✅ ${deletedCount} mensagens foram deletadas com sucesso!\n\nChat foi limpo. 🧹`);
         
         // Renderizar lista vazia
         messagesInnerEl.innerHTML = '';
         const emptyMsg = document.createElement('div');
         emptyMsg.className = 'flex min-h-full items-center justify-center text-center text-sm text-pink-100/50';
-        emptyMsg.textContent = 'Chat limpo. 🧹';
+        emptyMsg.innerHTML = '<span>🧹 Chat limpo por <strong>' + esc(CURRENT_USER.name) + '</strong></span>';
         messagesInnerEl.appendChild(emptyMsg);
       } catch (err) {
-        console.error('Error cleaning messages:', err);
-        alert('Erro ao limpar chat: ' + err.message);
+        console.error('❌ Error cleaning messages:', err);
+        alert('Erro ao limpar chat: ' + (err.message || 'Desconhecido'));
       }
     }
 
@@ -1299,6 +1318,9 @@ try {
       }
     }
 
+    // ⚠️ IMPORTANTE - CORS FIX NECESSÁRIO:
+    // Se receber erro "CORS policy", execute no Google Cloud Console:
+    // gsutil cors set cors.json gs://crm-quimbanda-chat.firebasestorage.app
     async function uploadAndSendFile(fileOrBlob, typeHint = 'file') {
       if (!fileOrBlob) return;
 
@@ -1317,8 +1339,12 @@ try {
           return;
         }
         
-        const path = `chat_uploads/${chatId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        console.log('📂 Caminho de upload:', path);
+        // Usar referência de caminho limpa sem caracteres especiais que causem CORS
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8);
+        const fileName = `${timestamp}_${random}.${ext}`;
+        const path = `chat_uploads/${chatId}/${fileName}`;
+        console.log('📂 Caminho de upload (CORS-safe):', path);
         const storageRef = f.ref(window.storage, path);
 
         const uploadTask = f.uploadBytesResumable(storageRef, fileOrBlob, {
@@ -1534,6 +1560,27 @@ try {
     if (createGroupBtn) {
       createGroupBtn.addEventListener('click', showCreateGroupModal);
     }
+    
+    // Botão Colapsar Sidebar (Desktop apenas)
+    if (collapseSidebarBtn) {
+      collapseSidebarBtn.addEventListener('click', () => {
+        if (chatUsersPanelEl) {
+          chatUsersPanelEl.classList.toggle('sidebar-collapsed');
+          // Alterar ícone
+          const icon = collapseSidebarBtn.querySelector('i');
+          if (icon) {
+            if (chatUsersPanelEl.classList.contains('sidebar-collapsed')) {
+              icon.className = 'fa-solid fa-angle-right text-sm';
+              collapseSidebarBtn.title = 'Expandir sidebar';
+            } else {
+              icon.className = 'fa-solid fa-angle-left text-sm';
+              collapseSidebarBtn.title = 'Colapsar sidebar';
+            }
+          }
+        }
+      });
+    }
+    
     if (createGroupCancelBtn) {
       createGroupCancelBtn.addEventListener('click', hideCreateGroupModal);
     }
