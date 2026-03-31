@@ -8,6 +8,8 @@ export class ChatMessageHandler {
     this.config = {
       retryAttempts: 3,
       retryDelay: 500,
+      maxRetryDelay: 5000,
+      useExponentialBackoff: true,
       ...config
     };
     
@@ -44,6 +46,23 @@ export class ChatMessageHandler {
   }
   
   /**
+   * Calcular delay com backoff exponencial
+   */
+  getRetryDelay(attemptNumber) {
+    if (!this.config.useExponentialBackoff) {
+      return this.config.retryDelay;
+    }
+    // Fórmula: delay * 2^(attemptNumber - 1), até maxRetryDelay
+    const delay = Math.min(
+      this.config.retryDelay * Math.pow(2, attemptNumber - 1),
+      this.config.maxRetryDelay
+    );
+    // Adicionar jitter (variação aleatória)
+    const jitter = Math.random() * (delay * 0.1);
+    return Math.floor(delay + jitter);
+  }
+  
+  /**
    * Enviar mensagem com retry
    */
   async send(attemptNumber = 1) {
@@ -62,20 +81,21 @@ export class ChatMessageHandler {
     if (this.callbacks.send) {
       try {
         const result = await this.callbacks.send();
-        console.log('[MessageHandler] Mensagem enviada com sucesso');
+        console.log('[MessageHandler] ✅ Mensagem enviada com sucesso');
         return result;
       } catch (error) {
-        console.error(`[MessageHandler] Erro ao enviar:`, error);
+        console.error(`[MessageHandler] Erro ao enviar:`, error.message || error);
         
         // Retry logic
         if (attemptNumber < this.config.retryAttempts) {
-          console.log(`[MessageHandler] Aguardando ${this.config.retryDelay}ms antes de retry...`);
-          await new Promise(resolve => setTimeout(resolve, this.config.retryDelay));
+          const delay = this.getRetryDelay(attemptNumber);
+          console.log(`[MessageHandler] ⏳ Tentativa ${attemptNumber}/${this.config.retryAttempts} - Aguardando ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
           return this.send(attemptNumber + 1);
         } else {
-          console.error('[MessageHandler] Falha após ' + this.config.retryAttempts + ' tentativas');
-          alert('Erro ao enviar mensagem. Tente novamente.');
-          return false;
+          console.error('[MessageHandler] ❌ Falha após ' + this.config.retryAttempts + ' tentativas');
+          // Não mostrar alert aqui - deixar para o handler da chamada
+          throw error;
         }
       }
     }

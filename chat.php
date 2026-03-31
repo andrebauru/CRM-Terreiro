@@ -1284,9 +1284,17 @@ try {
           const doc = await f.addDoc(messagesRef, { ...base, ...payload });
           console.log('Mensagem gravada no Firestore!');
           log('✅ Mensagem privada enviada com ID:', doc.id);
+        } else {
+          throw new Error('Nenhuma conversa selecionada. Selecione um usuário ou o chat geral.');
         }
       } catch (e) {
-        console.error('❌ Erro em sendMessage:', e);
+        console.error('❌ Erro em sendMessage:', e.code || e.message);
+        // Mensagens de erro específicas para mobile
+        if (e.code === 'permission-denied' || e.message.includes('Permission denied')) {
+          throw new Error('Sem permissão para enviar mensagem. Verifique as regras do Firestore.');
+        } else if (e.code === 'unavailable' || e.message.includes('offline')) {
+          throw new Error('Sem conexão com a internet. Tente novamente.');
+        }
         throw e;
       }
     }
@@ -1322,7 +1330,16 @@ try {
             const pct = (snap.bytesTransferred / Math.max(1, snap.totalBytes)) * 100;
             log('Upload progress:', Math.round(pct) + '%');
             setUploadProgress(pct);
-          }, reject, resolve);
+          }, (error) => {
+            console.error('❌ Erro durante upload:', error.code, error.message);
+            // Melhor mensagem de erro para CORS
+            if (error.code === 'storage/unauthorized' || error.message.includes('CORS')) {
+              alert('❌ Erro de acesso ao armazenamento.\n\nVer: FIREBASE_CORS_FIX.md na raiz do projeto para soluções.');
+            } else {
+              alert('❌ Erro ao fazer upload: ' + (error.message || 'Desconhecido'));
+            }
+            reject(error);
+          }, resolve);
         });
 
         const url = await f.getDownloadURL(uploadTask.snapshot.ref);
@@ -1347,8 +1364,11 @@ try {
         clearMediaPreview();
         setUploadProgress(100);
       } catch (e) {
-        console.error('uploadAndSendFile error:', e);
-        throw e;
+        console.error('uploadAndSendFile error:', e.code, e.message);
+        // Erro já foi tratado acima, não relançar silenciosamente
+        if (!e.handled) {
+          alert('❌ Erro ao enviar arquivo: ' + (e.message || 'Desconhecido'));
+        }
       }
     }
 
