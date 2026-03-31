@@ -87,7 +87,11 @@ try {
       background: rgba(236, 72, 153, 0.7);
   </style>
   <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web com CSS Externo -->
-  <div class="chat-wrapper">
+  <div class="chat-wrapper" id="chatWrapper">
+    <!-- Toggle Sidebar CRM Button (top-left corner) -->
+    <button id="toggleCrmSidebar" class="absolute top-4 left-4 z-50 h-10 w-10 rounded-lg bg-pink-600 hover:bg-pink-700 text-white flex items-center justify-center shadow-lg transition" title="Menu CRM">
+      <i class="fa-solid fa-bars text-lg"></i>
+    </button>
     <!-- Sidebar: Contatos (Esquerda - 25%) -->
     <aside class="chat-sidebar flex">
       <header class="chat-sidebar-header">
@@ -96,7 +100,9 @@ try {
             <div class="text-sm font-semibold text-white">Conversas</div>
             <div class="text-xs text-slate-400">Histórico em tempo real</div>
           </div>
-          <div class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300">Online</div>
+          <button id="createGroupBtn" class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300 hover:bg-emerald-500/20 transition" title="Criar grupo">
+            <i class="fa-solid fa-plus"></i>
+          </button>
         </div>
         <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#334155] border border-slate-600 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
       </header>
@@ -195,6 +201,25 @@ try {
       </main>
     </div>
 
+    <!-- Modal para criar grupo -->
+    <div id="createGroupModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-slate-800 rounded-2xl border border-slate-600 p-6 w-full max-w-md">
+        <h2 class="text-lg font-bold text-white mb-4">Criar Novo Grupo</h2>
+        
+        <input id="groupNameInput" type="text" placeholder="Nome do grupo..." class="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-2 text-white text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500" />
+        
+        <div class="mb-4">
+          <label class="text-xs text-slate-300 mb-2 block">Selecione os membros:</label>
+          <div id="groupMembersContainer" class="bg-slate-700 rounded-lg border border-slate-600 p-3 max-h-64 overflow-y-auto"></div>
+        </div>
+        
+        <div class="flex gap-2">
+          <button id="createGroupConfirmBtn" class="flex-1 bg-pink-600 hover:bg-pink-700 rounded-lg px-4 py-2 text-white font-semibold transition">Criar</button>
+          <button id="createGroupCancelBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 rounded-lg px-4 py-2 text-white font-semibold transition">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script type="module">
     console.log('🎯 Chat inicializado - script iniciado');
@@ -202,7 +227,8 @@ try {
 
     const CURRENT_USER = {
       id: Number(<?= (int)$currentUserId ?>),
-      name: <?= json_encode($currentUserName, JSON_UNESCAPED_UNICODE) ?>
+      name: <?= json_encode($currentUserName, JSON_UNESCAPED_UNICODE) ?>,
+      role: <?= json_encode($_SESSION['user_role'] ?? 'user', JSON_UNESCAPED_UNICODE) ?>
     };
 
     const USERS = <?= json_encode(array_map(static function ($u) {
@@ -237,6 +263,12 @@ try {
     const typingIndicatorEl = document.getElementById('typingIndicator');
     const chatStatusEl = document.getElementById('chatStatus');
     const chatStatusDotEl = document.getElementById('chatStatusDot');
+    const createGroupBtn = document.getElementById('createGroupBtn');
+    const createGroupModal = document.getElementById('createGroupModal');
+    const groupNameInput = document.getElementById('groupNameInput');
+    const groupMembersContainer = document.getElementById('groupMembersContainer');
+    const createGroupConfirmBtn = document.getElementById('createGroupConfirmBtn');
+    const createGroupCancelBtn = document.getElementById('createGroupCancelBtn');
 
     let unsubscribeMessages = null;
     let unsubscribeTyping = null;
@@ -622,6 +654,7 @@ try {
         // Container da mensagem
         const row = document.createElement('div');
         row.className = `message-row ${mine ? 'sent' : 'received'}`;
+        row.setAttribute('data-message-id', doc.id || '');
 
         // Balão de mensagem
         const bubble = document.createElement('div');
@@ -654,6 +687,22 @@ try {
         }
         
         bubble.appendChild(timeEl);
+        
+        // Botão de deletar para admin
+        if (CURRENT_USER.role === 'admin') {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'message-delete-btn';
+          deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+          deleteBtn.title = 'Deletar mensagem';
+          deleteBtn.addEventListener('click', async () => {
+            if (confirm('Deletar esta mensagem?')) {
+              await deleteMessage(doc.id);
+              row.remove();
+            }
+          });
+          bubble.appendChild(deleteBtn);
+        }
+        
         row.appendChild(bubble);
         messagesInnerEl.appendChild(row);
       });
@@ -856,6 +905,34 @@ try {
       }
     }
 
+    async function deleteMessage(messageId) {
+      if (!CURRENT_USER.role === 'admin') {
+        alert('Apenas administradores podem deletar mensagens');
+        return;
+      }
+      
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        
+        // Deletar da conversa geral
+        if (currentChatMode === 'general') {
+          const messageRef = f.doc(window.db, 'conversations', GENERAL_CHAT_ID, 'messages', messageId);
+          await f.deleteDoc(messageRef);
+          log('Message deleted from general chat:', messageId);
+        } else if (currentChatMode === 'private' && currentChatUser) {
+          // Deletar da conversa privada
+          const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
+          const messageRef = f.doc(window.db, 'conversations', convo, 'messages', messageId);
+          await f.deleteDoc(messageRef);
+          log('Message deleted from private chat:', messageId);
+        }
+      } catch (err) {
+        console.error('Error deleting message:', err);
+        alert('Erro ao deletar mensagem: ' + err.message);
+      }
+    }
+
     async function openPrivateChat(user) {
       log('Opening private chat with:', user.id, user.name);
       showConversationArea();
@@ -1026,6 +1103,128 @@ try {
           await f.deleteDoc(typingDocRef);
         }
       } catch (_) {}
+    }
+
+    function showCreateGroupModal() {
+      groupMembersContainer.innerHTML = '';
+      USERS.forEach(user => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 p-2 hover:bg-slate-600 rounded cursor-pointer';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = user.id;
+        checkbox.className = 'w-4 h-4 rounded bg-slate-700 border-slate-600 cursor-pointer';
+        
+        const span = document.createElement('span');
+        span.className = 'text-sm text-white';
+        span.textContent = `${user.name} (${user.email})`;
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        groupMembersContainer.appendChild(label);
+      });
+      
+      groupNameInput.value = '';
+      createGroupModal.classList.remove('hidden');
+    }
+
+    function hideCreateGroupModal() {
+      createGroupModal.classList.add('hidden');
+    }
+
+    async function createGroup() {
+      const groupName = groupNameInput.value.trim();
+      if (!groupName) {
+        alert('Digite um nome para o grupo');
+        return;
+      }
+
+      const selectedCheckboxes = groupMembersContainer.querySelectorAll('input[type="checkbox"]:checked');
+      const memberIds = Array.from(selectedCheckboxes).map(cb => Number(cb.value));
+      
+      if (memberIds.length === 0) {
+        alert('Selecione pelo menos um membro');
+        return;
+      }
+
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        
+        // Criar ID do grupo: "group_" + hash dos membros + timestamp
+        const sortedMemberIds = [CURRENT_USER.id, ...memberIds].sort((a, b) => a - b);
+        const groupId = `group_${sortedMemberIds.join('_')}_${Date.now()}`;
+        
+        // Criar documento do grupo
+        const groupsRef = f.collection(window.db, 'groups');
+        await f.addDoc(groupsRef, {
+          id: groupId,
+          name: groupName,
+          members: sortedMemberIds,
+          createdBy: CURRENT_USER.id,
+          createdAt: f.serverTimestamp(),
+          createdAtMs: Date.now(),
+        });
+        
+        log('✅ Grupo criado:', groupId, groupName);
+        alert(`✅ Grupo "${groupName}" criado com sucesso!`);
+        hideCreateGroupModal();
+        
+        // Recarregar lista de usuários/grupos
+        renderUsersList('');
+      } catch (err) {
+        console.error('Error creating group:', err);
+        alert('Erro ao criar grupo: ' + err.message);
+      }
+    }
+
+    async function cleanAllMessages() {
+      if (CURRENT_USER.role !== 'admin') {
+        alert('Apenas administradores podem limpar o chat');
+        return;
+      }
+      
+      if (!confirm('⚠️ AVISO: Isto vai deletar TODAS as mensagens do chat atual. Continue?')) {
+        return;
+      }
+      
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        
+        const isGeneral = currentChatMode === 'general';
+        const conversationId = isGeneral ? GENERAL_CHAT_ID : (currentChatUser ? conversationId(CURRENT_USER.id, currentChatUser.id) : null);
+        
+        if (!conversationId) {
+          alert('Nenhuma conversa selecionada');
+          return;
+        }
+        
+        const messagesRef = f.collection(window.db, 'conversations', conversationId, 'messages');
+        const q = f.query(messagesRef);
+        const snapshot = await f.getDocs(q);
+        
+        // Deletar todas as mensagens
+        let deletedCount = 0;
+        for (const doc of snapshot.docs) {
+          await f.deleteDoc(f.doc(window.db, 'conversations', conversationId, 'messages', doc.id));
+          deletedCount++;
+        }
+        
+        log(`✅ ${deletedCount} mensagens deletadas`);
+        alert(`✅ ${deletedCount} mensagens foram deletadas com sucesso`);
+        
+        // Renderizar lista vazia
+        messagesInnerEl.innerHTML = '';
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'flex min-h-full items-center justify-center text-center text-sm text-pink-100/50';
+        emptyMsg.textContent = 'Chat limpo. 🧹';
+        messagesInnerEl.appendChild(emptyMsg);
+      } catch (err) {
+        console.error('Error cleaning messages:', err);
+        alert('Erro ao limpar chat: ' + err.message);
+      }
     }
 
     async function sendMessage(payload = {}) {
@@ -1229,6 +1428,13 @@ try {
         return;
       }
 
+      // Processar comando /cleanall
+      if (text === '/cleanall') {
+        await cleanAllMessages();
+        messageInput.value = '';
+        return;
+      }
+
       try {
         console.log('✉️ Enviando mensagem de texto:', text.substring(0, 30) + '...');
         await sendMessage({ type: 'text', text });
@@ -1288,6 +1494,23 @@ try {
       renderUsersList(searchEl.value);
     });
 
+    // Setup group creation modal
+    if (createGroupBtn) {
+      createGroupBtn.addEventListener('click', showCreateGroupModal);
+    }
+    if (createGroupCancelBtn) {
+      createGroupCancelBtn.addEventListener('click', hideCreateGroupModal);
+    }
+    if (createGroupConfirmBtn) {
+      createGroupConfirmBtn.addEventListener('click', createGroup);
+    }
+    // Fechar modal ao clicar fora
+    if (createGroupModal) {
+      createGroupModal.addEventListener('click', (e) => {
+        if (e.target === createGroupModal) hideCreateGroupModal();
+      });
+    }
+
     // Setup back button - mobile only
     setupBackButton();
 
@@ -1328,6 +1551,16 @@ try {
       currentChatUser = null;
       openGeneralChat();
       renderUsersList('');
+    }
+
+    // Setup CRM Sidebar Toggle
+    const toggleCrmBtn = document.getElementById('toggleCrmSidebar');
+    const chatWrapper = document.getElementById('chatWrapper');
+    if (toggleCrmBtn && chatWrapper) {
+      toggleCrmBtn.addEventListener('click', () => {
+        chatWrapper.classList.toggle('sidebar-open');
+        log('CRM Sidebar toggled');
+      });
     }
 
     window.addEventListener('beforeunload', () => {
