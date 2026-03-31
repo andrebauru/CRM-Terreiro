@@ -34,6 +34,17 @@ try {
     /* Smooth scroll behavior */
     #messages-container {
       scroll-behavior: smooth;
+      flex: 1 1 0%;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Garantir que a barra de input fica fixo no rodapé */
+    #chatComposer {
+      flex-shrink: 0;
+      width: 100%;
     }
 
     /* Animação de digitação */
@@ -65,8 +76,8 @@ try {
         </div>
       </header>
 
-      <!-- Container Principal do Chat -->
-      <div class="flex h-[calc(100vh-100px)] flex-col md:flex-row gap-0 md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)] overflow-hidden">
+      <!-- Container Principal do Chat (Flex com altura fixa e overflow hidden) -->
+      <div class="flex flex-col md:flex-row h-[calc(100vh-80px)] gap-0 md:gap-4 md:p-4 overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
         
         <!-- Lista de Contatos (Esquerda) -->
         <aside id="chatUsersPanel" class="h-full w-full md:w-80 md:rounded-3xl border-r md:border border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
@@ -322,6 +333,8 @@ try {
         log('Scrolling to bottom. Force:', force, 'NearBottom:', nearBottom);
         // Usar requestAnimationFrame para garantir que o scroll aconteça após o render
         requestAnimationFrame(() => {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+          // Também usar scrollTo como fallback
           messagesEl.scrollTo({ 
             top: messagesEl.scrollHeight, 
             behavior: force ? 'auto' : 'smooth' 
@@ -548,13 +561,21 @@ try {
 
         // Estilos diferentes para enviadas vs recebidas
         if (mine) {
+          // Mensagem enviada: direita com cantos arredondados exceto superior-direito
+          bubbleClasses.push('rounded-l-2xl');
           bubbleClasses.push('rounded-tr-none');
+          bubbleClasses.push('rounded-tl-2xl');
+          bubbleClasses.push('rounded-br-2xl');
           bubbleClasses.push('bg-pink-600');
           bubbleClasses.push('text-white');
           bubbleClasses.push('shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.42),0_12px_30px_rgba(236,72,153,.30)]');
           bubble.classList.add('glow-pink');
         } else {
+          // Mensagem recebida: esquerda com cantos arredondados exceto superior-esquerdo
+          bubbleClasses.push('rounded-r-2xl');
           bubbleClasses.push('rounded-tl-none');
+          bubbleClasses.push('rounded-tr-2xl');
+          bubbleClasses.push('rounded-br-2xl');
           bubbleClasses.push('border');
           bubbleClasses.push('border-white/10');
           bubbleClasses.push('bg-slate-800');
