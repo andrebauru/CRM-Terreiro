@@ -109,12 +109,12 @@ try {
         <header class="chat-sidebar-header">
           <div class="mb-3 flex items-center justify-between gap-2">
             <div>
-              <div class="text-sm font-semibold text-pink-100">Conversas</div>
-              <div class="text-xs text-pink-200/60">Histórico em tempo real</div>
+              <div class="text-sm font-semibold text-white">Conversas</div>
+              <div class="text-xs text-slate-400">Histórico em tempo real</div>
             </div>
             <div class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300">Online</div>
           </div>
-          <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#241635] border border-fuchsia-500/30 px-4 py-3 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
+          <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#334155] border border-slate-600 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
         </header>
         <div id="chatUsersList" class="chat-sidebar-content"></div>
 
