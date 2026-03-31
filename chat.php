@@ -36,8 +36,8 @@ try {
       </header>
 
       <!-- Container Principal do Chat -->
-      <div class="flex h-[calc(100vh-100px)] flex-col md:flex-row overflow-hidden md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
-        <aside id="chatUsersPanel" class="h-full w-full md:w-[30%] md:min-w-[320px] md:max-w-[420px] border-r md:border md:rounded-3xl border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
+      <div class="flex h-[calc(100vh-80px)] flex-col md:flex-row overflow-hidden md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
+        <aside id="chatUsersPanel" class="h-full w-full md:w-80 border-r md:border md:rounded-3xl border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
           <div class="shrink-0 border-b border-fuchsia-400/15 p-4 bg-gradient-to-b from-white/5 to-transparent">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
@@ -51,7 +51,7 @@ try {
           <div id="chatUsersList" class="flex-1 overflow-y-auto px-3 py-3 space-y-2"></div>
         </aside>
 
-        <section id="chatConversationArea" class="hidden md:flex h-full min-w-0 w-full md:flex-[0_0_70%] flex-col overflow-hidden md:rounded-3xl border-fuchsia-400/20 md:border bg-slate-900/75 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
+        <section id="chatConversationArea" class="hidden md:flex h-full min-w-0 w-full flex-1 flex-col overflow-hidden md:rounded-3xl border-fuchsia-400/20 md:border bg-slate-900/75 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
           <div id="chatHeader" class="shrink-0 border-b border-fuchsia-400/15 bg-slate-900/65 backdrop-blur-xl px-5 py-4 flex items-center justify-between">
             <div class="flex min-w-0 items-center gap-3">
               <button id="chatBackBtn" class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-fuchsia-500/25 bg-[#241635] text-pink-100" title="Voltar">
@@ -90,11 +90,11 @@ try {
             </div>
           </div>
 
-          <div id="chatMessages" class="hidden scroll-smooth flex-1 overflow-y-auto px-4 md:px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
+          <div id="messages-container" class="hidden scroll-smooth flex-1 overflow-y-auto px-4 md:px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
             <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-3"></div>
           </div>
 
-          <div id="chatComposer" class="hidden sticky bottom-0 shrink-0 border-t border-fuchsia-400/15 bg-[#160d25]/90 p-4">
+          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/15 bg-[#160d25]/95 p-4">
             <div id="mediaPreview" class="hidden rounded-2xl border border-fuchsia-400/30 bg-black/25 p-3 text-sm text-pink-100"></div>
 
             <div id="uploadProgressWrap" class="hidden mt-3">
@@ -157,7 +157,7 @@ try {
     const chatAvatarWrapEl = document.getElementById('chatAvatarWrap');
     const chatEmptyStateEl = document.getElementById('chatEmptyState');
     const chatComposerEl = document.getElementById('chatComposer');
-    const messagesEl = document.getElementById('chatMessages');
+    const messagesEl = document.getElementById('messages-container');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
     const emojiBtn = document.getElementById('emojiBtn');
@@ -187,6 +187,7 @@ try {
     const GENERAL_CHAT_ID = 'general';
     let currentChatUser = null;
     let currentChatMode = null; // 'general' ou 'private'
+    let selectedUserId = null;
     let presenceHeartbeatTimer = null;
     const userPresenceMap = new Map();
     let currentFcmToken = null;
@@ -274,7 +275,7 @@ try {
       if (!messagesEl) return;
       const nearBottom = (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight) < 120;
       if (force || nearBottom) {
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
       }
     }
 
@@ -301,20 +302,18 @@ try {
       if (isDesktop) {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.remove('block');
         chatConversationAreaEl.classList.add('flex');
         return;
       }
 
-      if (inConversation) {
+      const shouldShowConversation = typeof inConversation === 'boolean' ? inConversation : !!selectedUserId;
+      if (shouldShowConversation) {
         chatUsersPanelEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.remove('block');
         chatConversationAreaEl.classList.add('flex');
       } else {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('hidden');
-        chatConversationAreaEl.classList.remove('block');
         chatConversationAreaEl.classList.remove('flex');
       }
     }
@@ -403,6 +402,7 @@ try {
           log('General chat clicked');
           currentChatMode = 'general';
           currentChatUser = null;
+          selectedUserId = GENERAL_CHAT_ID;
           openGeneralChat();
           setMobileView(true);
         });
@@ -417,6 +417,7 @@ try {
             log('User clicked:', user.name);
             currentChatMode = 'private';
             currentChatUser = user;
+            selectedUserId = String(user.id);
             openPrivateChat(user);
             setMobileView(true);
           }
@@ -461,8 +462,8 @@ try {
 
         const bubble = document.createElement('div');
         bubble.className = mine
-          ? 'max-w-[82%] rounded-2xl rounded-br-sm bg-pink-600 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.42),0_12px_30px_rgba(236,72,153,.30)]'
-          : 'max-w-[82%] rounded-2xl rounded-bl-sm border border-white/10 bg-slate-800 px-4 py-3 text-white shadow-[0_10px_26px_rgba(0,0,0,.22)]';
+          ? 'max-w-[82%] rounded-2xl rounded-tr-none bg-pink-600 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.42),0_12px_30px_rgba(236,72,153,.30)]'
+          : 'max-w-[82%] rounded-2xl rounded-tl-none border border-white/10 bg-slate-800 px-4 py-3 text-white shadow-[0_10px_26px_rgba(0,0,0,.22)]';
 
         let body = '';
         if (currentChatMode === 'general' && !mine) {
@@ -491,7 +492,7 @@ try {
           ? `<span class="inline-flex items-center gap-0.5 ${isRead ? 'text-sky-300' : 'text-white/70'}"><i class="fa-solid fa-check text-[10px]"></i><i class="fa-solid fa-check -ml-1 text-[10px]"></i></span>`
           : '';
 
-        bubble.innerHTML = `${body}<div class="mt-2 flex items-center justify-end gap-1 text-[11px] ${mine ? 'text-white/80' : 'text-slate-300/70'}"><span>${formatTime(date)}</span>${readIndicator}</div>`;
+        bubble.innerHTML = `${body}<div class="mt-2 flex items-center justify-end gap-1 text-[10px] opacity-70 ${mine ? 'text-white' : 'text-slate-300'}"><span>${formatTime(date)}</span>${readIndicator}</div>`;
         row.appendChild(bubble);
         messagesInnerEl.appendChild(row);
       });
@@ -1119,12 +1120,13 @@ try {
 
     if (chatBackBtn) {
       chatBackBtn.addEventListener('click', () => {
+        selectedUserId = null;
         setMobileView(false);
       });
     }
 
     window.addEventListener('resize', () => {
-      setMobileView(!!currentChatMode);
+      setMobileView(!!selectedUserId);
     });
 
     // Initialize
