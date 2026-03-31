@@ -89,7 +89,7 @@ try {
   <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web com CSS Externo -->
   <div class="chat-wrapper">
     <!-- Sidebar: Contatos (Esquerda - 25%) -->
-    <aside class="chat-sidebar">
+    <aside class="chat-sidebar flex">
       <header class="chat-sidebar-header">
         <div class="mb-3 flex items-center justify-between gap-2">
           <div>
@@ -104,7 +104,7 @@ try {
     </aside>
 
     <!-- Chat Area (Direita - 75%, Coluna com Header/Messages/Input) -->
-    <main class="chat-main">
+    <main class="chat-main flex">
       <!-- Top Header (CRM Title) -->
       <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
@@ -237,7 +237,6 @@ try {
     const typingIndicatorEl = document.getElementById('typingIndicator');
     const chatStatusEl = document.getElementById('chatStatus');
     const chatStatusDotEl = document.getElementById('chatStatusDot');
-    const messagesInnerEl = document.getElementById('chatMessagesInner');
 
     let unsubscribeMessages = null;
     let unsubscribeTyping = null;

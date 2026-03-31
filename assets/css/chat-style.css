@@ -27,20 +27,20 @@
   overflow: hidden;
 }
 
+.chat-sidebar.hidden {
+  display: none !important;
+}
+
+.chat-sidebar.flex {
+  display: flex !important;
+}
+
 /* Mobile: Full width */
 @media (max-width: 768px) {
   .chat-sidebar {
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100%;
-  }
-
-  .chat-sidebar.hidden {
-    display: none !important;
-  }
-
-  .chat-sidebar.flex {
-    display: flex !important;
   }
 }
 
@@ -74,19 +74,19 @@
   overflow: hidden;
 }
 
-/* Mobile: Hide by default */
+.chat-main.hidden {
+  display: none !important;
+}
+
+.chat-main.flex {
+  display: flex !important;
+}
+
+/* Mobile: Full width */
 @media (max-width: 768px) {
   .chat-main {
     width: 100% !important;
     min-width: 100% !important;
-  }
-
-  .chat-main.hidden {
-    display: none !important;
-  }
-
-  .chat-main.flex {
-    display: flex !important;
   }
 }
 
