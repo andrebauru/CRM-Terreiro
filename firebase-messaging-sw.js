@@ -18,15 +18,20 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload?.notification?.title || 'CRM Terreiro';
-  const options = {
-    body: payload?.notification?.body || 'Você recebeu uma nova mensagem.',
+  const notificationTitle = (payload && payload.notification && payload.notification.title)
+    ? payload.notification.title
+    : 'CRM Terreiro';
+
+  const notificationOptions = {
+    body: (payload && payload.notification && payload.notification.body)
+      ? payload.notification.body
+      : 'Você recebeu uma nova mensagem.',
     icon: '/public/static/logo-quimbanda.png',
     badge: '/public/static/logo-quimbanda.png',
     data: payload?.data || {}
   };
 
-  self.registration.showNotification(title, options);
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 self.addEventListener('notificationclick', (event) => {
