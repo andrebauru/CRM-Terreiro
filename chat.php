@@ -31,6 +31,14 @@ try {
         0 12px 30px rgba(236, 72, 153, 0.30);
     }
 
+    /* Layout lock do chat */
+    #chat-container {
+      display: flex;
+      height: calc(100vh - 80px);
+      overflow: hidden;
+      position: relative;
+    }
+
     /* Scroll interno do chat */
     #messages-container {
       scroll-behavior: smooth;
@@ -39,13 +47,19 @@ try {
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      padding: 1.5rem;
+      padding: 20px;
     }
 
     /* Garantir que a barra de input fica fixo no rodapé */
     #chatComposer {
       flex-shrink: 0;
       width: 100%;
+    }
+
+    .chat-bubble-text {
+      color: #ffffff !important;
+      word-break: break-word;
+      min-height: 20px;
     }
 
     /* Animação de digitação */
@@ -78,10 +92,10 @@ try {
       </header>
 
       <!-- Container Principal do Chat (Flex com altura fixa e overflow hidden) -->
-      <div class="flex h-[calc(100vh-80px)] flex-col overflow-hidden md:flex-row md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
+      <div id="chat-container" class="relative flex h-[calc(100vh-80px)] flex-col overflow-hidden md:flex-row bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
         
         <!-- Lista de Contatos (Esquerda) -->
-        <aside id="chatUsersPanel" class="h-full w-full md:min-w-[250px] md:basis-[20%] md:max-w-[20%] md:rounded-3xl border-r border-[#333] bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
+        <aside id="chatUsersPanel" class="h-full w-full md:min-w-[280px] md:basis-[20%] md:max-w-[20%] border-r border-[#2d3748] bg-[#0f172a] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
           <div class="shrink-0 border-b border-fuchsia-400/15 p-4 bg-gradient-to-b from-white/5 to-transparent">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
@@ -96,10 +110,10 @@ try {
         </aside>
 
         <!-- Área de Conversa (Direita) -->
-        <section id="chatConversationArea" class="hidden h-full w-full md:flex md:basis-[80%] md:max-w-[80%] flex-col overflow-hidden md:rounded-3xl bg-[#020617] md:border md:border-fuchsia-400/20 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] min-w-0">
+        <section id="chatConversationArea" class="hidden h-full w-full md:flex md:basis-[80%] md:max-w-[80%] flex-col overflow-hidden bg-[#020617] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] min-w-0">
           
           <!-- Header da Conversa -->
-          <div id="chatHeader" class="shrink-0 border-b border-fuchsia-400/15 bg-slate-900/65 backdrop-blur-xl px-5 py-4 flex items-center justify-between">
+          <div id="chatHeader" class="h-16 shrink-0 border-b border-[#2d3748] bg-slate-900/65 backdrop-blur-xl px-5 flex items-center justify-between">
             <div class="flex min-w-0 items-center gap-3">
               <button id="chatBackBtn" class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-fuchsia-500/25 bg-[#241635] text-pink-100" title="Voltar">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -139,12 +153,12 @@ try {
           </div>
 
           <!-- Área de Mensagens (Scroll Interno) -->
-          <div id="messages-container" class="hidden scroll-smooth flex-1 overflow-y-auto p-6 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
+          <div id="messages-container" class="hidden scroll-smooth flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
             <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-4"></div>
           </div>
 
           <!-- Compositor de Mensagens (Footer) -->
-          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/15 bg-[#160d25]/95 p-4">
+          <div id="chatComposer" class="hidden shrink-0 border-t border-[#2d3748] bg-[#0f172a] p-[15px]">
             <div id="mediaPreview" class="hidden rounded-2xl border border-fuchsia-400/30 bg-black/25 p-3 text-sm text-pink-100"></div>
 
             <div id="uploadProgressWrap" class="hidden mt-3">
@@ -520,17 +534,21 @@ try {
 
       let lastDateKey = '';
 
-      docs.forEach((msg) => {
-        const messageText = String((msg && (msg.text ?? msg.content)) || '');
-        log('Renderizando mensagem:', { senderId: msg.senderId, text: messageText });
-        const mine = Number(msg.senderId) === CURRENT_USER.id;
+      docs.forEach((docItem) => {
+        const msgData = docItem && typeof docItem.data === 'function'
+          ? (docItem.data() || {})
+          : (docItem || {});
+
+        const messageText = String(msgData.text || msgData.content || msgData.mensagem || 'Mensagem vazia');
+        log('Renderizando mensagem:', { senderId: msgData.senderId, text: messageText });
+        const mine = Number(msgData.senderId) === CURRENT_USER.id;
 
         // Extrair data da mensagem
-        const date = msg.timestamp && typeof msg.timestamp.toDate === 'function'
-          ? msg.timestamp.toDate()
-          : (msg.createdAt && typeof msg.createdAt.toDate === 'function'
-            ? msg.createdAt.toDate()
-            : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date()));
+        const date = msgData.timestamp && typeof msgData.timestamp.toDate === 'function'
+          ? msgData.timestamp.toDate()
+          : (msgData.createdAt && typeof msgData.createdAt.toDate === 'function'
+            ? msgData.createdAt.toDate()
+            : (msgData.createdAtMs ? new Date(msgData.createdAtMs) : new Date()));
 
         // Separador de data
         const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -557,15 +575,15 @@ try {
         if (currentChatMode === 'general' && !mine) {
           const senderEl = document.createElement('div');
           senderEl.className = 'mb-1 text-xs font-semibold text-pink-200/90';
-          senderEl.innerText = String(msg.senderName || `Usuário #${msg.senderId}`);
+          senderEl.innerText = String(msgData.senderName || `Usuário #${msgData.senderId}`);
           bubble.appendChild(senderEl);
         }
 
         // Processamento de mídia
-        const fileType = String(msg.file_type || msg.type || '').toLowerCase();
-        const mediaUrl = msg.mediaUrl || msg.file_url || '';
+        const fileType = String(msgData.file_type || msgData.type || '').toLowerCase();
+        const mediaUrl = msgData.mediaUrl || msgData.file_url || '';
 
-        if ((fileType === 'image' || String(msg.mediaMime || '').startsWith('image/')) && mediaUrl) {
+        if ((fileType === 'image' || String(msgData.mediaMime || '').startsWith('image/')) && mediaUrl) {
           const mediaWrap = document.createElement('a');
           mediaWrap.href = mediaUrl;
           mediaWrap.target = '_blank';
@@ -591,20 +609,20 @@ try {
           fileEl.target = '_blank';
           fileEl.rel = 'noopener';
           fileEl.className = 'inline-flex items-center gap-2 rounded-xl bg-black/15 px-3 py-2 text-xs underline';
-          fileEl.innerText = `📎 ${String(msg.mediaName || msg.file_name || 'Arquivo')}`;
+          fileEl.innerText = `📎 ${String(msgData.mediaName || msgData.file_name || 'Arquivo')}`;
           bubble.appendChild(fileEl);
         }
 
         // Texto da mensagem (innerText para garantir render e segurança)
-        if (messageText) {
-          const textEl = document.createElement('div');
-          textEl.className = (mediaUrl ? 'mt-2 ' : '') + 'text-white min-h-[20px]';
-          textEl.innerText = messageText;
-          bubble.appendChild(textEl);
-        }
+        const textEl = document.createElement('div');
+        textEl.className = (mediaUrl ? 'mt-2 ' : '') + 'chat-bubble-text';
+        textEl.style.color = '#ffffff';
+        textEl.style.wordBreak = 'break-word';
+        textEl.innerText = messageText;
+        bubble.appendChild(textEl);
 
         // Indicador de leitura e horário
-        const isRead = !!(msg.readAt || msg.read_at || msg.read === true);
+        const isRead = !!(msgData.readAt || msgData.read_at || msgData.read === true);
         const readIndicator = mine
           ? `<span class="inline-flex items-center gap-0.5 ${isRead ? 'text-sky-300' : 'text-white/70'}"><i class="fa-solid fa-check text-[10px]"></i><i class="fa-solid fa-check -ml-1 text-[10px]"></i></span>`
           : '';
