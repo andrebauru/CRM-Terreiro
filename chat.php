@@ -73,12 +73,14 @@ try {
       animation: typing 1.4s infinite;
     }
   </style>
-  <div class="h-screen flex overflow-hidden">
+  <!-- Fixed-Height Viewport Container -->
+  <div class="h-screen w-full flex overflow-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
-    <main class="flex-1 flex flex-col min-w-0">
-      <!-- Header do Chat -->
-      <header class="shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
+    <!-- Chat Area Main Container -->
+    <main class="flex-1 h-screen flex flex-col overflow-hidden">
+      <!-- Top Header (CRM Title) -->
+      <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
           <h1 class="text-lg font-black text-pink-300">Chat Interno</h1>
           <span class="text-xs text-pink-100/50">•</span>
@@ -86,12 +88,12 @@ try {
         </div>
       </header>
 
-      <!-- Container Principal do Chat (Flex com altura fixa e overflow hidden) -->
-      <div id="chat-container" class="h-[calc(100vh-80px)] flex overflow-hidden flex-col md:flex-row bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
+      <!-- Chat Container (20% Sidebar + 80% Chat Area) -->
+      <div id="chat-container" class="flex-1 flex overflow-hidden flex-col md:flex-row">
         
-        <!-- Lista de Contatos (Esquerda) -->
-        <aside id="chatUsersPanel" class="h-full w-full md:w-1/5 md:min-w-[250px] border-r border-slate-800 bg-[#0f172a] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
-          <div class="shrink-0 border-b border-fuchsia-400/15 p-4 bg-gradient-to-b from-white/5 to-transparent">
+        <!-- Sidebar: Contatos (Esquerda - 20%) -->
+        <aside id="chatUsersPanel" class="w-full md:w-1/5 md:min-w-[280px] h-full border-r border-slate-800 bg-slate-900 flex flex-col overflow-hidden">
+          <div class="flex-shrink-0 border-b border-slate-800 p-4 bg-slate-900">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
                 <div class="text-sm font-semibold text-pink-100">Conversas</div>
@@ -101,14 +103,14 @@ try {
             </div>
             <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#241635] border border-fuchsia-500/30 px-4 py-3 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
           </div>
-          <div id="chatUsersList" class="flex-1 overflow-y-auto px-3 py-3 space-y-2"></div>
+          <div id="chatUsersList" class="flex-1 overflow-y-auto px-2 py-2 space-y-1 bg-slate-900"></div>
         </aside>
 
-        <!-- Área de Conversa (Direita) -->
-        <section id="chatConversationArea" class="hidden h-full w-full md:flex flex-1 flex-col overflow-hidden bg-slate-950 relative backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] min-w-0">
+        <!-- Chat Area (Direita - 80%, Coluna com Header/Messages/Input) -->
+        <section id="chatConversationArea" class="hidden md:flex flex-1 h-full w-full flex-col overflow-hidden bg-slate-950 relative min-w-0">
           
-          <!-- Header da Conversa -->
-          <div id="chatHeader" class="h-16 shrink-0 border-b border-[#2d3748] bg-slate-900/65 backdrop-blur-xl px-5 flex items-center justify-between">
+          <!-- Chat Header (70px fixed height) -->
+          <div id="chatHeader" class="h-[70px] flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 flex items-center justify-between">
             <div class="flex min-w-0 items-center gap-3">
               <button id="chatBackBtn" class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-fuchsia-500/25 bg-[#241635] text-pink-100" title="Voltar">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -136,8 +138,8 @@ try {
             </div>
           </div>
 
-          <!-- Estado Vazio (Mensagem Inicial) -->
-          <div id="chatEmptyState" class="flex absolute inset-0 z-10 items-center justify-center px-8 text-center text-pink-100/70 bg-[linear-gradient(180deg,rgba(255,255,255,.02),transparent)]">
+          <!-- Empty State (Overlay) -->
+          <div id="chatEmptyState" class="absolute inset-0 z-10 hidden items-center justify-center px-8 text-center text-pink-100/70 bg-slate-950">
             <div class="max-w-md">
               <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-500/25 to-fuchsia-600/25 text-2xl text-pink-200">
                 <i class="fa-solid fa-comments"></i>
@@ -147,13 +149,13 @@ try {
             </div>
           </div>
 
-          <!-- Área de Mensagens (Scroll Interno) -->
-          <div id="messages-container" class="hidden flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
-            <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-3"></div>
+          <!-- Messages Container (CRITICAL: flex-1 overflow-y-auto) -->
+          <div id="messages-container" class="hidden flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-950">
+            <div id="chatMessagesInner" class="flex min-h-full w-full flex-col justify-end gap-3"></div>
           </div>
 
-          <!-- Compositor de Mensagens (Footer) -->
-          <div id="chatComposer" class="hidden shrink-0 border-t border-[#2d3748] bg-[#0f172a] p-[15px]">
+          <!-- Input Footer (90px fixed height) -->
+          <div id="chatComposer" class="hidden h-[90px] flex-shrink-0 border-t border-slate-800 bg-slate-900 p-4 overflow-y-auto">
             <div id="mediaPreview" class="hidden rounded-2xl border border-fuchsia-400/30 bg-black/25 p-3 text-sm text-pink-100"></div>
 
             <div id="uploadProgressWrap" class="hidden mt-3">
@@ -530,9 +532,9 @@ try {
       let lastDateKey = '';
 
       docs.forEach((doc) => {
-        const data = doc && typeof doc.data === 'function' ? (doc.data() || {}) : (doc || {});
-        const msgText = String(data.text || data.content || data.mensagem || 'Erro: campo text vazio');
-        log('Renderizando mensagem:', { senderId: data.senderId, text: msgText });
+        const data = doc.data ? doc.data() : (doc || {});
+        const content = String(data.text || data.content || data.mensagem || "");
+        log('Renderizando mensagem:', { senderId: data.senderId, text: content });
         const mine = Number(data.senderId) === CURRENT_USER.id;
 
         // Extrair data da mensagem
@@ -552,86 +554,24 @@ try {
           lastDateKey = dateKey;
         }
 
-        // Container da mensagem (flex row com alinhamento)
+        // Container da mensagem
         const row = document.createElement('div');
         row.className = `flex w-full ${mine ? 'justify-end' : 'justify-start'}`;
 
-        // Balão de mensagem
+        // Balão de mensagem (aplicar classes corretamente)
         const bubble = document.createElement('div');
-
         bubble.className = mine
-          ? 'self-end bg-pink-600 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[70%] shadow-lg min-h-[20px] break-words whitespace-pre-wrap'
-          : 'self-start bg-slate-800 text-white rounded-2xl rounded-tl-none px-4 py-2 max-w-[70%] shadow-lg min-h-[20px] break-words whitespace-pre-wrap';
-
-        // Nome do remetente em chat geral
-        if (currentChatMode === 'general' && !mine) {
-          const senderEl = document.createElement('div');
-          senderEl.className = 'mb-1 text-xs font-semibold text-pink-200/90';
-          senderEl.innerText = String(data.senderName || `Usuário #${data.senderId}`);
-          bubble.appendChild(senderEl);
-        }
-
-        // Processamento de mídia
-        const fileType = String(data.file_type || data.type || '').toLowerCase();
-        const mediaUrl = data.mediaUrl || data.file_url || '';
-
-        if ((fileType === 'image' || String(data.mediaMime || '').startsWith('image/')) && mediaUrl) {
-          const mediaWrap = document.createElement('a');
-          mediaWrap.href = mediaUrl;
-          mediaWrap.target = '_blank';
-          mediaWrap.rel = 'noopener';
-          mediaWrap.className = 'inline-block';
-          mediaWrap.innerHTML = `<img src="${esc(mediaUrl)}" class="max-h-72 w-full rounded-2xl object-cover" loading="lazy" />`;
-          bubble.appendChild(mediaWrap);
-        } else if (fileType === 'video' && mediaUrl) {
-          const videoEl = document.createElement('video');
-          videoEl.controls = true;
-          videoEl.className = 'w-full rounded-2xl max-h-80';
-          videoEl.innerHTML = `<source src="${esc(mediaUrl)}" />`;
-          bubble.appendChild(videoEl);
-        } else if (fileType === 'audio' && mediaUrl) {
-          const audioEl = document.createElement('audio');
-          audioEl.controls = true;
-          audioEl.className = 'w-full';
-          audioEl.innerHTML = `<source src="${esc(mediaUrl)}" />`;
-          bubble.appendChild(audioEl);
-        } else if (mediaUrl) {
-          const fileEl = document.createElement('a');
-          fileEl.href = mediaUrl;
-          fileEl.target = '_blank';
-          fileEl.rel = 'noopener';
-          fileEl.className = 'inline-flex items-center gap-2 rounded-xl bg-black/15 px-3 py-2 text-xs underline';
-          fileEl.innerText = `📎 ${String(data.mediaName || data.file_name || 'Arquivo')}`;
-          bubble.appendChild(fileEl);
-        }
-
-        // Texto da mensagem (textContent para garantir injeção correta)
-        const textEl = document.createElement('div');
-        textEl.className = (mediaUrl ? 'mt-2 ' : '') + 'chat-bubble-text';
-        textEl.style.color = '#ffffff';
-        textEl.style.wordBreak = 'break-word';
-        textEl.textContent = msgText;
-        bubble.appendChild(textEl);
-
-        // Indicador de leitura e horário
-        const isRead = !!(data.readAt || data.read_at || data.read === true);
-        const readIndicator = mine
-          ? `<span class="inline-flex items-center gap-0.5 ${isRead ? 'text-sky-300' : 'text-white/70'}"><i class="fa-solid fa-check text-[10px]"></i><i class="fa-solid fa-check -ml-1 text-[10px]"></i></span>`
-          : '';
-
-        const metaEl = document.createElement('div');
-        metaEl.className = `mt-2 flex items-center justify-end gap-1 text-[10px] opacity-70 ${mine ? 'text-white' : 'text-slate-300'}`;
-        metaEl.innerHTML = `<span>${formatTime(date)}</span>${readIndicator}`;
-        bubble.appendChild(metaEl);
-
-        bubble.classList.add('chat-bubble');
+          ? "self-end bg-pink-600 text-white rounded-xl p-3 max-w-[70%] break-words"
+          : "self-start bg-slate-800 text-white rounded-xl p-3 max-w-[70%] break-words";
+        
+        bubble.textContent = content;
         row.appendChild(bubble);
         messagesInnerEl.appendChild(row);
       });
 
-      // Scroll automático para o final imediatamente após render
+      // Autoscroll imediato após render
       if (messagesEl) {
-        messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'auto' });
+        messagesEl.scrollTop = messagesEl.scrollHeight;
       }
       log('Messages rendered successfully');
     }
