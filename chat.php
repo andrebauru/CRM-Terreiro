@@ -21,8 +21,72 @@ try {
     }
 }
 ?>
-<link rel="stylesheet" href="/assets/css/chat-style.css">
+<link rel="stylesheet" href="assets/css/chat-style.css">
 <body class="bg-slate-950 font-sans text-slate-100 overflow-hidden">
+  <style>
+    /* Viewport fixo - Suporte adicional */
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* Scroll smooth para mensagens */
+    .chat-messages {
+      scroll-behavior: smooth;
+    }
+
+    /* Glow effect para balões */
+    .glow-pink {
+      box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.35), 0 0 24px rgba(236, 72, 153, 0.42), 0 12px 30px rgba(236, 72, 153, 0.30);
+    }
+
+    /* Animação de digitação com bounce */
+    @keyframes typing {
+      0%, 60%, 100% {
+        opacity: 0.5;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-10px);
+      }
+    }
+
+    .typing-dot {
+      animation: typing 1.4s infinite;
+    }
+
+    /* Garantir cor branca nos balões */
+    .chat-bubble,
+    .chat-bubble-text,
+    .message-bubble-text {
+      color: #ffffff !important;
+      word-break: break-word;
+      min-height: 20px;
+    }
+
+    /* Customização de scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(236, 72, 153, 0.5);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(236, 72, 153, 0.7);
+    }
+  </style>
   <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web com CSS Externo -->
   <div class="chat-wrapper">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
@@ -289,7 +353,7 @@ try {
       
       if (force || nearBottom) {
         log('Scrolling to bottom. Force:', force, 'NearBottom:', nearBottom);
-        // Usar requestAnimationFrame para garantir que o scroll aconteça após o render
+        // Usar requestAnimationFrame para garantir que o scroll aconteça APÓS o DOM terminar
         requestAnimationFrame(() => {
           messagesEl.scrollTop = messagesEl.scrollHeight;
           // Também usar scrollTo como fallback
@@ -518,12 +582,14 @@ try {
       let lastDateKey = '';
 
       docs.forEach((doc) => {
-        // Extrair dados de forma robusta (fallback para diferentes campos)
+        // Extrair dados de forma robusta
         const data = doc.data ? doc.data() : (doc || {});
-        const text = String(data.text || data.content || data.mensagem || "");
-        log('Renderizando mensagem:', { senderId: data.senderId, text: text.substring(0, 50) });
+        // Campo principal: text (via Firestore)
+        const content = data.text || "";
         
-        if (!text) {
+        log('Renderizando mensagem:', { senderId: data.senderId, text: content.substring(0, 50) });
+        
+        if (!content) {
           log('⚠️ Mensagem vazia ou sem campo text:', data);
           return; // Pular mensagens vazias
         }
@@ -554,12 +620,12 @@ try {
         const row = document.createElement('div');
         row.className = `message-row ${mine ? 'sent' : 'received'}`;
 
-        // Balão de mensagem - USA APENAS CLASSES CSS
+        // Balão de mensagem
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${mine ? 'sent' : 'received'}`;
         
-        // IMPORTANTE: Usar textContent para garantir renderização correta e segura
-        bubble.textContent = text;
+        // IMPORTANTE: Usar textContent para injetar texto de forma segura
+        bubble.textContent = content;
         
         // Horário e status de leitura
         const timeEl = document.createElement('div');
@@ -589,8 +655,11 @@ try {
         messagesInnerEl.appendChild(row);
       });
 
-      // Autoscroll para o final imediatamente após render
-      scrollMessagesToBottom(true);
+      // Autoscroll para o final imediatamente após render com requestAnimationFrame
+      requestAnimationFrame(() => {
+        scrollMessagesToBottom(true);
+      });
+      
       log('Messages rendered successfully');
     }
 
@@ -1222,10 +1291,14 @@ try {
     // Detectar resize APENAS se a largura mudar (mobile orientation)
     // Não reagir a mudanças de altura (que acontece quando teclado abre)
     let lastWidth = window.innerWidth;
+    // Track last width to detect only significant width changes (ignore keyboard height changes)
+    let lastWidth = window.innerWidth;
+    
     window.addEventListener('resize', () => {
       const currentWidth = window.innerWidth;
       
-      // Só processar se a largura mudou significativamente (mais de 50px)
+      // Só processar se a LARGURA mudou significativamente (mais de 50px)
+      // Isso ignora mudanças de altura causadas pela abertura do teclado no mobile
       if (Math.abs(currentWidth - lastWidth) > 50) {
         log('Screen width changed:', lastWidth, '->', currentWidth);
         lastWidth = currentWidth;
