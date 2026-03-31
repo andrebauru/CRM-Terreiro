@@ -90,6 +90,22 @@
   }
 }
 
+/* === CHAT CONVERSATION AREA === */
+.chat-conversation-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.chat-conversation-area.hidden {
+  display: none !important;
+}
+
+.chat-conversation-area.flex {
+  display: flex !important;
+}
+
 /* === CHAT HEADER === */
 .chat-header {
   flex-shrink: 0;

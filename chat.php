@@ -85,13 +85,25 @@ try {
 
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(236, 72, 153, 0.7);
-    }
   </style>
   <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web com CSS Externo -->
   <div class="chat-wrapper">
-    <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
+    <!-- Sidebar: Contatos (Esquerda - 25%) -->
+    <aside class="chat-sidebar">
+      <header class="chat-sidebar-header">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <div class="text-sm font-semibold text-white">Conversas</div>
+            <div class="text-xs text-slate-400">Histórico em tempo real</div>
+          </div>
+          <div class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300">Online</div>
+        </div>
+        <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#334155] border border-slate-600 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
+      </header>
+      <div id="chatUsersList" class="chat-sidebar-content"></div>
+    </aside>
 
-    <!-- Chat Area Main Container -->
+    <!-- Chat Area (Direita - 75%, Coluna com Header/Messages/Input) -->
     <main class="chat-main">
       <!-- Top Header (CRM Title) -->
       <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
@@ -102,32 +114,16 @@ try {
         </div>
       </header>
 
-      <!-- Chat Container -->
-      <div id="chat-container" class="chat-sidebar">
+      <!-- Chat Conversation Area -->
+      <section id="chatConversationArea" class="chat-conversation-area hidden">
         
-        <!-- Sidebar: Contatos (Esquerda - 20%) -->
-        <header class="chat-sidebar-header">
-          <div class="mb-3 flex items-center justify-between gap-2">
-            <div>
-              <div class="text-sm font-semibold text-white">Conversas</div>
-              <div class="text-xs text-slate-400">Histórico em tempo real</div>
-            </div>
-            <div class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300">Online</div>
-          </div>
-          <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#334155] border border-slate-600 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
-        </header>
-        <div id="chatUsersList" class="chat-sidebar-content"></div>
-
-        <!-- Chat Area (Direita - 80%, Coluna com Header/Messages/Input) -->
-        <section id="chatConversationArea" class="chat-main hidden">
-          
-          <!-- Chat Header (70px fixed height) -->
-          <header class="chat-header">
-            <div class="chat-header-content">
-              <button id="chatBackBtn" class="chat-back-button" title="Voltar">
-                <i class="fa-solid fa-arrow-left"></i>
-              </button>
-              <div id="chatAvatarWrap" class="chat-header-avatar">--</div>
+        <!-- Chat Header (70px fixed height) -->
+        <header class="chat-header">
+          <div class="chat-header-content">
+            <button id="chatBackBtn" class="chat-back-button" title="Voltar">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div id="chatAvatarWrap" class="chat-header-avatar">--</div>
               <div class="chat-header-info">
                 <div id="chatWithName" class="chat-header-name">Selecione um chat</div>
                 <div class="chat-header-status">
@@ -196,9 +192,8 @@ try {
             </div>
           </div>
         </section>
-      </div>
-    </main>
-  </div>
+      </main>
+    </div>
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script type="module">
@@ -220,7 +215,7 @@ try {
     }, $chatUsers), JSON_UNESCAPED_UNICODE) ?>;
 
     const usersListEl = document.getElementById('chatUsersList');
-    const chatUsersPanelEl = document.getElementById('chat-container'); // Sidebar container
+    const chatUsersPanelEl = document.querySelector('.chat-sidebar');  // Sidebar container
     const chatConversationAreaEl = document.getElementById('chatConversationArea');
     const chatBackBtn = document.getElementById('chatBackBtn');
     const searchEl = document.getElementById('chatUserSearch');
