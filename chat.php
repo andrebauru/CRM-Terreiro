@@ -1290,7 +1290,6 @@ try {
 
     // Detectar resize APENAS se a largura mudar (mobile orientation)
     // Não reagir a mudanças de altura (que acontece quando teclado abre)
-    let lastWidth = window.innerWidth;
     // Track last width to detect only significant width changes (ignore keyboard height changes)
     let lastWidth = window.innerWidth;
     
