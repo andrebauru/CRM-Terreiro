@@ -90,7 +90,7 @@ try {
             </div>
           </div>
 
-          <div id="chatMessages" class="hidden flex-1 overflow-y-auto px-4 md:px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
+          <div id="chatMessages" class="hidden scroll-smooth flex-1 overflow-y-auto px-4 md:px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
             <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-3"></div>
           </div>
 
@@ -301,6 +301,7 @@ try {
       if (isDesktop) {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.remove('block');
         chatConversationAreaEl.classList.add('flex');
         return;
       }
@@ -308,10 +309,12 @@ try {
       if (inConversation) {
         chatUsersPanelEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('flex');
+        chatConversationAreaEl.classList.remove('flex');
+        chatConversationAreaEl.classList.add('block');
       } else {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('hidden');
+        chatConversationAreaEl.classList.remove('block');
       }
     }
 
@@ -457,7 +460,7 @@ try {
 
         const bubble = document.createElement('div');
         bubble.className = mine
-          ? 'max-w-[82%] rounded-[22px] rounded-br-md bg-gradient-to-r from-pink-600 to-fuchsia-600 px-4 py-3 text-white shadow-[0_12px_30px_rgba(236,72,153,.30)]'
+          ? 'max-w-[82%] rounded-[22px] rounded-br-md bg-gradient-to-r from-pink-600 to-fuchsia-600 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.45),0_12px_30px_rgba(236,72,153,.30)]'
           : 'max-w-[82%] rounded-[22px] rounded-bl-md border border-white/10 bg-slate-800 px-4 py-3 text-slate-100 shadow-[0_10px_26px_rgba(0,0,0,.22)]';
 
         let body = '';
