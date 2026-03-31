@@ -89,8 +89,8 @@ try {
   <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web com CSS Externo -->
   <div class="chat-wrapper" id="chatWrapper">
     <!-- Toggle Sidebar CRM Button (top-left corner) -->
-    <button id="toggleCrmSidebar" class="absolute top-4 left-4 z-50 h-10 w-10 rounded-lg bg-pink-600 hover:bg-pink-700 text-white flex items-center justify-center shadow-lg transition" title="Menu CRM">
-      <i class="fa-solid fa-bars text-lg"></i>
+    <button id="toggleCrmSidebar" class="absolute top-4 left-4 z-50 h-12 w-12 rounded-lg bg-gradient-to-br from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white flex items-center justify-center shadow-2xl transition transform hover:scale-110 active:scale-95" title="Menu CRM">
+      <i class="fa-solid fa-bars text-xl"></i>
     </button>
     <!-- Sidebar: Contatos (Esquerda - 25%) -->
     <aside class="chat-sidebar flex">
@@ -404,13 +404,17 @@ try {
 
     function showConversationArea() {
       if (chatEmptyStateEl) chatEmptyStateEl.classList.add('hidden');
+      if (chatConversationAreaEl) {
+        chatConversationAreaEl.classList.remove('hidden');
+        chatConversationAreaEl.classList.add('flex');
+      }
       if (messagesEl) {
         messagesEl.classList.remove('hidden');
-        messagesEl.classList.add('visible');
+        messagesEl.classList.add('flex');
       }
       if (chatComposerEl) {
         chatComposerEl.classList.remove('hidden');
-        chatComposerEl.classList.add('visible');
+        chatComposerEl.classList.add('flex');
       }
       selectedUserId = currentChatUser ? currentChatUser.id : null;
       setMobileView(true);
@@ -454,7 +458,9 @@ try {
     }
 
     function setMobileView(inConversation) {
-      // Backward compatibility - chama updateMobileVisibility
+      // inConversation parameter is kept for backward compatibility
+      // The function now relies on selectedUserId being set first
+      log('setMobileView called, selectedUserId:', selectedUserId);
       updateMobileVisibility();
     }
 
@@ -1344,11 +1350,11 @@ try {
 
       let mediaHtml = `<div class="text-sm text-pink-100 mb-2">${esc(file.name || 'Arquivo')}</div>`;
       if (mime.startsWith('image/')) {
-        mediaHtml += `<img src="${esc(url)}" class="rounded-lg max-h-56 w-full object-cover" />`;
+        mediaHtml += `<img src="${esc(url)}" class="rounded-lg max-h-48 max-w-full object-contain" />`;
       } else if (mime.startsWith('video/')) {
-        mediaHtml += `<video controls class="rounded-lg max-h-56 w-full"><source src="${esc(url)}" /></video>`;
+        mediaHtml += `<video controls class="rounded-lg max-h-48 max-w-full"><source src="${esc(url)}" /></video>`;
       } else if (mime.startsWith('audio/')) {
-        mediaHtml += `<audio controls class="w-full"><source src="${esc(url)}" /></audio>`;
+        mediaHtml += `<audio controls class="max-w-full"><source src="${esc(url)}" /></audio>`;
       } else {
         mediaHtml += '<div class="text-xs text-pink-100/70">Arquivo pronto para envio.</div>';
       }
