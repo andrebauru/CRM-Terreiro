@@ -591,7 +591,17 @@ try {
           return;
         }
 
-        const token = await f.getToken(window.firebaseMessaging, { vapidKey });
+        if (!('serviceWorker' in navigator)) {
+          console.warn('Service Worker não suportado neste navegador.');
+          return;
+        }
+
+        const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+        const token = await f.getToken(window.firebaseMessaging, {
+          vapidKey,
+          serviceWorkerRegistration: swRegistration,
+        });
         if (!token) {
           console.warn('Token FCM não retornado.');
           return;
@@ -600,12 +610,10 @@ try {
         if (currentFcmToken === token) return;
         currentFcmToken = token;
 
-        const tokenDocId = `web_${CURRENT_USER.id}_${token.slice(0, 24)}`;
-        const tokenDoc = f.doc(window.db, 'users', String(CURRENT_USER.id), 'tokens', tokenDocId);
-        await f.setDoc(tokenDoc, {
-          token,
-          platform: 'web',
-          userId: CURRENT_USER.id,
+        const userDocRef = f.doc(window.db, 'users', String(CURRENT_USER.id));
+        await f.setDoc(userDocRef, {
+          fcm_token: token,
+          user_id: CURRENT_USER.id,
           updatedAt: f.serverTimestamp(),
           userAgent: navigator.userAgent || 'unknown',
         }, { merge: true });
@@ -616,7 +624,7 @@ try {
           });
         }
 
-        console.log('✅ Token FCM salvo no Firestore');
+        console.log('✅ Token FCM salvo em users/{userId}.fcm_token');
       } catch (err) {
         console.warn('Falha ao configurar notificações push:', err);
       }

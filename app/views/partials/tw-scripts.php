@@ -36,6 +36,9 @@ const firebaseConfig = {
   measurementId: "G-QHKS3WVLJ5"
 };
 
+// Chave VAPID pública para Firebase Cloud Messaging Web Push
+window.__FCM_VAPID_KEY = "BL1UqUTCKB2I3bkJ8XKcUPI-l7vPIbY7qH_uKNq9AEl6KQGX5LDOYJ-qBjnoAso0HuaVbgVhkZ1eCUSsqSk9U5U";
+
 try {
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   // Firestore explícito com SDK v10
