@@ -429,9 +429,11 @@ try {
           body += `<div class="whitespace-pre-wrap break-words text-sm leading-6${mediaUrl ? ' mt-2' : ''}">${esc(msg.text)}</div>`;
         }
 
-        const date = msg.createdAt && typeof msg.createdAt.toDate === 'function'
-          ? msg.createdAt.toDate()
-          : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date());
+        const date = msg.timestamp && typeof msg.timestamp.toDate === 'function'
+          ? msg.timestamp.toDate()
+          : (msg.createdAt && typeof msg.createdAt.toDate === 'function'
+            ? msg.createdAt.toDate()
+            : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date()));
 
         bubble.innerHTML = `${body}<div class="mt-2 text-right text-[11px] ${mine ? 'text-white/75' : 'text-pink-100/45'}">${formatTime(date)}</div>`;
         row.appendChild(bubble);
@@ -538,7 +540,12 @@ try {
         const chatId = GENERAL_CHAT_ID;
         console.log('💬 Abrindo chat com ID:', chatId);
         const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
-        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limitToLast(50));
+        const q = f.query(
+          messagesRef,
+          f.where('conversationId', '==', GENERAL_CHAT_ID),
+          f.orderBy('timestamp', 'asc'),
+          f.limitToLast(200)
+        );
 
         unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
           console.log('Buscando mensagens para:', chatId);
@@ -584,7 +591,12 @@ try {
         console.log('💬 Abrindo chat com ID:', convo);
         log('Conversation ID:', convo);
         const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
-        const q = f.query(messagesRef, f.orderBy('createdAt', 'asc'), f.limitToLast(50));
+        const q = f.query(
+          messagesRef,
+          f.where('conversationId', '==', convo),
+          f.orderBy('timestamp', 'asc'),
+          f.limitToLast(200)
+        );
         const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(user.id));
 
         unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
@@ -725,13 +737,17 @@ try {
           console.log('Enviando para ID:', GENERAL_CHAT_ID);
           const messagesRef = f.collection(window.db, 'conversations', GENERAL_CHAT_ID, 'messages');
           const base = {
+            text: '',
             senderId: CURRENT_USER.id,
             senderName: CURRENT_USER.name,
+            receiverId: null,
             conversationId: GENERAL_CHAT_ID,
+            timestamp: f.serverTimestamp(),
             createdAt: f.serverTimestamp(),
             createdAtMs: Date.now(),
           };
           const doc = await f.addDoc(messagesRef, { ...base, ...payload });
+          console.log('Mensagem gravada no Firestore!');
           log('✅ Mensagem geral enviada com ID:', doc.id);
         } else if (currentChatMode === 'private' && currentChatUser) {
           log('📤 Modo PRIVADO - enviando para usuário:', currentChatUser.name);
@@ -739,14 +755,17 @@ try {
           console.log('Enviando para ID:', currentChatUser.id);
           const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
           const base = {
+            text: '',
             senderId: CURRENT_USER.id,
             senderName: CURRENT_USER.name,
             receiverId: currentChatUser.id,
             conversationId: convo,
+            timestamp: f.serverTimestamp(),
             createdAt: f.serverTimestamp(),
             createdAtMs: Date.now(),
           };
           const doc = await f.addDoc(messagesRef, { ...base, ...payload });
+          console.log('Mensagem gravada no Firestore!');
           log('✅ Mensagem privada enviada com ID:', doc.id);
         }
       } catch (e) {

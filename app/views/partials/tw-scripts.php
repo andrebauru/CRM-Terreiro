@@ -37,6 +37,7 @@ const firebaseConfig = {
 
 try {
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  // Firestore explícito com SDK v10
   const db = getFirestore(app);
   const storage = getStorage(app);
 
@@ -78,7 +79,7 @@ try {
   }).catch(() => {});
 
   window.firebaseReady = true;
-  console.log('🔥 Firebase Iniciado com Sucesso');
+  console.log('🔥 Firebase Iniciado com Sucesso (Firestore via getFirestore v10)');
   window.dispatchEvent(new CustomEvent('firebase-ready'));
 } catch (e) {
   window.firebaseReady = false;
