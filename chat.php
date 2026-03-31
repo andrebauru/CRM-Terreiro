@@ -23,6 +23,18 @@ try {
 ?>
 <body class="bg-slate-950 font-sans text-slate-100 overflow-hidden">
   <style>
+    /* VIEWPORT FIXA - Estilo WhatsApp Web */
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
     /* Glow effect para balões enviados */
     .glow-pink {
       box-shadow: 
@@ -31,12 +43,13 @@ try {
         0 12px 30px rgba(236, 72, 153, 0.30);
     }
 
-    /* Layout lock do chat */
+    /* Layout lock do chat - Flex-based sem calc() */
     #chat-container {
       display: flex;
-      height: calc(100vh - 80px);
       overflow: hidden;
       position: relative;
+      flex: 1;
+      height: 100%;
     }
 
     /* Scroll interno do chat */
@@ -48,6 +61,9 @@ try {
     #chatComposer {
       flex-shrink: 0;
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
     }
 
     .chat-bubble,
@@ -72,13 +88,32 @@ try {
     .typing-dot {
       animation: typing 1.4s infinite;
     }
+
+    /* Evita scroll na página inteira */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(236, 72, 153, 0.5);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(236, 72, 153, 0.7);
+    }
   </style>
-  <!-- Fixed-Height Viewport Container -->
-  <div class="h-screen w-full flex overflow-hidden">
+  <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web -->
+  <div class="h-[100dvh] w-screen flex overflow-hidden fixed inset-0">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <!-- Chat Area Main Container -->
-    <main class="flex-1 h-screen flex flex-col overflow-hidden">
+    <main class="flex-1 h-[100dvh] flex flex-col overflow-hidden">
       <!-- Top Header (CRM Title) -->
       <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
@@ -390,20 +425,48 @@ try {
         return;
       }
 
-      // Mobile: mostrar lista ou chat baseado no estado
-      const shouldShowConversation = inConversation === true || (inConversation === undefined && !!selectedUserId);
+      // Mobile: mostrar lista ou chat baseado no estado (apenas se houver seleção)
+      const shouldShowConversation = inConversation === true || (inConversation === undefined && selectedUserId);
       
       if (shouldShowConversation) {
         chatUsersPanelEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('flex');
-        log('Mobile view: showing conversation');
+        log('Mobile view: showing conversation, selectedUserId:', selectedUserId);
       } else {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('flex');
         log('Mobile view: showing contacts list');
       }
+    }
+
+    // Event listener para botão de voltar (mobile only)
+    function setupBackButton() {
+      if (!chatBackBtn) {
+        log('ERROR: chatBackBtn not found!');
+        return;
+      }
+      chatBackBtn.addEventListener('click', () => {
+        log('Back button clicked');
+        selectedUserId = null;
+        currentChatUser = null;
+        currentChatMode = null;
+        if (unsubscribeMessages) {
+          unsubscribeMessages();
+          unsubscribeMessages = null;
+        }
+        if (unsubscribeTyping) {
+          unsubscribeTyping();
+          unsubscribeTyping = null;
+        }
+        if (messagesEl) messagesEl.innerHTML = '';
+        if (chatEmptyStateEl) chatEmptyStateEl.classList.remove('hidden');
+        if (messagesEl) messagesEl.classList.add('hidden');
+        if (chatComposerEl) chatComposerEl.classList.add('hidden');
+        setMobileView(false); // Mostrar lista de contatos
+        renderUsersList('');
+      });
     }
 
     function setUploadProgress(percent) {
@@ -532,9 +595,16 @@ try {
       let lastDateKey = '';
 
       docs.forEach((doc) => {
+        // Extrair dados de forma robusta (fallback para diferentes campos)
         const data = doc.data ? doc.data() : (doc || {});
-        const content = String(data.text || data.content || data.mensagem || "");
-        log('Renderizando mensagem:', { senderId: data.senderId, text: content });
+        const text = String(data.text || data.content || data.mensagem || "");
+        log('Renderizando mensagem:', { senderId: data.senderId, text: text.substring(0, 50) });
+        
+        if (!text) {
+          log('⚠️ Mensagem vazia ou sem campo text:', data);
+          return; // Pular mensagens vazias
+        }
+
         const mine = Number(data.senderId) === CURRENT_USER.id;
 
         // Extrair data da mensagem
@@ -558,21 +628,36 @@ try {
         const row = document.createElement('div');
         row.className = `flex w-full ${mine ? 'justify-end' : 'justify-start'}`;
 
-        // Balão de mensagem (aplicar classes corretamente)
+        // Balão de mensagem - WhatsApp Style
         const bubble = document.createElement('div');
         bubble.className = mine
-          ? "self-end bg-pink-600 text-white rounded-xl p-3 max-w-[70%] break-words"
-          : "self-start bg-slate-800 text-white rounded-xl p-3 max-w-[70%] break-words";
+          ? "self-end bg-pink-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[70%] shadow-lg break-words"
+          : "self-start bg-slate-800 text-white rounded-2xl rounded-tl-none p-3 max-w-[70%] shadow-lg break-words";
         
-        bubble.textContent = content;
+        // Usar textContent para evitar XSS e garantir renderização correta
+        bubble.textContent = text;
+        
+        // Horário e status de leitura
+        const timeEl = document.createElement('div');
+        const timeStr = formatTime(date);
+        const isRead = !!(data.readAt || data.read_at || data.read === true);
+        
+        timeEl.className = `mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? 'text-pink-100/70' : 'text-slate-300/70'}`;
+        
+        if (mine) {
+          const checkClass = isRead ? 'text-blue-300' : 'text-pink-100/70';
+          timeEl.innerHTML = `<span>${timeStr}</span><i class="fa-solid fa-check ${checkClass}" style="font-size: 8px;"></i><i class="fa-solid fa-check ${checkClass} -ml-2" style="font-size: 8px;"></i>`;
+        } else {
+          timeEl.innerHTML = `<span>${timeStr}</span>`;
+        }
+        
+        bubble.appendChild(timeEl);
         row.appendChild(bubble);
         messagesInnerEl.appendChild(row);
       });
 
-      // Autoscroll imediato após render
-      if (messagesEl) {
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-      }
+      // Autoscroll para o final imediatamente após render
+      scrollMessagesToBottom(true);
       log('Messages rendered successfully');
     }
 
@@ -1197,16 +1282,30 @@ try {
       renderUsersList(searchEl.value);
     });
 
+    // Setup back button - mobile only
+    setupBackButton();
+
+    // Detectar resize APENAS se a largura mudar (mobile orientation)
+    // Não reagir a mudanças de altura (que acontece quando teclado abre)
+    let lastWidth = window.innerWidth;
+    window.addEventListener('resize', () => {
+      const currentWidth = window.innerWidth;
+      
+      // Só processar se a largura mudou significativamente (mais de 50px)
+      if (Math.abs(currentWidth - lastWidth) > 50) {
+        log('Screen width changed:', lastWidth, '->', currentWidth);
+        lastWidth = currentWidth;
+        setMobileView(!!selectedUserId);
+      }
+    });
+
     if (chatBackBtn) {
       chatBackBtn.addEventListener('click', () => {
+        log('Back button clicked from event listener');
         selectedUserId = null;
         setMobileView(false);
       });
     }
-
-    window.addEventListener('resize', () => {
-      setMobileView(!!selectedUserId);
-    });
 
     // Initialize
     log('Initializing chat');
