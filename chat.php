@@ -222,6 +222,11 @@ try {
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script type="module">
+    // Importar módulos
+    import ChatUIManager from './assets/js/chat-ui.js';
+    import ChatMessageHandler from './assets/js/chat-message-handler.js';
+    import ChatMobileHandler from './assets/js/chat-mobile-handler.js';
+    
     console.log('🎯 Chat inicializado - script iniciado');
     initSensitivePageProtection('chat');
 
@@ -862,6 +867,8 @@ try {
     async function openGeneralChat() {
       log('Opening general chat');
       showConversationArea();
+      uiManager.showConversation();
+      uiManager.focusMessageInput();
       chatWithNameEl.textContent = 'Chat Geral';
       chatAvatarWrapEl.innerHTML = '<div class="h-11 w-11 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
       typingIndicatorEl.classList.add('hidden');
@@ -942,6 +949,9 @@ try {
     async function openPrivateChat(user) {
       log('Opening private chat with:', user.id, user.name);
       showConversationArea();
+      uiManager.showConversation();
+      uiManager.focusMessageInput();
+      mobileHandler.selectUser(user.id);
       chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
       chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-11 w-11 rounded-full object-cover');
       typingIndicatorEl.classList.add('hidden');
@@ -1559,15 +1569,77 @@ try {
       renderUsersList('');
     }
 
-    // Setup CRM Sidebar Toggle
-    const toggleCrmBtn = document.getElementById('toggleCrmSidebar');
-    const chatWrapper = document.getElementById('chatWrapper');
-    if (toggleCrmBtn && chatWrapper) {
-      toggleCrmBtn.addEventListener('click', () => {
-        chatWrapper.classList.toggle('sidebar-open');
-        log('CRM Sidebar toggled');
-      });
-    }
+    // Initialize new UI managers
+    const uiManager = new ChatUIManager({
+      mobileBreakpoint: 768
+    });
+    
+    const messageHandler = new ChatMessageHandler({
+      retryAttempts: 3,
+      retryDelay: 500
+    });
+    
+    const mobileHandler = new ChatMobileHandler({
+      mobileBreakpoint: 768
+    });
+    
+    // Initialize message handler
+    messageHandler.init(messageInput, sendBtn);
+    
+    // Setup UI listeners
+    uiManager.setupListeners({
+      onSidebarToggle: (isOpen) => {
+        console.log('[CHAT] Sidebar toggled:', isOpen);
+      },
+      onBack: () => {
+        console.log('[CHAT] Back button pressed');
+        selectedUserId = null;
+        currentChatUser = null;
+        currentChatMode = null;
+        if (unsubscribeMessages) {
+          unsubscribeMessages();
+          unsubscribeMessages = null;
+        }
+        if (unsubscribeTyping) {
+          unsubscribeTyping();
+          unsubscribeTyping = null;
+        }
+        if (messagesEl) messagesEl.innerHTML = '';
+        renderUsersList('');
+      }
+    });
+    
+    // Override sendBtn click to use message handler
+    sendBtn.removeEventListener('click', sendBtn.onclick);
+    sendBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      const text = messageHandler.getMessageText();
+      
+      if (text === '/cleanall') {
+        await cleanAllMessages();
+        messageHandler.clearInput();
+        uiManager.focusMessageInput();
+        return;
+      }
+      
+      if (!text) return;
+      
+      messageHandler.disableInput();
+      console.log('[CHAT] Enviando mensagem...');
+      
+      try {
+        await sendMessage({ type: 'text', text });
+        messageHandler.clearInput();
+        console.log('[CHAT] Mensagem enviada com sucesso');
+      } catch (e) {
+        console.error('[CHAT] Erro ao enviar:', e);
+        alert('Erro ao enviar mensagem: ' + e.message);
+      } finally {
+        messageHandler.enableInput();
+        uiManager.focusMessageInput();
+      }
+    });
 
     window.addEventListener('beforeunload', () => {
       log('Page unloading, clearing typing status');

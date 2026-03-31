@@ -14,14 +14,26 @@
   flex-direction: row;
   background-color: #0f172a;
   z-index: 30; /* Fica acima da sidebar padrão quando em focus */
-  transition: left 0.3s ease-in-out;
+  transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
   left: 0;
 }
 
 /* Quando sidebar do CRM está aberta, chat se move para direita */
 .chat-wrapper.sidebar-open {
-  left: 300px;
-  width: calc(100vw - 300px);
+  left: 300px !important;
+  width: calc(100vw - 300px) !important;
+}
+
+/* Garantir que a sidebar padrão fica visível quando aberta */
+.chat-wrapper.sidebar-open ~ * {
+  z-index: 35 !important;
+}
+
+/* Sidebar do CRM padrão fica acima quando aberta */
+#sidebarOverlay,
+[id*="sidebar"],
+.sidebar {
+  z-index: 40 !important;
 }
 
 /* === SIDEBAR (25%) === */
