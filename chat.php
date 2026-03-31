@@ -37,7 +37,7 @@ try {
 
       <!-- Container Principal do Chat -->
       <div class="flex h-[calc(100vh-100px)] flex-col md:flex-row overflow-hidden md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
-        <aside id="chatUsersPanel" class="w-full md:w-[30%] md:min-w-[320px] md:max-w-[420px] border-r md:border md:rounded-3xl border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
+        <aside id="chatUsersPanel" class="h-full w-full md:w-[30%] md:min-w-[320px] md:max-w-[420px] border-r md:border md:rounded-3xl border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
           <div class="shrink-0 border-b border-fuchsia-400/15 p-4 bg-gradient-to-b from-white/5 to-transparent">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
@@ -51,7 +51,7 @@ try {
           <div id="chatUsersList" class="flex-1 overflow-y-auto px-3 py-3 space-y-2"></div>
         </aside>
 
-        <section id="chatConversationArea" class="hidden md:flex min-w-0 w-full md:flex-[0_0_70%] flex-col overflow-hidden md:rounded-3xl border-fuchsia-400/20 md:border bg-slate-900/75 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
+        <section id="chatConversationArea" class="hidden md:flex h-full min-w-0 w-full md:flex-[0_0_70%] flex-col overflow-hidden md:rounded-3xl border-fuchsia-400/20 md:border bg-slate-900/75 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
           <div id="chatHeader" class="shrink-0 border-b border-fuchsia-400/15 bg-slate-900/65 backdrop-blur-xl px-5 py-4 flex items-center justify-between">
             <div class="flex min-w-0 items-center gap-3">
               <button id="chatBackBtn" class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-fuchsia-500/25 bg-[#241635] text-pink-100" title="Voltar">
@@ -94,7 +94,7 @@ try {
             <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-3"></div>
           </div>
 
-          <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/15 bg-[#160d25]/90 p-4">
+          <div id="chatComposer" class="hidden sticky bottom-0 shrink-0 border-t border-fuchsia-400/15 bg-[#160d25]/90 p-4">
             <div id="mediaPreview" class="hidden rounded-2xl border border-fuchsia-400/30 bg-black/25 p-3 text-sm text-pink-100"></div>
 
             <div id="uploadProgressWrap" class="hidden mt-3">
@@ -274,7 +274,7 @@ try {
       if (!messagesEl) return;
       const nearBottom = (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight) < 120;
       if (force || nearBottom) {
-        messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+        messagesEl.scrollTop = messagesEl.scrollHeight;
       }
     }
 
@@ -309,12 +309,13 @@ try {
       if (inConversation) {
         chatUsersPanelEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.remove('flex');
-        chatConversationAreaEl.classList.add('block');
+        chatConversationAreaEl.classList.remove('block');
+        chatConversationAreaEl.classList.add('flex');
       } else {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('block');
+        chatConversationAreaEl.classList.remove('flex');
       }
     }
 
@@ -460,8 +461,8 @@ try {
 
         const bubble = document.createElement('div');
         bubble.className = mine
-          ? 'max-w-[82%] rounded-[22px] rounded-br-md bg-gradient-to-r from-pink-600 to-fuchsia-600 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.45),0_12px_30px_rgba(236,72,153,.30)]'
-          : 'max-w-[82%] rounded-[22px] rounded-bl-md border border-white/10 bg-slate-800 px-4 py-3 text-slate-100 shadow-[0_10px_26px_rgba(0,0,0,.22)]';
+          ? 'max-w-[82%] rounded-2xl rounded-br-sm bg-pink-600 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.42),0_12px_30px_rgba(236,72,153,.30)]'
+          : 'max-w-[82%] rounded-2xl rounded-bl-sm border border-white/10 bg-slate-800 px-4 py-3 text-white shadow-[0_10px_26px_rgba(0,0,0,.22)]';
 
         let body = '';
         if (currentChatMode === 'general' && !mine) {
