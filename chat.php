@@ -22,6 +22,36 @@ try {
 }
 ?>
 <body class="bg-slate-950 font-sans text-slate-100 overflow-hidden">
+  <style>
+    /* Glow effect para balões enviados */
+    .glow-pink {
+      box-shadow: 
+        0 0 0 1px rgba(244, 114, 182, 0.35),
+        0 0 24px rgba(236, 72, 153, 0.42),
+        0 12px 30px rgba(236, 72, 153, 0.30);
+    }
+
+    /* Smooth scroll behavior */
+    #messages-container {
+      scroll-behavior: smooth;
+    }
+
+    /* Animação de digitação */
+    @keyframes typing {
+      0%, 60%, 100% {
+        opacity: 0.5;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-10px);
+      }
+    }
+
+    .typing-dot {
+      animation: typing 1.4s infinite;
+    }
+  </style>
   <div class="h-screen flex overflow-hidden">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
@@ -36,8 +66,10 @@ try {
       </header>
 
       <!-- Container Principal do Chat -->
-      <div class="flex h-[calc(100vh-80px)] flex-col md:flex-row overflow-hidden md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)]">
-        <aside id="chatUsersPanel" class="h-full w-full md:w-80 border-r md:border md:rounded-3xl border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
+      <div class="flex h-[calc(100vh-100px)] flex-col md:flex-row gap-0 md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.08),transparent_30%)] overflow-hidden">
+        
+        <!-- Lista de Contatos (Esquerda) -->
+        <aside id="chatUsersPanel" class="h-full w-full md:w-80 md:rounded-3xl border-r md:border border-fuchsia-400/20 bg-slate-900/80 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] flex flex-col overflow-hidden">
           <div class="shrink-0 border-b border-fuchsia-400/15 p-4 bg-gradient-to-b from-white/5 to-transparent">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
@@ -51,7 +83,10 @@ try {
           <div id="chatUsersList" class="flex-1 overflow-y-auto px-3 py-3 space-y-2"></div>
         </aside>
 
-        <section id="chatConversationArea" class="hidden md:flex h-full min-w-0 w-full flex-1 flex-col overflow-hidden md:rounded-3xl border-fuchsia-400/20 md:border bg-slate-900/75 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)]">
+        <!-- Área de Conversa (Direita) -->
+        <section id="chatConversationArea" class="hidden md:flex h-full w-full flex-1 flex-col overflow-hidden md:rounded-3xl border-fuchsia-400/20 md:border bg-slate-900/75 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,.28)] min-w-0">
+          
+          <!-- Header da Conversa -->
           <div id="chatHeader" class="shrink-0 border-b border-fuchsia-400/15 bg-slate-900/65 backdrop-blur-xl px-5 py-4 flex items-center justify-between">
             <div class="flex min-w-0 items-center gap-3">
               <button id="chatBackBtn" class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-fuchsia-500/25 bg-[#241635] text-pink-100" title="Voltar">
@@ -80,6 +115,7 @@ try {
             </div>
           </div>
 
+          <!-- Estado Vazio (Mensagem Inicial) -->
           <div id="chatEmptyState" class="flex flex-1 items-center justify-center px-8 text-center text-pink-100/70 bg-[linear-gradient(180deg,rgba(255,255,255,.02),transparent)]">
             <div class="max-w-md">
               <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-500/25 to-fuchsia-600/25 text-2xl text-pink-200">
@@ -90,10 +126,12 @@ try {
             </div>
           </div>
 
+          <!-- Área de Mensagens (Scroll Interno) -->
           <div id="messages-container" class="hidden scroll-smooth flex-1 overflow-y-auto px-4 md:px-5 py-5 bg-[radial-gradient(circle_at_top,rgba(236,72,153,.05),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,70,239,.07),transparent_26%)]">
             <div id="chatMessagesInner" class="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-end gap-3"></div>
           </div>
 
+          <!-- Compositor de Mensagens (Footer) -->
           <div id="chatComposer" class="hidden shrink-0 border-t border-fuchsia-400/15 bg-[#160d25]/95 p-4">
             <div id="mediaPreview" class="hidden rounded-2xl border border-fuchsia-400/30 bg-black/25 p-3 text-sm text-pink-100"></div>
 
@@ -272,10 +310,23 @@ try {
     }
 
     function scrollMessagesToBottom(force = false) {
-      if (!messagesEl) return;
+      if (!messagesEl) {
+        log('ERROR: messagesEl not found!');
+        return;
+      }
+      
+      // Se force=true, sempre scrolla. Caso contrário, verifica se está perto do final
       const nearBottom = (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight) < 120;
+      
       if (force || nearBottom) {
-        messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+        log('Scrolling to bottom. Force:', force, 'NearBottom:', nearBottom);
+        // Usar requestAnimationFrame para garantir que o scroll aconteça após o render
+        requestAnimationFrame(() => {
+          messagesEl.scrollTo({ 
+            top: messagesEl.scrollHeight, 
+            behavior: force ? 'auto' : 'smooth' 
+          });
+        });
       }
     }
 
@@ -290,31 +341,43 @@ try {
 
     function showConversationArea() {
       if (chatEmptyStateEl) chatEmptyStateEl.classList.add('hidden');
-      messagesEl.classList.remove('hidden');
+      if (messagesEl) messagesEl.classList.remove('hidden');
       if (chatComposerEl) chatComposerEl.classList.remove('hidden');
+      selectedUserId = currentChatUser ? currentChatUser.id : null;
       setMobileView(true);
       scrollMessagesToBottom(true);
     }
 
     function setMobileView(inConversation) {
-      if (!chatUsersPanelEl || !chatConversationAreaEl) return;
+      if (!chatUsersPanelEl || !chatConversationAreaEl) {
+        log('ERROR: chatUsersPanelEl or chatConversationAreaEl not found!');
+        return;
+      }
+      
       const isDesktop = window.innerWidth >= 768;
+      
       if (isDesktop) {
+        // Desktop: sempre mostrar ambos lado a lado
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('flex');
+        log('Desktop view: showing both panels');
         return;
       }
 
-      const shouldShowConversation = typeof inConversation === 'boolean' ? inConversation : !!selectedUserId;
+      // Mobile: mostrar lista ou chat baseado no estado
+      const shouldShowConversation = inConversation === true || (inConversation === undefined && !!selectedUserId);
+      
       if (shouldShowConversation) {
         chatUsersPanelEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('flex');
+        log('Mobile view: showing conversation');
       } else {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('flex');
+        log('Mobile view: showing contacts list');
       }
     }
 
@@ -427,8 +490,12 @@ try {
 
     function renderMessages(docs) {
       log('renderMessages called with', docs.length, 'messages');
-      if (!messagesInnerEl) return;
+      if (!messagesInnerEl) {
+        log('ERROR: messagesInnerEl not found!');
+        return;
+      }
 
+      // Limpar container ANTES de renderizar
       messagesInnerEl.innerHTML = '';
 
       if (!docs.length) {
@@ -438,67 +505,112 @@ try {
       }
 
       let lastDateKey = '';
+      
       docs.forEach((msg) => {
-        console.log('Exibindo mensagem de:', msg.senderId);
+        log('Renderizando mensagem:', { senderId: msg.senderId, text: msg.text });
         const mine = Number(msg.senderId) === CURRENT_USER.id;
 
+        // Extrair data da mensagem
         const date = msg.timestamp && typeof msg.timestamp.toDate === 'function'
           ? msg.timestamp.toDate()
           : (msg.createdAt && typeof msg.createdAt.toDate === 'function'
             ? msg.createdAt.toDate()
             : (msg.createdAtMs ? new Date(msg.createdAtMs) : new Date()));
 
+        // Separador de data
         const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
         if (dateKey !== lastDateKey) {
           const separator = document.createElement('div');
-          separator.className = 'my-2 flex justify-center';
+          separator.className = 'my-3 flex justify-center';
           separator.innerHTML = `<span class="rounded-full border border-white/10 bg-slate-800/80 px-3 py-1 text-[11px] text-slate-200 shadow">${getDayLabel(date)}</span>`;
           messagesInnerEl.appendChild(separator);
           lastDateKey = dateKey;
         }
 
+        // Container da mensagem (flex row com alinhamento)
         const row = document.createElement('div');
-        row.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
+        row.className = `flex w-full ${mine ? 'justify-end' : 'justify-start'}`;
 
+        // Balão de mensagem
         const bubble = document.createElement('div');
-        bubble.className = mine
-          ? 'max-w-[82%] rounded-2xl rounded-tr-none bg-pink-600 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.42),0_12px_30px_rgba(236,72,153,.30)]'
-          : 'max-w-[82%] rounded-2xl rounded-tl-none border border-white/10 bg-slate-800 px-4 py-3 text-white shadow-[0_10px_26px_rgba(0,0,0,.22)]';
+        
+        // Classes base do balão
+        const bubbleClasses = [
+          'max-w-[70%]',
+          'rounded-2xl',
+          'px-4',
+          'py-3',
+          'text-sm',
+          'leading-6',
+          'break-words',
+          'whitespace-pre-wrap'
+        ];
 
-        let body = '';
-        if (currentChatMode === 'general' && !mine) {
-          body += `<div class="mb-1 text-xs font-semibold text-pink-200/90">${esc(msg.senderName || `Usuário #${msg.senderId}`)}</div>`;
+        // Estilos diferentes para enviadas vs recebidas
+        if (mine) {
+          bubbleClasses.push('rounded-tr-none');
+          bubbleClasses.push('bg-pink-600');
+          bubbleClasses.push('text-white');
+          bubbleClasses.push('shadow-[0_0_0_1px_rgba(244,114,182,.35),0_0_24px_rgba(236,72,153,.42),0_12px_30px_rgba(236,72,153,.30)]');
+          bubble.classList.add('glow-pink');
+        } else {
+          bubbleClasses.push('rounded-tl-none');
+          bubbleClasses.push('border');
+          bubbleClasses.push('border-white/10');
+          bubbleClasses.push('bg-slate-800');
+          bubbleClasses.push('text-white');
+          bubbleClasses.push('shadow-[0_10px_26px_rgba(0,0,0,.22)]');
         }
 
+        bubble.className = bubbleClasses.join(' ');
+
+        // Conteúdo do balão
+        let content = '';
+
+        // Nome do remetente em chats gerais
+        if (currentChatMode === 'general' && !mine) {
+          content += `<div class="mb-1 text-xs font-semibold text-pink-200/90">${esc(msg.senderName || `Usuário #${msg.senderId}`)}</div>`;
+        }
+
+        // Processamento de mídia
         const fileType = String(msg.file_type || msg.type || '').toLowerCase();
         const mediaUrl = msg.mediaUrl || msg.file_url || '';
 
         if ((fileType === 'image' || String(msg.mediaMime || '').startsWith('image/')) && mediaUrl) {
-          body += `<a href="${esc(mediaUrl)}" target="_blank" rel="noopener"><img src="${esc(mediaUrl)}" class="max-h-72 w-full rounded-2xl object-cover" loading="lazy" /></a>`;
+          content += `<a href="${esc(mediaUrl)}" target="_blank" rel="noopener" class="inline-block"><img src="${esc(mediaUrl)}" class="max-h-72 w-full rounded-2xl object-cover" loading="lazy" /></a>`;
+          if (msg.text) content += '<div class="mt-2"></div>';
         } else if (fileType === 'video' && mediaUrl) {
-          body += `<video controls class="w-full rounded-2xl max-h-80"><source src="${esc(mediaUrl)}" /></video>`;
+          content += `<video controls class="w-full rounded-2xl max-h-80" style="max-width:100%"><source src="${esc(mediaUrl)}" /></video>`;
+          if (msg.text) content += '<div class="mt-2"></div>';
         } else if (fileType === 'audio' && mediaUrl) {
-          body += `<audio controls class="w-full"><source src="${esc(mediaUrl)}" /></audio>`;
+          content += `<audio controls class="w-full" style="max-width:100%"><source src="${esc(mediaUrl)}" /></audio>`;
+          if (msg.text) content += '<div class="mt-2"></div>';
         } else if (mediaUrl) {
-          body += `<a href="${esc(mediaUrl)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-xl bg-black/15 px-3 py-2 text-sm underline">📎 ${esc(msg.mediaName || msg.file_name || 'Arquivo')}</a>`;
+          content += `<a href="${esc(mediaUrl)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-xl bg-black/15 px-3 py-2 text-xs underline">📎 ${esc(msg.mediaName || msg.file_name || 'Arquivo')}</a>`;
+          if (msg.text) content += '<div class="mt-2"></div>';
         }
 
+        // Texto da mensagem
         if (msg.text) {
-          body += `<div class="whitespace-pre-wrap break-words text-sm leading-6${mediaUrl ? ' mt-2' : ''}">${esc(msg.text)}</div>`;
+          content += `<div>${esc(msg.text)}</div>`;
         }
 
+        // Indicador de leitura e horário
         const isRead = !!(msg.readAt || msg.read_at || msg.read === true);
         const readIndicator = mine
           ? `<span class="inline-flex items-center gap-0.5 ${isRead ? 'text-sky-300' : 'text-white/70'}"><i class="fa-solid fa-check text-[10px]"></i><i class="fa-solid fa-check -ml-1 text-[10px]"></i></span>`
           : '';
 
-        bubble.innerHTML = `${body}<div class="mt-2 flex items-center justify-end gap-1 text-[10px] opacity-70 ${mine ? 'text-white' : 'text-slate-300'}"><span>${formatTime(date)}</span>${readIndicator}</div>`;
+        content += `<div class="mt-2 flex items-center justify-between gap-1 text-[10px] opacity-70 ${mine ? 'text-white' : 'text-slate-300'}"><span>${formatTime(date)}</span>${readIndicator}</div>`;
+
+        bubble.innerHTML = content;
         row.appendChild(bubble);
         messagesInnerEl.appendChild(row);
       });
 
-      scrollMessagesToBottom(true);
-      log('Messages rendered, scrolled to bottom');
+      // Scroll automático para o final
+      setTimeout(() => scrollMessagesToBottom(true), 10);
+      log('Messages rendered successfully');
     }
 
     function ensureFirebaseReady() {
