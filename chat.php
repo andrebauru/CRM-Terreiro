@@ -1210,21 +1210,21 @@ try {
         const f = window.firebaseFns;
         
         const isGeneral = currentChatMode === 'general';
-        const conversationId = isGeneral ? GENERAL_CHAT_ID : (currentChatUser ? conversationId(CURRENT_USER.id, currentChatUser.id) : null);
+        const chatConvId = isGeneral ? GENERAL_CHAT_ID : (currentChatUser ? conversationId(CURRENT_USER.id, currentChatUser.id) : null);
         
-        if (!conversationId) {
+        if (!chatConvId) {
           alert('Nenhuma conversa selecionada');
           return;
         }
         
-        const messagesRef = f.collection(window.db, 'conversations', conversationId, 'messages');
+        const messagesRef = f.collection(window.db, 'conversations', chatConvId, 'messages');
         const q = f.query(messagesRef);
         const snapshot = await f.getDocs(q);
         
         // Deletar todas as mensagens
         let deletedCount = 0;
         for (const doc of snapshot.docs) {
-          await f.deleteDoc(f.doc(window.db, 'conversations', conversationId, 'messages', doc.id));
+          await f.deleteDoc(f.doc(window.db, 'conversations', chatConvId, 'messages', doc.id));
           deletedCount++;
         }
         
