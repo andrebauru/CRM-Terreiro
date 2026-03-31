@@ -18,8 +18,8 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload?.notification?.title || 'CRM Terreiro';
   const options = {
     body: payload?.notification?.body || 'Você recebeu uma nova mensagem.',
-    icon: '/public/assets/icon-192.png',
-    badge: '/public/assets/icon-192.png',
+    icon: '/public/static/logo-quimbanda.png',
+    badge: '/public/static/logo-quimbanda.png',
     data: payload?.data || {}
   };
 
