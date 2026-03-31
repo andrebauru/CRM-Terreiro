@@ -21,99 +21,14 @@ try {
     }
 }
 ?>
+<link rel="stylesheet" href="/assets/css/chat-style.css">
 <body class="bg-slate-950 font-sans text-slate-100 overflow-hidden">
-  <style>
-    /* VIEWPORT FIXA - Estilo WhatsApp Web */
-    html, body {
-      height: 100%;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-
-    /* Glow effect para balões enviados */
-    .glow-pink {
-      box-shadow: 
-        0 0 0 1px rgba(244, 114, 182, 0.35),
-        0 0 24px rgba(236, 72, 153, 0.42),
-        0 12px 30px rgba(236, 72, 153, 0.30);
-    }
-
-    /* Layout lock do chat - Flex-based sem calc() */
-    #chat-container {
-      display: flex;
-      overflow: hidden;
-      position: relative;
-      flex: 1;
-      height: 100%;
-    }
-
-    /* Scroll interno do chat */
-    #messages-container {
-      scroll-behavior: smooth;
-    }
-
-    /* Garantir que a barra de input fica fixo no rodapé */
-    #chatComposer {
-      flex-shrink: 0;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-
-    .chat-bubble,
-    .chat-bubble-text {
-      color: #ffffff !important;
-      word-break: break-word;
-      min-height: 20px;
-    }
-
-    /* Animação de digitação */
-    @keyframes typing {
-      0%, 60%, 100% {
-        opacity: 0.5;
-        transform: translateY(0);
-      }
-      30% {
-        opacity: 1;
-        transform: translateY(-10px);
-      }
-    }
-
-    .typing-dot {
-      animation: typing 1.4s infinite;
-    }
-
-    /* Evita scroll na página inteira */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.5);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(236, 72, 153, 0.5);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(236, 72, 153, 0.7);
-    }
-  </style>
-  <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web -->
-  <div class="h-[100dvh] w-screen flex overflow-hidden fixed inset-0">
+  <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web com CSS Externo -->
+  <div class="chat-wrapper">
     <?php require_once __DIR__ . '/app/views/partials/tw-sidebar.php'; ?>
 
     <!-- Chat Area Main Container -->
-    <main class="flex-1 h-[100dvh] flex flex-col overflow-hidden">
+    <main class="chat-main">
       <!-- Top Header (CRM Title) -->
       <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
@@ -123,45 +38,43 @@ try {
         </div>
       </header>
 
-      <!-- Chat Container (20% Sidebar + 80% Chat Area) -->
-      <div id="chat-container" class="flex-1 flex overflow-hidden flex-col md:flex-row">
+      <!-- Chat Container -->
+      <div id="chat-container" class="chat-sidebar">
         
         <!-- Sidebar: Contatos (Esquerda - 20%) -->
-        <aside id="chatUsersPanel" class="w-full md:w-1/5 md:min-w-[280px] h-full border-r border-slate-800 bg-slate-900 flex flex-col overflow-hidden">
-          <div class="flex-shrink-0 border-b border-slate-800 p-4 bg-slate-900">
-            <div class="mb-3 flex items-center justify-between gap-2">
-              <div>
-                <div class="text-sm font-semibold text-pink-100">Conversas</div>
-                <div class="text-xs text-pink-200/60">Histórico em tempo real</div>
-              </div>
-              <div class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300">Online</div>
+        <header class="chat-sidebar-header">
+          <div class="mb-3 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-sm font-semibold text-pink-100">Conversas</div>
+              <div class="text-xs text-pink-200/60">Histórico em tempo real</div>
             </div>
-            <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#241635] border border-fuchsia-500/30 px-4 py-3 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
+            <div class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300">Online</div>
           </div>
-          <div id="chatUsersList" class="flex-1 overflow-y-auto px-2 py-2 space-y-1 bg-slate-900"></div>
-        </aside>
+          <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#241635] border border-fuchsia-500/30 px-4 py-3 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
+        </header>
+        <div id="chatUsersList" class="chat-sidebar-content"></div>
 
         <!-- Chat Area (Direita - 80%, Coluna com Header/Messages/Input) -->
-        <section id="chatConversationArea" class="hidden md:flex flex-1 h-full w-full flex-col overflow-hidden bg-slate-950 relative min-w-0">
+        <section id="chatConversationArea" class="chat-main hidden">
           
           <!-- Chat Header (70px fixed height) -->
-          <div id="chatHeader" class="h-[70px] flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 flex items-center justify-between">
-            <div class="flex min-w-0 items-center gap-3">
-              <button id="chatBackBtn" class="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-fuchsia-500/25 bg-[#241635] text-pink-100" title="Voltar">
+          <header class="chat-header">
+            <div class="chat-header-content">
+              <button id="chatBackBtn" class="chat-back-button" title="Voltar">
                 <i class="fa-solid fa-arrow-left"></i>
               </button>
-              <div id="chatAvatarWrap" class="h-11 w-11 rounded-full bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100 shrink-0">--</div>
-              <div class="min-w-0">
-                <div id="chatWithName" class="truncate text-base font-semibold text-pink-100">Selecione um chat</div>
-                <div class="flex items-center gap-2 text-[11px] text-pink-200/65">
-                  <span id="chatStatusDot" class="inline-block h-2.5 w-2.5 rounded-full bg-slate-500"></span>
+              <div id="chatAvatarWrap" class="chat-header-avatar">--</div>
+              <div class="chat-header-info">
+                <div id="chatWithName" class="chat-header-name">Selecione um chat</div>
+                <div class="chat-header-status">
+                  <span id="chatStatusDot" class="chat-header-status-dot"></span>
                   <span id="chatStatus" class="shrink-0">Aguardando conversa</span>
                   <span id="typingIndicator" class="hidden text-pink-300/80 items-center gap-1">
                     <span>Digitando</span>
                     <span class="inline-flex gap-0.5">
-                      <span class="h-1 w-1 rounded-full bg-pink-300 animate-bounce"></span>
-                      <span class="h-1 w-1 rounded-full bg-pink-300 animate-bounce [animation-delay:120ms]"></span>
-                      <span class="h-1 w-1 rounded-full bg-pink-300 animate-bounce [animation-delay:240ms]"></span>
+                      <span class="h-1 w-1 rounded-full bg-pink-300 typing-indicator-dot"></span>
+                      <span class="h-1 w-1 rounded-full bg-pink-300 typing-indicator-dot" style="animation-delay: 120ms;"></span>
+                      <span class="h-1 w-1 rounded-full bg-pink-300 typing-indicator-dot" style="animation-delay: 240ms;"></span>
                     </span>
                   </span>
                 </div>
@@ -171,52 +84,50 @@ try {
               <i class="fa-solid fa-lock"></i>
               Chat seguro
             </div>
-          </div>
+          </header>
 
-          <!-- Empty State (Overlay) -->
-          <div id="chatEmptyState" class="absolute inset-0 z-10 hidden items-center justify-center px-8 text-center text-pink-100/70 bg-slate-950">
-            <div class="max-w-md">
-              <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-500/25 to-fuchsia-600/25 text-2xl text-pink-200">
+          <!-- Empty State -->
+          <div id="chatEmptyState" class="chat-messages-empty hidden">
+            <div class="chat-messages-empty-box">
+              <div class="chat-messages-empty-icon">
                 <i class="fa-solid fa-comments"></i>
               </div>
-              <div class="text-lg font-semibold text-pink-100">Seu chat premium está pronto</div>
-              <div class="mt-2 text-sm text-pink-100/55">Abra uma conversa à esquerda para carregar as últimas mensagens e continuar em tempo real.</div>
+              <div class="chat-messages-empty-title">Seu chat premium está pronto</div>
+              <div class="chat-messages-empty-text">Abra uma conversa à esquerda para carregar as últimas mensagens.</div>
             </div>
           </div>
 
           <!-- Messages Container (CRITICAL: flex-1 overflow-y-auto) -->
-          <div id="messages-container" class="hidden flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-950">
-            <div id="chatMessagesInner" class="flex min-h-full w-full flex-col justify-end gap-3"></div>
+          <div id="messages-container" class="chat-messages hidden">
+            <div id="chatMessagesInner" class="chat-messages-inner"></div>
           </div>
 
-          <!-- Input Footer (90px fixed height) -->
-          <div id="chatComposer" class="hidden h-[90px] flex-shrink-0 border-t border-slate-800 bg-slate-900 p-4 overflow-y-auto">
-            <div id="mediaPreview" class="hidden rounded-2xl border border-fuchsia-400/30 bg-black/25 p-3 text-sm text-pink-100"></div>
+          <!-- Input Footer -->
+          <div id="chatComposer" class="chat-composer hidden">
+            <div id="mediaPreview" class="composer-media-preview"></div>
 
-            <div id="uploadProgressWrap" class="hidden mt-3">
-              <div class="mb-1 flex items-center justify-between text-xs text-pink-100/70">
+            <div id="uploadProgressWrap" class="composer-progress">
+              <div class="composer-progress-label">
                 <span>Enviando mídia</span>
                 <span id="uploadProgressText">0%</span>
               </div>
-              <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div id="uploadProgressBar" class="h-1.5 w-0 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 transition-all"></div>
+              <div class="composer-progress-bar">
+                <div id="uploadProgressBar" class="composer-progress-fill"></div>
               </div>
             </div>
 
-            <div class="mt-3 flex items-end gap-3 rounded-3xl border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/10">
-              <div class="flex items-center gap-2">
-                <button id="emojiBtn" class="flex h-11 w-11 items-center justify-center rounded-2xl border border-fuchsia-500/25 bg-[#241635] text-pink-200 transition hover:bg-[#301d47] hover:text-white" title="Emoji"><i class="fa-regular fa-face-smile text-base"></i></button>
-                <label class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-fuchsia-500/25 bg-[#241635] text-pink-200 transition hover:bg-[#301d47] hover:text-white" title="Anexo">
-                  <i class="fa-solid fa-paperclip text-base"></i>
+            <div class="composer-input-area">
+              <div class="composer-button-group">
+                <button id="emojiBtn" class="composer-icon-button" title="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                <label class="composer-icon-button cursor-pointer" title="Anexo">
+                  <i class="fa-solid fa-paperclip"></i>
                   <input id="fileInput" type="file" class="hidden" accept="image/*,video/*,audio/*" />
                 </label>
               </div>
-              <div class="flex-1">
-                <textarea id="messageInput" rows="1" placeholder="Digite uma mensagem..." class="min-h-[52px] w-full resize-none rounded-2xl border border-fuchsia-500/20 bg-[#241635] px-4 py-3 text-sm text-pink-100 placeholder:text-pink-200/40 focus:outline-none focus:ring-2 focus:ring-pink-500/60"></textarea>
-              </div>
-              <div class="flex items-center gap-2">
-                <button id="recordBtn" class="flex h-11 min-w-[44px] items-center justify-center rounded-2xl border border-fuchsia-500/25 bg-[#241635] px-3 text-sm font-semibold text-pink-200 transition hover:bg-[#301d47] hover:text-white" title="Áudio"><i class="fa-solid fa-microphone"></i></button>
-                <button id="sendBtn" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white shadow-[0_10px_25px_rgba(236,72,153,.35)] transition hover:scale-[1.02] hover:from-pink-500 hover:to-fuchsia-500" title="Enviar"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+              <textarea id="messageInput" rows="1" placeholder="Digite uma mensagem..." class="composer-textarea"></textarea>
+              <div class="composer-button-group">
+                <button id="recordBtn" class="composer-icon-button" title="Áudio"><i class="fa-solid fa-microphone"></i></button>
+                <button id="sendBtn" class="composer-send-button" title="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
               </div>
             </div>
           </div>
@@ -245,7 +156,7 @@ try {
     }, $chatUsers), JSON_UNESCAPED_UNICODE) ?>;
 
     const usersListEl = document.getElementById('chatUsersList');
-    const chatUsersPanelEl = document.getElementById('chatUsersPanel');
+    const chatUsersPanelEl = document.getElementById('chat-container'); // Sidebar container
     const chatConversationAreaEl = document.getElementById('chatConversationArea');
     const chatBackBtn = document.getElementById('chatBackBtn');
     const searchEl = document.getElementById('chatUserSearch');
@@ -394,6 +305,7 @@ try {
       pendingFile = null;
       pendingAudioBlob = null;
       if (!mediaPreviewEl) return;
+      mediaPreviewEl.classList.remove('visible');
       mediaPreviewEl.classList.add('hidden');
       mediaPreviewEl.innerHTML = '';
       fileInput.value = '';
@@ -401,8 +313,14 @@ try {
 
     function showConversationArea() {
       if (chatEmptyStateEl) chatEmptyStateEl.classList.add('hidden');
-      if (messagesEl) messagesEl.classList.remove('hidden');
-      if (chatComposerEl) chatComposerEl.classList.remove('hidden');
+      if (messagesEl) {
+        messagesEl.classList.remove('hidden');
+        messagesEl.classList.add('visible');
+      }
+      if (chatComposerEl) {
+        chatComposerEl.classList.remove('hidden');
+        chatComposerEl.classList.add('visible');
+      }
       selectedUserId = currentChatUser ? currentChatUser.id : null;
       setMobileView(true);
       scrollMessagesToBottom(true);
@@ -420,7 +338,7 @@ try {
         // Desktop: sempre mostrar ambos lado a lado
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('flex');
+        chatConversationAreaEl.classList.add('visible');
         log('Desktop view: showing both panels');
         return;
       }
@@ -431,12 +349,12 @@ try {
       if (shouldShowConversation) {
         chatUsersPanelEl.classList.add('hidden');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('flex');
+        chatConversationAreaEl.classList.add('visible');
         log('Mobile view: showing conversation, selectedUserId:', selectedUserId);
       } else {
         chatUsersPanelEl.classList.remove('hidden');
         chatConversationAreaEl.classList.add('hidden');
-        chatConversationAreaEl.classList.remove('flex');
+        chatConversationAreaEl.classList.remove('visible');
         log('Mobile view: showing contacts list');
       }
     }
@@ -471,12 +389,14 @@ try {
 
     function setUploadProgress(percent) {
       uploadWrap.classList.remove('hidden');
+      uploadWrap.classList.add('visible');
       const p = Math.max(0, Math.min(100, percent));
       uploadBar.style.width = `${p}%`;
       uploadText.textContent = `${Math.round(p)}%`;
       if (p >= 100) {
         setTimeout(() => {
           uploadWrap.classList.add('hidden');
+          uploadWrap.classList.remove('visible');
           uploadBar.style.width = '0%';
           uploadText.textContent = '0%';
         }, 500);
@@ -587,7 +507,10 @@ try {
       messagesInnerEl.innerHTML = '';
 
       if (!docs.length) {
-        messagesInnerEl.innerHTML = '<div class="flex min-h-full items-center justify-center rounded-3xl border border-dashed border-fuchsia-500/15 bg-white/5 px-6 py-10 text-center text-sm text-pink-100/50">Nenhuma mensagem ainda. Comece a conversa! 💬</div>';
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'flex min-h-full items-center justify-center text-center text-sm text-pink-100/50';
+        emptyMsg.textContent = 'Nenhuma mensagem ainda. Comece a conversa! 💬';
+        messagesInnerEl.appendChild(emptyMsg);
         scrollMessagesToBottom(true);
         return;
       }
@@ -618,23 +541,24 @@ try {
         const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
         if (dateKey !== lastDateKey) {
           const separator = document.createElement('div');
-          separator.className = 'my-3 flex justify-center';
-          separator.innerHTML = `<span class="rounded-full border border-white/10 bg-slate-800/80 px-3 py-1 text-[11px] text-slate-200 shadow">${getDayLabel(date)}</span>`;
+          separator.className = 'message-date-separator';
+          const sepText = document.createElement('span');
+          sepText.className = 'message-date-separator-text';
+          sepText.textContent = getDayLabel(date);
+          separator.appendChild(sepText);
           messagesInnerEl.appendChild(separator);
           lastDateKey = dateKey;
         }
 
         // Container da mensagem
         const row = document.createElement('div');
-        row.className = `flex w-full ${mine ? 'justify-end' : 'justify-start'}`;
+        row.className = `message-row ${mine ? 'sent' : 'received'}`;
 
-        // Balão de mensagem - WhatsApp Style
+        // Balão de mensagem - USA APENAS CLASSES CSS
         const bubble = document.createElement('div');
-        bubble.className = mine
-          ? "self-end bg-pink-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[70%] shadow-lg break-words"
-          : "self-start bg-slate-800 text-white rounded-2xl rounded-tl-none p-3 max-w-[70%] shadow-lg break-words";
+        bubble.className = `message-bubble ${mine ? 'sent' : 'received'}`;
         
-        // Usar textContent para evitar XSS e garantir renderização correta
+        // IMPORTANTE: Usar textContent para garantir renderização correta e segura
         bubble.textContent = text;
         
         // Horário e status de leitura
@@ -642,13 +566,22 @@ try {
         const timeStr = formatTime(date);
         const isRead = !!(data.readAt || data.read_at || data.read === true);
         
-        timeEl.className = `mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? 'text-pink-100/70' : 'text-slate-300/70'}`;
+        timeEl.className = `message-meta ${mine ? 'sent' : 'received'}`;
+        
+        // Criar span de tempo
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = timeStr;
+        timeEl.appendChild(timeSpan);
         
         if (mine) {
-          const checkClass = isRead ? 'text-blue-300' : 'text-pink-100/70';
-          timeEl.innerHTML = `<span>${timeStr}</span><i class="fa-solid fa-check ${checkClass}" style="font-size: 8px;"></i><i class="fa-solid fa-check ${checkClass} -ml-2" style="font-size: 8px;"></i>`;
-        } else {
-          timeEl.innerHTML = `<span>${timeStr}</span>`;
+          // Check duplo para mensagens enviadas
+          const checkFirst = document.createElement('i');
+          checkFirst.className = `fa-solid fa-check message-check-icon ${isRead ? 'read' : ''}`;
+          timeEl.appendChild(checkFirst);
+          
+          const checkSecond = document.createElement('i');
+          checkSecond.className = `fa-solid fa-check message-check-icon ${isRead ? 'read' : ''}`;
+          timeEl.appendChild(checkSecond);
         }
         
         bubble.appendChild(timeEl);
@@ -1157,6 +1090,7 @@ try {
       `;
 
       mediaPreviewEl.innerHTML = mediaHtml;
+      mediaPreviewEl.classList.add('visible');
       mediaPreviewEl.classList.remove('hidden');
 
       document.getElementById('sendPreviewBtn').addEventListener('click', async () => {
