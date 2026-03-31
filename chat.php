@@ -390,7 +390,7 @@ try {
       scrollMessagesToBottom(true);
     }
 
-    function setMobileView(inConversation) {
+    function updateMobileVisibility() {
       if (!chatUsersPanelEl || !chatConversationAreaEl) {
         log('ERROR: chatUsersPanelEl or chatConversationAreaEl not found!');
         return;
@@ -401,26 +401,34 @@ try {
       if (isDesktop) {
         // Desktop: sempre mostrar ambos lado a lado
         chatUsersPanelEl.classList.remove('hidden');
+        chatUsersPanelEl.classList.add('flex');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('visible');
+        chatConversationAreaEl.classList.add('flex');
         log('Desktop view: showing both panels');
         return;
       }
 
-      // Mobile: mostrar lista ou chat baseado no estado (apenas se houver seleção)
-      const shouldShowConversation = inConversation === true || (inConversation === undefined && selectedUserId);
-      
-      if (shouldShowConversation) {
+      // Mobile: mostrar lista ou chat baseado no selectedUserId
+      if (selectedUserId) {
+        // Há um usuário selecionado: mostrar chat, esconder sidebar
         chatUsersPanelEl.classList.add('hidden');
+        chatUsersPanelEl.classList.remove('flex');
         chatConversationAreaEl.classList.remove('hidden');
-        chatConversationAreaEl.classList.add('visible');
+        chatConversationAreaEl.classList.add('flex');
         log('Mobile view: showing conversation, selectedUserId:', selectedUserId);
       } else {
+        // Nenhum usuário: mostrar sidebar, esconder chat
         chatUsersPanelEl.classList.remove('hidden');
+        chatUsersPanelEl.classList.add('flex');
         chatConversationAreaEl.classList.add('hidden');
-        chatConversationAreaEl.classList.remove('visible');
+        chatConversationAreaEl.classList.remove('flex');
         log('Mobile view: showing contacts list');
       }
+    }
+
+    function setMobileView(inConversation) {
+      // Backward compatibility - chama updateMobileVisibility
+      updateMobileVisibility();
     }
 
     // Event listener para botão de voltar (mobile only)
@@ -446,7 +454,7 @@ try {
         if (chatEmptyStateEl) chatEmptyStateEl.classList.remove('hidden');
         if (messagesEl) messagesEl.classList.add('hidden');
         if (chatComposerEl) chatComposerEl.classList.add('hidden');
-        setMobileView(false); // Mostrar lista de contatos
+        updateMobileVisibility(); // Atualizar visibilidade mobile
         renderUsersList('');
       });
     }
