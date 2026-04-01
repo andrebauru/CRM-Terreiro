@@ -250,15 +250,26 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     let currentDetalhe = null;
 
-    const formatBRLDisplay = (value) => formatBRLOrZero(String(value || 0));
+    const mensalidadeCurrencyCode = <?= json_encode(strtoupper((string)($_crmCurrCode ?? 'JPY')), JSON_UNESCAPED_UNICODE) ?>;
+    const mensalidadeIsJpy = mensalidadeCurrencyCode === 'JPY';
 
-    const formatBRLInput = (value) => formatBRL(value);
+    const formatMoneyDisplay = (value) => formatBRLOrZero(String(value || 0));
+
+    const formatMoneyInput = (value) => formatBRL(value);
+
+    const parseMoneyInput = (value) => {
+      if (!value) return 0;
+      if (mensalidadeIsJpy) {
+        return parseInt(String(value).replace(/[^\d-]/g, '') || '0', 10);
+      }
+      return parseBRL(value);
+    };
 
     document.getElementById('lValor').addEventListener('input', function () {
-      this.value = formatBRLInput(this.value);
+      this.value = formatMoneyInput(this.value);
     });
     document.getElementById('contaValor').addEventListener('input', function () {
-      this.value = formatBRLInput(this.value);
+      this.value = formatMoneyInput(this.value);
     });
 
     const formatWhatsapp = (phone) => {
@@ -288,7 +299,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 </td>
                 <td class="py-3">${item.grade}</td>
                 <td class="py-3"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>Dia ${item.due_day}</span></td>
-                <td class="py-3 font-medium">${item.isento_mensalidade ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatBRLDisplay(item.mensalidade_value)}</td>
+                <td class="py-3 font-medium">${item.isento_mensalidade ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatMoneyDisplay(item.mensalidade_value)}</td>
                 <td class="py-3 text-right">
                   ${item.isento_mensalidade
                     ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold"><i class="fa-solid fa-hand"></i> Isento</span>'
@@ -309,7 +320,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 <td class="py-3 font-medium">${item.name}</td>
                 <td class="py-3 text-slate-500">${item.descricao || '-'}</td>
                 <td class="py-3"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>${fmtDate(item.data_vencimento)}</span></td>
-                <td class="py-3 font-medium">${formatBRLDisplay(item.mensalidade_value)}</td>
+                <td class="py-3 font-medium">${formatMoneyDisplay(item.mensalidade_value)}</td>
                 <td class="py-3 text-right">
                   ${item.paid
                     ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
@@ -471,7 +482,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     document.getElementById('lancamentoForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      const valor = parseBRL(document.getElementById('lValor').value);
+      const valor = parseMoneyInput(document.getElementById('lValor').value);
       const body = new URLSearchParams({
         action: 'create_lancamento',
         filho_id: document.getElementById('lFilhoId').value,
@@ -488,7 +499,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const body = new URLSearchParams({
         action: 'create_conta',
         descricao: document.getElementById('contaDescricao').value,
-        valor: parseBRL(document.getElementById('contaValor').value),
+        valor: parseMoneyInput(document.getElementById('contaValor').value),
         data_vencimento: document.getElementById('contaVencimento').value,
       });
       fetch('api/financeiro.php', { method: 'POST', body })

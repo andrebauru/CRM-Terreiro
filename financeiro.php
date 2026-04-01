@@ -434,28 +434,39 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const currentUserId = <?= (int)($_SESSION['user_id'] ?? 0) ?>;
     const currentUserRole = <?= json_encode((string)($_SESSION['user_role'] ?? 'user')) ?>;
     const gensenRate = 0.1021;
+    const financeiroCurrencyCode = <?= json_encode(strtoupper((string)($_crmCurrCode ?? 'JPY')), JSON_UNESCAPED_UNICODE) ?>;
+    const financeiroCurrencySymbol = <?= json_encode((string)($_crmCurrSymbol ?? '¥'), JSON_UNESCAPED_UNICODE) ?>;
+    const financeiroIsJpy = financeiroCurrencyCode === 'JPY';
 
-    function formatBRLCents(cents) {
+    function formatMoneyCents(cents) {
       return formatBRLOrZero(String(cents || 0));
     }
 
     function parseCurrency(str) {
+      if (!str) return 0;
+      if (financeiroIsJpy) {
+        return parseInt(String(str).replace(/[^\d-]/g, '') || '0', 10);
+      }
       return parseCurrencyInput(str);
+    }
+
+    function formatMoneyInput(value) {
+      return formatBRL(value);
     }
 
     // Real-time currency mask for value inputs
     document.getElementById('contaValor').addEventListener('input', function () {
-      this.value = formatBRL(this.value);
+      this.value = formatMoneyInput(this.value);
     });
     document.getElementById('entradaValor').addEventListener('input', function () {
-      this.value = formatBRL(this.value);
+      this.value = formatMoneyInput(this.value);
     });
     document.getElementById('splitPreviewValor').addEventListener('input', function () {
-      this.value = formatBRL(this.value);
+      this.value = formatMoneyInput(this.value);
       renderSplitPreview();
     });
     document.getElementById('splitValorTotal').addEventListener('input', function () {
-      this.value = formatBRL(this.value);
+      this.value = formatMoneyInput(this.value);
     });
 
     async function api(params) {
@@ -564,12 +575,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const valor = parseCurrency(document.getElementById('splitPreviewValor').value || '0');
       const split = calcularSplitLocal(valor);
       document.getElementById('splitPreviewGrid').innerHTML = `
-        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Espaço</p><p class="font-bold">${formatBRLCents(split.brutos.pct_espaco || 0)}</p></div>
-        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Treinamento</p><p class="font-bold">${formatBRLCents(split.brutos.pct_treinamento || 0)}</p></div>
-        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Material</p><p class="font-bold">${formatBRLCents(split.brutos.pct_material || 0)}</p></div>
-        <div class="rounded-xl border border-amber-100 bg-amber-50 p-3"><p class="text-xs text-amber-700">Tata líquido</p><p class="font-bold text-amber-800">${formatBRLCents(split.liquido_tata || 0)}</p><p class="text-[11px] text-amber-700">Retido: ${formatBRLCents(split.imposto_tata || 0)}</p></div>
-        <div class="rounded-xl border border-sky-100 bg-sky-50 p-3"><p class="text-xs text-sky-700">Executor líquido</p><p class="font-bold text-sky-800">${formatBRLCents(split.liquido_executor || 0)}</p><p class="text-[11px] text-sky-700">Retido: ${formatBRLCents(split.imposto_executor || 0)}</p></div>
-        <div class="rounded-xl border border-rose-100 bg-rose-50 p-3"><p class="text-xs text-rose-700">Zeimusho</p><p class="font-bold text-rose-800">${formatBRLCents(split.imposto_total || 0)}</p></div>`;
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Espaço</p><p class="font-bold">${formatMoneyCents(split.brutos.pct_espaco || 0)}</p></div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Treinamento</p><p class="font-bold">${formatMoneyCents(split.brutos.pct_treinamento || 0)}</p></div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-xs text-slate-500">Material</p><p class="font-bold">${formatMoneyCents(split.brutos.pct_material || 0)}</p></div>
+        <div class="rounded-xl border border-amber-100 bg-amber-50 p-3"><p class="text-xs text-amber-700">Tata líquido</p><p class="font-bold text-amber-800">${formatMoneyCents(split.liquido_tata || 0)}</p><p class="text-[11px] text-amber-700">Retido: ${formatMoneyCents(split.imposto_tata || 0)}</p></div>
+        <div class="rounded-xl border border-sky-100 bg-sky-50 p-3"><p class="text-xs text-sky-700">Executor líquido</p><p class="font-bold text-sky-800">${formatMoneyCents(split.liquido_executor || 0)}</p><p class="text-[11px] text-sky-700">Retido: ${formatMoneyCents(split.imposto_executor || 0)}</p></div>
+        <div class="rounded-xl border border-rose-100 bg-rose-50 p-3"><p class="text-xs text-rose-700">Zeimusho</p><p class="font-bold text-rose-800">${formatMoneyCents(split.imposto_total || 0)}</p></div>`;
     }
 
     async function loadSplitUsers() {
@@ -613,8 +624,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (prefill.cliente_telefone) document.getElementById('splitClienteTelefone').value = prefill.cliente_telefone;
       if (prefill.descricao_servico) document.getElementById('splitDescricaoServico').value = prefill.descricao_servico;
       if (prefill.valor_total) {
-        document.getElementById('splitValorTotal').value = formatBRL(prefill.valor_total);
-        document.getElementById('splitPreviewValor').value = formatBRL(prefill.valor_total);
+        document.getElementById('splitValorTotal').value = formatMoneyInput(prefill.valor_total);
+        document.getElementById('splitPreviewValor').value = formatMoneyInput(prefill.valor_total);
       }
       if (prefill.data_realizacao) document.getElementById('splitDataRealizacao').value = prefill.data_realizacao;
       if (prefill.data_pagamento) document.getElementById('splitDataPagamento').value = prefill.data_pagamento;
@@ -692,9 +703,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <td class="px-4 py-3"><div class="font-medium">${t.cliente_nome || '-'}</div><div class="text-xs text-slate-500">${t.cliente_telefone || ''}</div></td>
               <td class="px-4 py-3"><div>${t.medium_name || '-'}</div><div class="text-xs text-slate-500">Tata: ${t.tata_name || '-'}</div></td>
               <td class="px-4 py-3"><div class="flex items-center gap-2"><select onchange="updateFinancialStatus(${t.id}, this.value, '${esc(t.data_pagamento || '')}')" class="border border-slate-200 rounded px-2 py-1 text-xs">${options}</select></div></td>
-              <td class="px-4 py-3 text-right font-semibold">${formatBRLCents(t.valor_total)}</td>
-              <td class="px-4 py-3 text-right text-rose-600">${formatBRLCents(t.taxa_gensen_paga)}</td>
-              <td class="px-4 py-3 text-right text-sky-700 font-semibold">${formatBRLCents(t.valor_liquido_medium)}</td>
+              <td class="px-4 py-3 text-right font-semibold">${formatMoneyCents(t.valor_total)}</td>
+              <td class="px-4 py-3 text-right text-rose-600">${formatMoneyCents(t.taxa_gensen_paga)}</td>
+              <td class="px-4 py-3 text-right text-sky-700 font-semibold">${formatMoneyCents(t.valor_liquido_medium)}</td>
               <td class="px-4 py-3 text-right">
                 <div class="flex gap-2 justify-end">
                   <button onclick="generateReceipt(${t.id})" class="px-2 py-1 rounded text-xs bg-amber-100 text-amber-700 font-bold hover:bg-amber-200">Gerar</button>
@@ -765,15 +776,15 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (!d.ok) return;
       const r = d.data;
       const saldoColor = r.saldo >= 0 ? 'text-slate-700' : 'text-red-600';
-      document.getElementById('cardEntradas').textContent = formatBRLCents(r.total_entradas);
-      document.getElementById('cardSaidas').textContent = formatBRLCents(r.total_saidas);
+      document.getElementById('cardEntradas').textContent = formatMoneyCents(r.total_entradas);
+      document.getElementById('cardSaidas').textContent = formatMoneyCents(r.total_saidas);
       document.getElementById('cardSaldo').className = `text-2xl font-black mt-1 ${saldoColor}`;
-      document.getElementById('cardSaldo').textContent = formatBRLCents(r.saldo);
-      document.getElementById('cardCredito').textContent = formatBRLCents(r.total_credito_casa);
-      document.getElementById('cardMensPagas').textContent = formatBRLCents(r.mensalidades_pagas);
-      document.getElementById('cardMensPend').textContent = formatBRLCents(r.mensalidades_pendentes);
+      document.getElementById('cardSaldo').textContent = formatMoneyCents(r.saldo);
+      document.getElementById('cardCredito').textContent = formatMoneyCents(r.total_credito_casa);
+      document.getElementById('cardMensPagas').textContent = formatMoneyCents(r.mensalidades_pagas);
+      document.getElementById('cardMensPend').textContent = formatMoneyCents(r.mensalidades_pendentes);
       document.getElementById('cardContasPend').textContent =
-        `${r.contas_pendentes_qtd} — ${formatBRLCents(r.contas_pendentes_valor)}`;
+        `${r.contas_pendentes_qtd} — ${formatMoneyCents(r.contas_pendentes_valor)}`;
     }
 
     async function loadCaixa() {
@@ -784,15 +795,15 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('caixaSummary').innerHTML = `
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase">Saldo Inicial</p>
-          <p class="text-xl font-black ${s.saldo_inicial >= 0 ? 'text-slate-700' : 'text-red-600'} mt-1">${formatBRLCents(s.saldo_inicial)}</p>
+          <p class="text-xl font-black ${s.saldo_inicial >= 0 ? 'text-slate-700' : 'text-red-600'} mt-1">${formatMoneyCents(s.saldo_inicial)}</p>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase">Entradas / Saídas (realizadas)</p>
-          <p class="text-xl font-black text-green-600 mt-1">${formatBRLCents(s.entradas)} / <span class="text-red-600">${formatBRLCents(s.saidas)}</span></p>
+          <p class="text-xl font-black text-green-600 mt-1">${formatMoneyCents(s.entradas)} / <span class="text-red-600">${formatMoneyCents(s.saidas)}</span></p>
         </div>
         <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
           <p class="text-xs text-slate-400 font-semibold uppercase">Saldo Final</p>
-          <p class="text-xl font-black ${s.saldo_final >= 0 ? 'text-slate-700' : 'text-red-600'} mt-1">${formatBRLCents(s.saldo_final)}</p>
+          <p class="text-xl font-black ${s.saldo_final >= 0 ? 'text-slate-700' : 'text-red-600'} mt-1">${formatMoneyCents(s.saldo_final)}</p>
         </div>
       `;
       const body = document.getElementById('caixaBody');
@@ -809,7 +820,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               </span>
             </td>
             <td class="px-4 py-3 text-right font-semibold ${m.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}">
-              ${m.tipo === 'entrada' ? '+' : '-'} ${formatBRLCents(m.valor)}
+              ${m.tipo === 'entrada' ? '+' : '-'} ${formatMoneyCents(m.valor)}
             </td>
           </tr>`).join('');
     }
@@ -824,7 +835,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           const parcelaStr = (c.parcela_num && c.parcela_total) ? `${c.parcela_num}/${c.parcela_total}` : '-';
           const statusCls = c.status === 'Pago' ? 'bg-green-100 text-green-700'
             : (c.status === 'Vencido' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700');
-          const valorPago = c.valor_pago ? formatBRLCents(c.valor_pago) : '-';
+          const valorPago = c.valor_pago ? formatMoneyCents(c.valor_pago) : '-';
           return `<tr class="hover:bg-slate-50">
             <td class="px-3 py-3 font-medium">${c.descricao}</td>
             <td class="px-3 py-3 text-slate-500 text-xs">${c.fornecedor || '-'}</td>
@@ -834,7 +845,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <td class="px-3 py-3">
               <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusCls}">${c.status}</span>
             </td>
-            <td class="px-3 py-3 text-right font-semibold">${formatBRLCents(c.valor)}</td>
+            <td class="px-3 py-3 text-right font-semibold">${formatMoneyCents(c.valor)}</td>
             <td class="px-3 py-3 text-right text-green-600 text-xs">${valorPago}</td>
             <td class="px-3 py-3 text-right">
               <div class="flex gap-1 justify-end flex-wrap">
@@ -857,7 +868,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalContaTitulo').textContent = 'Editar Conta';
       document.getElementById('contaDescricao').value = c.descricao || '';
       document.getElementById('contaCategoria').value = c.categoria || '';
-      document.getElementById('contaValor').value = formatBRL(String(c.valor));
+      document.getElementById('contaValor').value = formatMoneyInput(String(c.valor));
       document.getElementById('contaFornecedor').value = c.fornecedor || '';
       document.getElementById('contaVencimento').value = c.data_vencimento || '';
       document.getElementById('contaRecorrencia').value = c.recorrencia || 'nenhuma';

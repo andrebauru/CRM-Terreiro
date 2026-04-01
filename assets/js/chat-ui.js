@@ -102,6 +102,7 @@ export class ChatUIManager {
     
     // Mobile: esconder sidebar
     if (this.isMobile && this.elements.sidebar) {
+      document.body.classList.add('mobile-view-active');
       this.elements.sidebar.classList.add('hidden');
       this.elements.sidebar.classList.remove('flex');
     }
@@ -138,6 +139,7 @@ export class ChatUIManager {
     
     // Mobile: mostrar sidebar
     if (this.isMobile && this.elements.sidebar) {
+      document.body.classList.remove('mobile-view-active');
       this.elements.sidebar.classList.remove('hidden');
       this.elements.sidebar.classList.add('flex');
     }
@@ -165,8 +167,10 @@ export class ChatUIManager {
     } else {
       // Mobile: mostrar conversa ou sidebar baseado em selectedUserId
       if (this.state.selectedUserId) {
+        document.body.classList.add('mobile-view-active');
         this.showConversation();
       } else {
+        document.body.classList.remove('mobile-view-active');
         this.hideConversation();
       }
     }

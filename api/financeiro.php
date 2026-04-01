@@ -81,6 +81,53 @@ function validarStatusFinanceiro(?string $status): string
     return in_array($status, $permitidos, true) ? $status : 'pendente';
 }
 
+function obterConfiguracaoMoeda(PDO $pdo): array
+{
+    static $settings = null;
+    if ($settings !== null) {
+        return $settings;
+    }
+
+    try {
+        $stmt = $pdo->query('SELECT currency_code, currency_symbol FROM settings LIMIT 1');
+        $settings = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        $settings = [];
+    }
+
+    $settings['currency_code'] = strtoupper((string)($settings['currency_code'] ?? 'JPY'));
+    $settings['currency_symbol'] = (string)($settings['currency_symbol'] ?? ($settings['currency_code'] === 'BRL' ? 'R$' : '¥'));
+    return $settings;
+}
+
+function normalizarValorMonetario($rawValue, string $currencyCode): int
+{
+    if (is_int($rawValue) || is_float($rawValue)) {
+        return (int)round((float)$rawValue);
+    }
+
+    $value = trim((string)$rawValue);
+    if ($value === '') {
+        return 0;
+    }
+
+    if ($currencyCode === 'JPY') {
+        $clean = preg_replace('/[^0-9\-]/', '', $value);
+        return (int)($clean !== '' ? $clean : 0);
+    }
+
+    $clean = preg_replace('/[^0-9,\.\-]/', '', $value);
+    if ($clean === '' || $clean === '-' || $clean === ',' || $clean === '.') {
+        return 0;
+    }
+
+    if (str_contains($clean, ',')) {
+        return (int)round((float)str_replace(',', '.', str_replace('.', '', $clean)) * 100);
+    }
+
+    return (int)round((float)$clean * 100);
+}
+
 function obterFinancialTransaction(PDO $pdo, int $id): ?array
 {
     $stmt = $pdo->prepare(
@@ -174,6 +221,8 @@ function ensureMonthlyMensalidades(PDO $pdo, string $monthStart): void
 
 try {
     $pdo = db();
+    $currencySettings = obterConfiguracaoMoeda($pdo);
+    $currencyCode = $currencySettings['currency_code'];
 
     // ── DASHBOARD ──────────────────────────────────────────────────────────
     if ($action === 'dashboard') {
@@ -508,7 +557,7 @@ try {
 
     if ($action === 'create_conta') {
         $descricao   = requireField('descricao', 'Descrição obrigatória');
-        $valor       = (int)($_POST['valor'] ?? 0);
+        $valor       = normalizarValorMonetario($_POST['valor'] ?? 0, $currencyCode);
         $dataVenc    = $_POST['data_vencimento'] ?? date('Y-m-d');
         $categoria   = trim($_POST['categoria'] ?? '') ?: null;
         $fornecedor  = trim($_POST['fornecedor'] ?? '') ?: null;
@@ -562,7 +611,7 @@ try {
         $id = (int)($_POST['id'] ?? 0);
         if ($id <= 0) jsonResponse(['ok' => false, 'message' => 'ID inválido'], 422);
         $descricao   = requireField('descricao', 'Descrição obrigatória');
-        $valor       = (int)($_POST['valor'] ?? 0);
+        $valor       = normalizarValorMonetario($_POST['valor'] ?? 0, $currencyCode);
         $dataVenc    = $_POST['data_vencimento'] ?? date('Y-m-d');
         $categoria   = trim($_POST['categoria'] ?? '') ?: null;
         $fornecedor  = trim($_POST['fornecedor'] ?? '') ?: null;
@@ -593,7 +642,7 @@ try {
         $today    = date('Y-m-d');
         $mesStart = date('Y-m-01');
         $valorPago = isset($_POST['valor_pago']) && $_POST['valor_pago'] !== ''
-            ? (int)$_POST['valor_pago']
+            ? normalizarValorMonetario($_POST['valor_pago'], $currencyCode)
             : (int)$conta['valor'];
         $valorTotal = (int)$conta['valor'];
         $jaAcumulado = (int)($conta['valor_pago'] ?? 0);
@@ -684,7 +733,7 @@ try {
 
     if ($action === 'create_entrada') {
         $descricao   = requireField('descricao', 'Descrição obrigatória');
-        $valor       = (int)($_POST['valor'] ?? 0);
+        $valor       = normalizarValorMonetario($_POST['valor'] ?? 0, $currencyCode);
         $origem      = $_POST['origem'] ?? 'manual';
         $dataEntrada = $_POST['data_entrada'] ?? date('Y-m-d');
 

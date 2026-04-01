@@ -2,6 +2,7 @@
 $pageTitle = 'CRM Terreiro - Gastos';
 $activePage = 'gastos';
 require_once __DIR__ . '/app/views/partials/tw-head.php';
+$isJpyCurrency = strtoupper((string)($_crmCurrCode ?? 'JPY')) === 'JPY';
 ?>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
   <div class="min-h-screen flex overflow-x-hidden">
@@ -190,17 +191,29 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
   <?php require_once __DIR__ . '/app/views/partials/tw-scripts.php'; ?>
   <script>
-    function formatBRLCents(cents) {
+    const gastosCurrencyCode = <?= json_encode(strtoupper((string)($_crmCurrCode ?? 'JPY')), JSON_UNESCAPED_UNICODE) ?>;
+    const gastosCurrencySymbol = <?= json_encode((string)($_crmCurrSymbol ?? '¥'), JSON_UNESCAPED_UNICODE) ?>;
+    const gastosIsJpy = gastosCurrencyCode === 'JPY';
+
+    function formatMoneyCents(cents) {
       return formatBRLOrZero(String(cents || 0));
     }
 
     function parseCurrency(str) {
+      if (!str) return 0;
+      if (gastosIsJpy) {
+        return parseInt(String(str).replace(/[^\d-]/g, '') || '0', 10);
+      }
       return parseCurrencyInput(str);
     }
 
-    // Real-time currency mask
+    function formatMoneyInput(value) {
+      return formatBRL(value);
+    }
+
+    // Real-time currency mask respeitando JPY/BRL configurado no banco
     document.getElementById('contaValor').addEventListener('input', function () {
-      this.value = formatBRL(this.value);
+      this.value = formatMoneyInput(this.value);
     });
 
     async function api(params) {
@@ -248,8 +261,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           qtdPendente++;
         }
       });
-      document.getElementById('cardPendente').textContent = formatBRLCents(totalPendente);
-      document.getElementById('cardPago').textContent = formatBRLCents(totalPago);
+      document.getElementById('cardPendente').textContent = formatMoneyCents(totalPendente);
+      document.getElementById('cardPago').textContent = formatMoneyCents(totalPago);
       document.getElementById('cardQtd').textContent = qtdPendente;
 
       // Pagination
@@ -266,7 +279,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           const parcelaStr = (c.parcela_num && c.parcela_total) ? `${c.parcela_num}/${c.parcela_total}` : '-';
           const statusCls = c.status === 'Pago' ? 'bg-green-100 text-green-700'
             : (c.status === 'Vencido' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700');
-          const valorPago = c.valor_pago ? formatBRLCents(c.valor_pago) : '-';
+          const valorPago = c.valor_pago ? formatMoneyCents(c.valor_pago) : '-';
           return `<tr class="hover:bg-slate-50">
             <td class="px-3 py-3 font-medium">${c.descricao}</td>
             <td class="px-3 py-3 text-slate-500 text-xs">${c.fornecedor || '-'}</td>
@@ -276,7 +289,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <td class="px-3 py-3">
               <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusCls}">${c.status}</span>
             </td>
-            <td class="px-3 py-3 text-right font-semibold">${formatBRLCents(c.valor)}</td>
+            <td class="px-3 py-3 text-right font-semibold">${formatMoneyCents(c.valor)}</td>
             <td class="px-3 py-3 text-right text-green-600 text-xs">${valorPago}</td>
             <td class="px-3 py-3 text-right">
               <div class="flex gap-1 justify-end flex-wrap">
@@ -311,7 +324,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalContaTitulo').textContent = 'Editar Gasto';
       document.getElementById('contaDescricao').value = c.descricao || '';
       document.getElementById('contaCategoria').value = c.categoria || '';
-      document.getElementById('contaValor').value = formatBRL(String(c.valor));
+      document.getElementById('contaValor').value = formatMoneyInput(String(c.valor));
       document.getElementById('contaFornecedor').value = c.fornecedor || '';
       document.getElementById('contaVencimento').value = c.data_vencimento || '';
       document.getElementById('contaRecorrencia').value = c.recorrencia || 'nenhuma';

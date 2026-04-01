@@ -38,8 +38,8 @@
 
 /* === SIDEBAR (25%) === */
 .chat-sidebar {
-  width: 25%;
-  min-width: 300px;
+  width: 20%;
+  min-width: 280px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -50,21 +50,38 @@
 }
 
 /* Sidebar Retrátil - Modo Colapsado (70px) */
+.chat-sidebar.collapsed,
 .chat-sidebar.sidebar-collapsed {
   width: 70px;
   min-width: 70px;
 }
 
 /* Esconder detalhes do usuário quando sidebar está colapsada */
-.chat-sidebar.sidebar-collapsed .chat-sidebar-header,
+.chat-sidebar.collapsed .sidebar-title-group,
+.chat-sidebar.collapsed .user-details,
+.chat-sidebar.collapsed #chatUserSearch,
+.chat-sidebar.sidebar-collapsed .sidebar-title-group,
 .chat-sidebar.sidebar-collapsed .user-details,
 .chat-sidebar.sidebar-collapsed #chatUserSearch {
   display: none;
 }
 
 /* Ajustar ícones quando colapsado */
+.chat-sidebar.collapsed .chat-user-btn,
 .chat-sidebar.sidebar-collapsed .chat-user-btn {
   padding: 0.75rem;
+  justify-content: center;
+}
+
+.chat-sidebar.collapsed .chat-sidebar-header,
+.chat-sidebar.sidebar-collapsed .chat-sidebar-header {
+  padding: 0.75rem 0.5rem;
+}
+
+.chat-sidebar.collapsed .chat-sidebar-header > div,
+.chat-sidebar.sidebar-collapsed .chat-sidebar-header > div,
+.chat-sidebar.collapsed .chat-user-btn > div,
+.chat-sidebar.sidebar-collapsed .chat-user-btn > div {
   justify-content: center;
 }
 
@@ -85,9 +102,28 @@
   }
   
   /* Não aplicar collapse em mobile */
+  .chat-sidebar.collapsed,
   .chat-sidebar.sidebar-collapsed {
     width: 100% !important;
     min-width: 100% !important;
+  }
+}
+
+@media (max-width: 767px) {
+  body.mobile-view-active .chat-sidebar {
+    display: none !important;
+  }
+
+  body.mobile-view-active .chat-conversation-area {
+    display: flex !important;
+  }
+
+  body:not(.mobile-view-active) .chat-sidebar {
+    display: flex !important;
+  }
+
+  body:not(.mobile-view-active) .chat-conversation-area {
+    display: none !important;
   }
 }
 
@@ -398,6 +434,21 @@
   color: #ef4444;
 }
 
+.message-media {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.message-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* === DATE SEPARATOR === */
 .message-date-separator {
   display: flex;
@@ -641,6 +692,11 @@
 .chat-user-btn div {
   color: #ffffff !important;
   font-weight: 600;
+}
+
+.user-details {
+  min-width: 0;
+  flex: 1;
 }
 
 /* === RESPONSIVE === */

@@ -116,6 +116,13 @@ $_crmCurrentUserLabel = (string)(
       $_jsVer  = @filemtime($_appJsPath) ?: time();
       $_jsHash = substr(@md5_file($_appJsPath) ?: '', 0, 8);
   ?>
+  <script>
+    window.__crmSettings = {
+      currency_code: <?= json_encode($_crmCurrCode, JSON_UNESCAPED_UNICODE) ?>,
+      currency_symbol: <?= json_encode($_crmCurrSymbol, JSON_UNESCAPED_UNICODE) ?>,
+      language: <?= json_encode($_crmLang, JSON_UNESCAPED_UNICODE) ?>,
+    };
+  </script>
   <script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js?v=<?= $_jsVer ?>&h=<?= $_jsHash ?>" defer></script>
   <?php endif; ?>
   <!-- Critical inline CSS: garante sidebar responsiva e layout mesmo se app.css estiver desatualizado -->

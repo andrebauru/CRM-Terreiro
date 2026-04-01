@@ -96,7 +96,7 @@ try {
     <aside class="chat-sidebar flex">
       <header class="chat-sidebar-header">
         <div class="mb-3 flex items-center justify-between gap-2">
-          <div>
+          <div class="sidebar-title-group">
             <div class="text-sm font-semibold text-white">Conversas</div>
             <div class="text-xs text-slate-400">Histórico em tempo real</div>
           </div>
@@ -434,6 +434,7 @@ try {
       } else {
         selectedUserId = currentChatUser ? currentChatUser.id : null;
       }
+      document.body.classList.toggle('mobile-view-active', window.innerWidth < 768 && !!selectedUserId);
       // FIX: Force mobile view para esconder sidebar em telas pequenas
       setMobileView(true);
       // Trigger CSS para móvel: mudar de show-list para show-chat
@@ -451,6 +452,7 @@ try {
       }
       
       const isDesktop = window.innerWidth >= 768;
+      document.body.classList.toggle('mobile-view-active', !isDesktop && !!selectedUserId);
       
       if (isDesktop) {
         // Desktop: sempre mostrar ambos lado a lado
@@ -498,6 +500,7 @@ try {
         selectedUserId = null;
         currentChatUser = null;
         currentChatMode = null;
+        document.body.classList.remove('mobile-view-active');
         if (unsubscribeMessages) {
           unsubscribeMessages();
           unsubscribeMessages = null;
@@ -543,7 +546,7 @@ try {
               <i class="fa-solid fa-comments text-sm"></i>
               <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#1b112b] bg-emerald-400"></span>
             </div>
-            <div class="min-w-0 flex-1">
+            <div class="user-details min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
                 <div class="font-semibold text-pink-100 truncate text-sm">Chat Geral</div>
                 <div class="text-[11px] text-pink-100/45">Ao vivo</div>
@@ -576,7 +579,7 @@ try {
                 ${avatarHtml(u, 'h-12 w-12 rounded-full object-cover shrink-0 ring-2 ring-white/5')}
                 <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#1b112b] ${online ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
               </div>
-              <div class="min-w-0 flex-1">
+              <div class="user-details min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-2">
                   <div class="font-semibold text-pink-100 truncate text-sm">${esc(u.name || ('Usuário #' + u.id))}</div>
                   <div class="text-[11px] ${online ? 'text-emerald-300' : 'text-pink-100/35'}">${online ? 'Online' : 'Off'}</div>
@@ -648,13 +651,13 @@ try {
       docs.forEach((doc) => {
         // Extrair dados de forma robusta
         const data = doc.data ? doc.data() : (doc || {});
-        // Campo principal: text (via Firestore)
         const content = data.text || "";
+        const imageUrl = data.imageUrl || data.mediaUrl || "";
         
         log('Renderizando mensagem:', { senderId: data.senderId, text: content.substring(0, 50) });
         
-        if (!content) {
-          log('⚠️ Mensagem vazia ou sem campo text:', data);
+        if (!content && !imageUrl) {
+          log('⚠️ Mensagem vazia ou sem conteúdo renderizável:', data);
           return; // Pular mensagens vazias
         }
 
@@ -688,9 +691,22 @@ try {
         // Balão de mensagem
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${mine ? 'sent' : 'received'}`;
-        
-        // IMPORTANTE: Usar textContent para injetar texto de forma segura
-        bubble.textContent = content;
+
+        if (imageUrl) {
+          const mediaEl = document.createElement('img');
+          mediaEl.className = 'message-media';
+          mediaEl.src = imageUrl;
+          mediaEl.alt = data.mediaName || 'Imagem enviada';
+          mediaEl.loading = 'lazy';
+          bubble.appendChild(mediaEl);
+        }
+
+        if (content) {
+          const textEl = document.createElement('div');
+          textEl.className = 'message-text';
+          textEl.textContent = content;
+          bubble.appendChild(textEl);
+        }
         
         // Horário e status de leitura
         const timeEl = document.createElement('div');
@@ -886,6 +902,7 @@ try {
       log('Opening general chat');
       showConversationArea();
       uiManager.showConversation();
+      uiManager.state.selectedUserId = GENERAL_CHAT_ID;
       uiManager.focusMessageInput();
       chatWithNameEl.textContent = 'Chat Geral';
       chatAvatarWrapEl.innerHTML = '<div class="h-11 w-11 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
@@ -937,7 +954,7 @@ try {
     }
 
     async function deleteMessage(messageId) {
-      if (!CURRENT_USER.role === 'admin') {
+      if (CURRENT_USER.role !== 'admin') {
         alert('Apenas administradores podem deletar mensagens');
         return;
       }
@@ -968,6 +985,7 @@ try {
       log('Opening private chat with:', user.id, user.name);
       showConversationArea();
       uiManager.showConversation();
+      uiManager.state.selectedUserId = user.id;
       uiManager.focusMessageInput();
       mobileHandler.selectUser(user.id);
       chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
@@ -1213,6 +1231,16 @@ try {
       }
     }
 
+    function getCurrentConversationId() {
+      if (currentChatMode === 'general') {
+        return GENERAL_CHAT_ID;
+      }
+      if (currentChatMode === 'private' && currentChatUser) {
+        return conversationId(CURRENT_USER.id, currentChatUser.id);
+      }
+      return null;
+    }
+
     // Admin Command: /cleanall - Delete all messages
     async function cleanAllMessages() {
       if (CURRENT_USER.role !== 'admin') {
@@ -1228,8 +1256,7 @@ try {
         await ensureFirebaseReady();
         const f = window.firebaseFns;
         
-        const isGeneral = currentChatMode === 'general';
-        const chatConvId = isGeneral ? GENERAL_CHAT_ID : (currentChatUser ? conversationId(CURRENT_USER.id, currentChatUser.id) : null);
+        const chatConvId = getCurrentConversationId();
         
         if (!chatConvId) {
           alert('Nenhuma conversa selecionada');
@@ -1239,12 +1266,22 @@ try {
         const messagesRef = f.collection(window.db, 'conversations', chatConvId, 'messages');
         const q = f.query(messagesRef);
         const snapshot = await f.getDocs(q);
-        
-        // Deletar todas as mensagens
+
+        if (!snapshot.docs.length) {
+          alert('Não há mensagens para limpar nesta conversa.');
+          return;
+        }
+
+        // Deletar todas as mensagens em lotes com writeBatch
         let deletedCount = 0;
-        for (const doc of snapshot.docs) {
-          await f.deleteDoc(f.doc(window.db, 'conversations', chatConvId, 'messages', doc.id));
-          deletedCount++;
+        for (let index = 0; index < snapshot.docs.length; index += 450) {
+          const batch = f.writeBatch(window.db);
+          const chunk = snapshot.docs.slice(index, index + 450);
+          for (const snap of chunk) {
+            batch.delete(f.doc(window.db, 'conversations', chatConvId, 'messages', snap.id));
+            deletedCount++;
+          }
+          await batch.commit();
         }
         
         console.log(`✅ ${deletedCount} mensagens deletadas com sucesso`);
@@ -1319,69 +1356,114 @@ try {
     }
 
     // ⚠️ IMPORTANTE - CORS FIX NECESSÁRIO:
-    // Se receber erro "CORS policy", execute no Google Cloud Console:
-    // gsutil cors set cors.json gs://crm-quimbanda-chat.firebasestorage.app
+    // Para liberar o domínio https://crm.quimbanda.jp no ambiente legado/bucket do Google Cloud,
+    // rode no Cloud Console: gsutil cors set cors.json gs://seu-bucket
+    function buildPublicUploadUrl(pathOrUrl) {
+      try {
+        return new URL(pathOrUrl, `${window.location.origin}/`).toString();
+      } catch (_) {
+        return pathOrUrl;
+      }
+    }
+
+    async function compressImageFile(file) {
+      if (!file || !String(file.type || '').startsWith('image/')) {
+        return file;
+      }
+
+      const imageElement = await new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(img);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Falha ao preparar imagem para compressão.'));
+        };
+        img.src = objectUrl;
+      });
+
+      const maxWidth = 800;
+      const ratio = imageElement.width > maxWidth ? (maxWidth / imageElement.width) : 1;
+      const targetWidth = Math.max(1, Math.round(imageElement.width * ratio));
+      const targetHeight = Math.max(1, Math.round(imageElement.height * ratio));
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        return file;
+      }
+
+      ctx.drawImage(imageElement, 0, 0, targetWidth, targetHeight);
+
+      const compressedBlob = await new Promise((resolve) => {
+        canvas.toBlob(resolve, 'image/jpeg', 0.7);
+      });
+
+      if (!compressedBlob) {
+        return file;
+      }
+
+      const safeName = (file.name || `imagem_${Date.now()}.jpg`).replace(/\.[^.]+$/, '.jpg');
+      return new File([compressedBlob], safeName, { type: 'image/jpeg' });
+    }
+
+    async function uploadLocalFile(fileOrBlob) {
+      const preparedFile = await compressImageFile(fileOrBlob);
+      const formData = new FormData();
+      formData.append('chat_image', preparedFile);
+      setUploadProgress(20);
+
+      const response = await fetch('upload_handler.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData,
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok || !result.url) {
+        throw new Error(result.message || 'Falha ao enviar imagem para o servidor local.');
+      }
+
+      setUploadProgress(100);
+      return {
+        url: buildPublicUploadUrl(result.url),
+        path: result.path || '',
+        mime: preparedFile.type || fileOrBlob.type || 'image/jpeg',
+        name: preparedFile.name || fileOrBlob.name || 'imagem.jpg'
+      };
+    }
+
     async function uploadAndSendFile(fileOrBlob, typeHint = 'file') {
       if (!fileOrBlob) return;
 
       console.log('📤 uploadAndSendFile iniciado:', fileOrBlob.name, 'tipo:', typeHint);
       try {
-        await ensureFirebaseReady();
-        const f = window.firebaseFns;
-        const ext = (fileOrBlob.name && fileOrBlob.name.split('.').pop()) || (typeHint === 'audio' ? 'webm' : 'bin');
-        const chatId = currentChatMode === 'general' 
-          ? GENERAL_CHAT_ID 
-          : (currentChatUser ? conversationId(CURRENT_USER.id, currentChatUser.id) : null);
+        const chatId = getCurrentConversationId();
         
         if (!chatId) {
           console.error('❌ Nenhum chat selecionado para upload');
           alert('Selecione um chat para enviar arquivo.');
           return;
         }
-        
-        // Usar referência de caminho limpa sem caracteres especiais que causem CORS
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 8);
-        const fileName = `${timestamp}_${random}.${ext}`;
-        const path = `chat_uploads/${chatId}/${fileName}`;
-        console.log('📂 Caminho de upload (CORS-safe):', path);
-        const storageRef = f.ref(window.storage, path);
-
-        const uploadTask = f.uploadBytesResumable(storageRef, fileOrBlob, {
-          contentType: fileOrBlob.type || 'application/octet-stream'
-        });
-
-        await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', (snap) => {
-            const pct = (snap.bytesTransferred / Math.max(1, snap.totalBytes)) * 100;
-            log('Upload progress:', Math.round(pct) + '%');
-            setUploadProgress(pct);
-          }, (error) => {
-            console.error('❌ Erro durante upload:', error.code, error.message);
-            // Melhor mensagem de erro para CORS
-            if (error.code === 'storage/unauthorized' || error.message.includes('CORS')) {
-              alert('❌ Erro de acesso ao armazenamento.\n\nVer: FIREBASE_CORS_FIX.md na raiz do projeto para soluções.');
-            } else {
-              alert('❌ Erro ao fazer upload: ' + (error.message || 'Desconhecido'));
-            }
-            reject(error);
-          }, resolve);
-        });
-
-        const url = await f.getDownloadURL(uploadTask.snapshot.ref);
-        console.log('✅ Upload completo, URL:', url.substring(0, 50) + '...');
-        const mime = String(fileOrBlob.type || '');
-        const messageType = typeHint === 'audio'
-          ? 'audio'
-          : (mime.startsWith('image/') ? 'image' : (mime.startsWith('video/') ? 'video' : 'file'));
+        const uploadResult = await uploadLocalFile(fileOrBlob);
+        console.log('✅ Upload local completo, URL:', uploadResult.url.substring(0, 80));
+        const mime = String(uploadResult.mime || fileOrBlob.type || '');
+        const isImage = mime.startsWith('image/');
+        const messageType = isImage ? 'image' : (typeHint === 'audio' ? 'audio' : (mime.startsWith('video/') ? 'video' : 'file'));
 
         await sendMessage({
           type: messageType,
           file_type: messageType,
           text: messageInput.value.trim() || '',
-          mediaUrl: url,
+          imageUrl: isImage ? uploadResult.url : '',
+          mediaUrl: uploadResult.url,
           mediaMime: mime,
-          mediaName: fileOrBlob.name || `audio_${Date.now()}.webm`,
+          mediaName: uploadResult.name,
         });
 
         messageInput.value = '';
@@ -1470,46 +1552,6 @@ try {
       }
     }
 
-    sendBtn.addEventListener('click', async () => {
-      console.log('🔘 Botão enviar clicado');
-      const text = messageInput.value.trim();
-      
-      if (pendingFile) {
-        console.log('📎 Enviando arquivo pendente');
-        try {
-          await uploadAndSendFile(pendingFile);
-        } catch (e) {
-          console.error('❌ Erro ao enviar anexo:', e);
-          alert('Falha ao enviar anexo.');
-        }
-        return;
-      }
-
-      if (!text) {
-        console.log('⚠️ Input vazio, ignorando');
-        return;
-      }
-
-      // Processar comando /cleanall
-      if (text === '/cleanall') {
-        await cleanAllMessages();
-        messageInput.value = '';
-        return;
-      }
-
-      try {
-        console.log('✉️ Enviando mensagem de texto:', text.substring(0, 30) + '...');
-        await sendMessage({ type: 'text', text });
-        messageInput.value = '';
-        messageInput.focus();
-        await setTyping(false);
-        console.log('✅ Mensagem enviada com sucesso');
-      } catch (e) {
-        console.error('❌ Erro ao enviar mensagem:', e);
-        alert('Falha ao enviar mensagem.');
-      }
-    });
-
     messageInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         console.log('⏎ Enter pressionado - enviando mensagem');
@@ -1565,11 +1607,11 @@ try {
     if (collapseSidebarBtn) {
       collapseSidebarBtn.addEventListener('click', () => {
         if (chatUsersPanelEl) {
-          chatUsersPanelEl.classList.toggle('sidebar-collapsed');
+          chatUsersPanelEl.classList.toggle('collapsed');
           // Alterar ícone
           const icon = collapseSidebarBtn.querySelector('i');
           if (icon) {
-            if (chatUsersPanelEl.classList.contains('sidebar-collapsed')) {
+            if (chatUsersPanelEl.classList.contains('collapsed')) {
               icon.className = 'fa-solid fa-angle-right text-sm';
               collapseSidebarBtn.title = 'Expandir sidebar';
             } else {
@@ -1607,7 +1649,7 @@ try {
       
       // Só processar se a LARGURA mudou significativamente (mais de 50px)
       // Isso ignora mudanças de altura causadas pela abertura do teclado no mobile
-      if (Math.abs(currentWidth - lastWidth) > 50) {
+      if (currentWidth !== lastWidth) {
         log('Screen width changed:', lastWidth, '->', currentWidth);
         lastWidth = currentWidth;
         setMobileView(!!selectedUserId);
@@ -1663,6 +1705,7 @@ try {
         selectedUserId = null;
         currentChatUser = null;
         currentChatMode = null;
+        uiManager.state.selectedUserId = null;
         if (unsubscribeMessages) {
           unsubscribeMessages();
           unsubscribeMessages = null;
@@ -1677,9 +1720,22 @@ try {
     });
     
     // Override sendBtn click to use message handler
-    sendBtn.removeEventListener('click', sendBtn.onclick);
     sendBtn.addEventListener('click', async (e) => {
       e.preventDefault();
+
+      if (pendingFile) {
+        messageHandler.disableInput();
+        try {
+          await uploadAndSendFile(pendingFile);
+        } catch (error) {
+          console.error('[CHAT] Erro ao enviar anexo:', error);
+          alert('Erro ao enviar imagem: ' + (error.message || 'Desconhecido'));
+        } finally {
+          messageHandler.enableInput();
+          uiManager.focusMessageInput();
+        }
+        return;
+      }
       
       const text = messageHandler.getMessageText();
       
