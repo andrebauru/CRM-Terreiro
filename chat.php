@@ -40,7 +40,7 @@ try {
 
     /* Glow effect para balões */
     .glow-pink {
-      box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.35), 0 0 24px rgba(236, 72, 153, 0.42), 0 12px 30px rgba(236, 72, 153, 0.30);
+      box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.35), 0 0 24px rgba(185, 28, 28, 0.35), 0 12px 30px rgba(127, 29, 29, 0.28);
     }
 
     /* Animação de digitação com bounce */
@@ -79,19 +79,20 @@ try {
     }
 
     ::-webkit-scrollbar-thumb {
-      background: rgba(236, 72, 153, 0.5);
+      background: rgba(185, 28, 28, 0.5);
       border-radius: 4px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(236, 72, 153, 0.7);
+      background: rgba(185, 28, 28, 0.7);
+    }
   </style>
   <!-- Fixed-Height Viewport Container - Estilo WhatsApp Web com CSS Externo -->
   <div class="chat-wrapper" id="chatWrapper">
-    <!-- Toggle Sidebar CRM Button (top-left corner) -->
-    <button id="toggleCrmSidebar" class="absolute top-4 left-4 z-50 h-12 w-12 rounded-lg bg-gradient-to-br from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white flex items-center justify-center shadow-2xl transition transform hover:scale-110 active:scale-95" title="Menu CRM">
-      <i class="fa-solid fa-bars text-xl"></i>
-    </button>
+    <a href="dashboard.php" class="absolute top-4 left-4 z-50 inline-flex items-center gap-2 rounded-xl border border-red-900/70 bg-black/80 px-4 py-2 text-sm font-semibold text-red-100 shadow-2xl transition hover:border-red-700 hover:bg-red-950/85 hover:text-white" title="Voltar ao CRM">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span>Voltar ao CRM</span>
+    </a>
     <!-- Sidebar: Contatos (Esquerda - 25%) -->
     <aside class="chat-sidebar flex">
       <header class="chat-sidebar-header">
@@ -102,15 +103,15 @@ try {
           </div>
           <div class="flex gap-1">
             <!-- Botão Colapsar Sidebar (apenas desktop) -->
-            <button id="collapseSidebarBtn" class="hidden md:flex rounded-lg border border-slate-600/30 bg-slate-700/20 p-2 text-slate-300 hover:bg-slate-600/40 hover:text-pink-400 transition" title="Colapsar sidebar">
+            <button id="collapseSidebarBtn" class="hidden md:flex rounded-lg border border-slate-600/30 bg-slate-700/20 p-2 text-slate-300 hover:bg-slate-600/40 hover:text-red-400 transition" title="Colapsar sidebar">
               <i class="fa-solid fa-angle-left text-sm"></i>
             </button>
-            <button id="createGroupBtn" class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-300 hover:bg-emerald-500/20 transition" title="Criar grupo">
+            <button id="createGroupBtn" class="rounded-full border border-red-700/40 bg-red-700/15 px-2 py-1 text-[11px] text-red-200 hover:bg-red-700/25 transition" title="Criar grupo">
               <i class="fa-solid fa-plus"></i>
             </button>
           </div>
         </div>
-        <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#334155] border border-slate-600 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/60" />
+        <input id="chatUserSearch" type="text" placeholder="Pesquisar contato ou e-mail..." class="w-full rounded-2xl bg-[#111827] border border-slate-600 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-700/60" />
       </header>
       <div id="chatUsersList" class="chat-sidebar-content"></div>
     </aside>
@@ -118,11 +119,11 @@ try {
     <!-- Chat Area (Direita - 75%, Coluna com Header/Messages/Input) -->
     <main class="chat-main flex">
       <!-- Top Header (CRM Title) -->
-      <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/75 backdrop-blur-xl border-b border-fuchsia-400/20 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
+      <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/85 backdrop-blur-xl border-b border-red-900/40 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
-          <h1 class="text-lg font-black text-pink-300">Chat Interno</h1>
-          <span class="text-xs text-pink-100/50">•</span>
-          <span class="text-xs text-pink-200"><?= htmlspecialchars($currentUserName) ?></span>
+          <h1 class="text-lg font-black text-red-300">Chat Interno</h1>
+          <span class="text-xs text-red-100/50">•</span>
+          <span class="text-xs text-red-100"><?= htmlspecialchars($currentUserName) ?></span>
         </div>
       </header>
 
@@ -141,18 +142,18 @@ try {
                 <div class="chat-header-status">
                   <span id="chatStatusDot" class="chat-header-status-dot"></span>
                   <span id="chatStatus" class="shrink-0">Aguardando conversa</span>
-                  <span id="typingIndicator" class="hidden text-pink-300/80 items-center gap-1">
+                  <span id="typingIndicator" class="hidden text-red-300/80 items-center gap-1">
                     <span>Digitando</span>
                     <span class="inline-flex gap-0.5">
-                      <span class="h-1 w-1 rounded-full bg-pink-300 typing-indicator-dot"></span>
-                      <span class="h-1 w-1 rounded-full bg-pink-300 typing-indicator-dot" style="animation-delay: 120ms;"></span>
-                      <span class="h-1 w-1 rounded-full bg-pink-300 typing-indicator-dot" style="animation-delay: 240ms;"></span>
+                      <span class="h-1 w-1 rounded-full bg-red-300 typing-indicator-dot"></span>
+                      <span class="h-1 w-1 rounded-full bg-red-300 typing-indicator-dot" style="animation-delay: 120ms;"></span>
+                      <span class="h-1 w-1 rounded-full bg-red-300 typing-indicator-dot" style="animation-delay: 240ms;"></span>
                     </span>
                   </span>
                 </div>
               </div>
             </div>
-            <div class="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-pink-100/60">
+            <div class="hidden md:flex items-center gap-2 rounded-full border border-red-900/40 bg-red-950/20 px-3 py-1 text-xs text-red-100/70">
               <i class="fa-solid fa-lock"></i>
               Chat seguro
             </div>
@@ -209,10 +210,10 @@ try {
 
     <!-- Modal para criar grupo -->
     <div id="createGroupModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
-      <div class="bg-slate-800 rounded-2xl border border-slate-600 p-6 w-full max-w-md">
+      <div class="bg-slate-800 rounded-2xl border border-red-900/40 p-6 w-full max-w-md">
         <h2 class="text-lg font-bold text-white mb-4">Criar Novo Grupo</h2>
         
-        <input id="groupNameInput" type="text" placeholder="Nome do grupo..." class="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-2 text-white text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500" />
+        <input id="groupNameInput" type="text" placeholder="Nome do grupo..." class="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-2 text-white text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-red-700" />
         
         <div class="mb-4">
           <label class="text-xs text-slate-300 mb-2 block">Selecione os membros:</label>
@@ -220,7 +221,7 @@ try {
         </div>
         
         <div class="flex gap-2">
-          <button id="createGroupConfirmBtn" class="flex-1 bg-pink-600 hover:bg-pink-700 rounded-lg px-4 py-2 text-white font-semibold transition">Criar</button>
+          <button id="createGroupConfirmBtn" class="flex-1 bg-red-700 hover:bg-red-600 rounded-lg px-4 py-2 text-white font-semibold transition">Criar</button>
           <button id="createGroupCancelBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 rounded-lg px-4 py-2 text-white font-semibold transition">Cancelar</button>
         </div>
       </div>
@@ -317,7 +318,7 @@ try {
       if (user && user.foto_perfil) {
         return `<img src="${esc(user.foto_perfil)}" class="${className}" alt="${esc(user.name || 'Usuário')}" />`;
       }
-      return `<div class="${className} bg-fuchsia-500/25 flex items-center justify-center text-xs font-bold text-pink-100">${esc(initials((user && user.name) ? user.name : ''))}</div>`;
+      return `<div class="${className} bg-red-900/50 flex items-center justify-center text-xs font-bold text-red-100">${esc(initials((user && user.name) ? user.name : ''))}</div>`;
     }
 
     function esc(v) {
@@ -540,18 +541,18 @@ try {
       
       // Renderizar opção de Chat Geral primeiro
       let html = `
-        <button data-chat-mode="general" class="chat-user-btn w-full rounded-2xl border px-3 py-3 text-left transition ${currentChatMode === 'general' ? 'border-pink-400/70 bg-gradient-to-r from-pink-600/25 to-fuchsia-600/20 shadow-[0_8px_22px_rgba(236,72,153,.18)]' : 'border-fuchsia-500/15 bg-[#1b112b] hover:bg-[#241635]'}">
+        <button data-chat-mode="general" class="chat-user-btn w-full rounded-2xl border px-3 py-3 text-left transition ${currentChatMode === 'general' ? 'chat-user-btn-active' : 'chat-user-btn-idle'}">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="relative h-12 w-12 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-lg shadow-fuchsia-900/30">
+            <div class="relative h-12 w-12 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-lg shadow-red-950/40">
               <i class="fa-solid fa-comments text-sm"></i>
-              <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#1b112b] bg-emerald-400"></span>
+              <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 bg-emerald-400"></span>
             </div>
             <div class="user-details min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <div class="font-semibold text-pink-100 truncate text-sm">Chat Geral</div>
-                <div class="text-[11px] text-pink-100/45">Ao vivo</div>
+                <div class="font-semibold text-white truncate text-sm">Chat Geral</div>
+                <div class="text-[11px] text-slate-300">Ao vivo</div>
               </div>
-              <div class="text-xs text-pink-100/60 truncate">Canal principal da equipe</div>
+              <div class="text-xs text-slate-300 truncate">Canal principal da equipe</div>
             </div>
           </div>
         </button>
@@ -563,7 +564,7 @@ try {
       });
 
       if (rows.length === 0 && !term) {
-        usersListEl.innerHTML = html + '<div class="rounded-2xl border border-dashed border-fuchsia-500/20 p-4 text-sm text-pink-100/60">Nenhum outro usuário disponível.</div>';
+        usersListEl.innerHTML = html + '<div class="rounded-2xl border border-dashed border-slate-600 p-4 text-sm text-slate-300">Nenhum outro usuário disponível.</div>';
         attachUserListeners();
         return;
       }
@@ -573,19 +574,19 @@ try {
         const online = isUserOnline(u.id);
         const presenceLabel = getUserPresenceLabel(u.id);
         return `
-          <button data-user-id="${u.id}" class="chat-user-btn w-full rounded-2xl border px-3 py-3 text-left transition ${active ? 'border-pink-400/70 bg-gradient-to-r from-pink-600/20 to-fuchsia-600/15 shadow-[0_8px_22px_rgba(236,72,153,.18)]' : 'border-fuchsia-500/15 bg-[#1b112b] hover:bg-[#241635]'}">
+          <button data-user-id="${u.id}" class="chat-user-btn w-full rounded-2xl border px-3 py-3 text-left transition ${active ? 'chat-user-btn-active' : 'chat-user-btn-idle'}">
             <div class="flex items-center gap-3 min-w-0">
               <div class="relative shrink-0">
                 ${avatarHtml(u, 'h-12 w-12 rounded-full object-cover shrink-0 ring-2 ring-white/5')}
-                <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#1b112b] ${online ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
+                <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-slate-900 ${online ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
               </div>
               <div class="user-details min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-2">
-                  <div class="font-semibold text-pink-100 truncate text-sm">${esc(u.name || ('Usuário #' + u.id))}</div>
-                  <div class="text-[11px] ${online ? 'text-emerald-300' : 'text-pink-100/35'}">${online ? 'Online' : 'Off'}</div>
+                  <div class="font-semibold text-white truncate text-sm">${esc(u.name || ('Usuário #' + u.id))}</div>
+                  <div class="text-[11px] ${online ? 'text-emerald-300' : 'text-slate-400'}">${online ? 'Online' : 'Off'}</div>
                 </div>
-                <div class="text-xs text-pink-100/60 truncate">${esc(u.email || '')}</div>
-                <div class="mt-1 text-[11px] ${online ? 'text-emerald-300/90' : 'text-pink-100/40'} truncate">${esc(presenceLabel)}</div>
+                <div class="text-xs text-slate-300 truncate">${esc(u.email || '')}</div>
+                <div class="mt-1 text-[11px] ${online ? 'text-emerald-300/90' : 'text-slate-400'} truncate">${esc(presenceLabel)}</div>
               </div>
             </div>
           </button>
@@ -639,7 +640,7 @@ try {
 
       if (!docs.length) {
         const emptyMsg = document.createElement('div');
-        emptyMsg.className = 'flex min-h-full items-center justify-center text-center text-sm text-pink-100/50';
+        emptyMsg.className = 'flex min-h-full items-center justify-center text-center text-sm text-slate-300';
         emptyMsg.textContent = 'Nenhuma mensagem ainda. Comece a conversa! 💬';
         messagesInnerEl.appendChild(emptyMsg);
         scrollMessagesToBottom(true);
@@ -691,6 +692,13 @@ try {
         // Balão de mensagem
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${mine ? 'sent' : 'received'}`;
+
+        const senderNameEl = document.createElement('div');
+        senderNameEl.className = `message-sender ${mine ? 'sent' : 'received'}`;
+        senderNameEl.textContent = mine
+          ? (data.senderName || CURRENT_USER.name || 'Você')
+          : (data.senderName || data.userName || 'Remetente');
+        bubble.appendChild(senderNameEl);
 
         if (imageUrl) {
           const mediaEl = document.createElement('img');
@@ -905,7 +913,7 @@ try {
       uiManager.state.selectedUserId = GENERAL_CHAT_ID;
       uiManager.focusMessageInput();
       chatWithNameEl.textContent = 'Chat Geral';
-      chatAvatarWrapEl.innerHTML = '<div class="h-11 w-11 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
+      chatAvatarWrapEl.innerHTML = '<div class="h-11 w-11 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
       typingIndicatorEl.classList.add('hidden');
       updateHeaderPresence(true, 'Canal geral online');
 
@@ -1290,7 +1298,7 @@ try {
         // Renderizar lista vazia
         messagesInnerEl.innerHTML = '';
         const emptyMsg = document.createElement('div');
-        emptyMsg.className = 'flex min-h-full items-center justify-center text-center text-sm text-pink-100/50';
+        emptyMsg.className = 'flex min-h-full items-center justify-center text-center text-sm text-slate-300';
         emptyMsg.innerHTML = '<span>🧹 Chat limpo por <strong>' + esc(CURRENT_USER.name) + '</strong></span>';
         messagesInnerEl.appendChild(emptyMsg);
       } catch (err) {
@@ -1359,10 +1367,17 @@ try {
     // Para liberar o domínio https://crm.quimbanda.jp no ambiente legado/bucket do Google Cloud,
     // rode no Cloud Console: gsutil cors set cors.json gs://seu-bucket
     function buildPublicUploadUrl(pathOrUrl) {
+      const canonicalBase = 'https://crm.quimbanda.jp';
       try {
-        return new URL(pathOrUrl, `${window.location.origin}/`).toString();
+        const normalized = new URL(pathOrUrl, `${window.location.origin}/`);
+        const normalizedPath = normalized.pathname.startsWith('/chat_uploads/')
+          ? normalized.pathname
+          : `/chat_uploads/${(normalized.pathname.split('/').pop() || '').replace(/^\/+/, '')}`;
+        return `${canonicalBase}${normalizedPath}`;
       } catch (_) {
-        return pathOrUrl;
+        const fallbackPath = String(pathOrUrl || '').replace(/^https?:\/\/[^/]+/i, '');
+        const fileName = fallbackPath.split('/').pop() || '';
+        return fileName ? `${canonicalBase}/chat_uploads/${fileName}` : pathOrUrl;
       }
     }
 
@@ -1486,7 +1501,7 @@ try {
       const mime = String(file.type || '');
       const url = URL.createObjectURL(file);
 
-      let mediaHtml = `<div class="text-sm text-pink-100 mb-2">${esc(file.name || 'Arquivo')}</div>`;
+      let mediaHtml = `<div class="text-sm text-white mb-2">${esc(file.name || 'Arquivo')}</div>`;
       if (mime.startsWith('image/')) {
         mediaHtml += `<img src="${esc(url)}" class="rounded-lg max-h-48 max-w-full object-contain" />`;
       } else if (mime.startsWith('video/')) {
@@ -1494,13 +1509,13 @@ try {
       } else if (mime.startsWith('audio/')) {
         mediaHtml += `<audio controls class="max-w-full"><source src="${esc(url)}" /></audio>`;
       } else {
-        mediaHtml += '<div class="text-xs text-pink-100/70">Arquivo pronto para envio.</div>';
+        mediaHtml += '<div class="text-xs text-slate-300">Arquivo pronto para envio.</div>';
       }
 
       mediaHtml += `
         <div class="flex gap-2 mt-3">
-          <button id="sendPreviewBtn" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-sm font-semibold">Enviar anexo</button>
-          <button id="cancelPreviewBtn" class="px-3 py-1.5 rounded-lg border border-fuchsia-500/40 text-sm">Cancelar</button>
+          <button id="sendPreviewBtn" class="px-3 py-1.5 rounded-lg bg-red-700 hover:bg-red-600 text-sm font-semibold text-white">Enviar anexo</button>
+          <button id="cancelPreviewBtn" class="px-3 py-1.5 rounded-lg border border-slate-500 text-sm text-slate-200">Cancelar</button>
         </div>
       `;
 

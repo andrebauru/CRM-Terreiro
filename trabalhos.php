@@ -268,7 +268,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         const data = await res.json();
         const atts = data.data || [];
         atendimentoSelect.innerHTML = '<option value="">Nenhum</option>' +
-          atts.map(a => `<option value="${a.id}">${a.services || 'Atendimento'} — ${formatBRLOrZero(String(a.total_amount))}</option>`).join('');
+          atts.map(a => `<option value="${a.id}">${a.services || 'Atendimento'} — ${formatCurrency(a.total_amount)}</option>`).join('');
       } catch (e) { /* ignore */ }
     });
 
