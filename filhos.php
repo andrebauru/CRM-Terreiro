@@ -12,7 +12,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Filhos da Casa</h1>
-          <p class="text-slate-500">Gestão de cadastro e grau hierárquico</p>
+          <p class="text-slate-500">Gestão de cadastro e status de quimbanda</p>
         </div>
         <button id="openModal" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold hover:bg-red-800">
           <i class="fa-solid fa-plus mr-2"></i>Novo Filho
@@ -32,7 +32,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <thead class="text-slate-500 border-b border-slate-100">
               <tr>
                 <th class="text-left pb-3">Nome</th>
-                <th class="text-left pb-3">Grau</th>
+                <th class="text-left pb-3">Status</th>
                 <th class="text-left pb-3">Entidade / Orixás</th>
                 <th class="text-left pb-3">Mensalidade</th>
                 <th class="text-left pb-3">Telefone</th>
@@ -80,14 +80,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-medium text-slate-700">Grau Espiritual</label>
-            <select id="filhoGrade" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-              <option>Probatório</option>
-              <option>Iniciação</option>
-              <option>1º Grau</option>
-              <option>2º Grau</option>
-              <option>3º Grau</option>
-              <option>Mestre</option>
+            <label class="text-sm font-medium text-slate-700">Status de Quimbanda</label>
+            <select id="filhoStatusQuimbanda" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
+              <option value="Probatorio">Probatorio</option>
+              <option value="Iniciado">Iniciado</option>
+              <option value="Tata">Tata</option>
             </select>
           </div>
           <div>
@@ -101,6 +98,20 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <div id="saiuAtWrap" class="hidden">
           <label class="text-sm font-medium text-slate-700">Data de Saída</label>
           <input id="filhoSaiuAt" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-slate-700">Data do Probatório</label>
+            <input id="filhoProbatorio" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-700">Nome do Iniciador</label>
+            <input id="filhoNomeIniciador" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Ex: Tata João" />
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Entidade que Reconheceu</label>
+          <input id="filhoEntidadeReconheceu" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Ex: Exu Tranca Rua" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Entidade de Frente</label>
@@ -185,9 +196,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const filhoName           = document.getElementById('filhoName');
     const filhoEmail          = document.getElementById('filhoEmail');
     const filhoPhone          = document.getElementById('filhoPhone');
-    const filhoGrade          = document.getElementById('filhoGrade');
+    const filhoStatusQuimbanda = document.getElementById('filhoStatusQuimbanda');
     const filhoStatus         = document.getElementById('filhoStatus');
     const filhoSaiuAt         = document.getElementById('filhoSaiuAt');
+    const filhoProbatorio     = document.getElementById('filhoProbatorio');
+    const filhoNomeIniciador  = document.getElementById('filhoNomeIniciador');
+    const filhoEntidadeReconheceu = document.getElementById('filhoEntidadeReconheceu');
     const filhoMensalidade    = document.getElementById('filhoMensalidade');
     const filhoDueDay         = document.getElementById('filhoDueDay');
     const filhoNotes          = document.getElementById('filhoNotes');
@@ -211,9 +225,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       filhoName.value          = '';
       filhoEmail.value         = '';
       filhoPhone.value         = '';
-      filhoGrade.value         = 'Iniciação';
+      filhoStatusQuimbanda.value = 'Probatorio';
       filhoStatus.value        = 'ativo';
       filhoSaiuAt.value        = '';
+      filhoProbatorio.value    = '';
+      filhoNomeIniciador.value = '';
+      filhoEntidadeReconheceu.value = '';
       filhoMensalidade.value   = '';
       filhoDueDay.value        = '5';
       filhoIsento.checked      = false;
@@ -231,23 +248,23 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       return digits.startsWith('81') ? `https://wa.me/${digits}` : `https://wa.me/81${digits}`;
     };
 
-    const gradeColor = (grade) => {
+    const statusColor = (statusQuimbanda) => {
       const map = {
-        'Probatório': 'bg-slate-100 text-slate-600',
-        'Iniciação':  'bg-blue-100 text-blue-700',
-        '1º Grau':    'bg-green-100 text-green-700',
-        '2º Grau':    'bg-yellow-100 text-yellow-700',
-        '3º Grau':    'bg-orange-100 text-orange-700',
-        'Mestre':     'bg-red-100 text-red-700',
+        'Probatorio': 'bg-slate-100 text-slate-600',
+        'Iniciado':   'bg-blue-100 text-blue-700',
+        'Tata':       'bg-red-100 text-red-700',
       };
-      return map[grade] || 'bg-slate-100 text-slate-600';
+      return map[statusQuimbanda] || 'bg-slate-100 text-slate-600';
     };
+
+    const statusLabel = (statusQuimbanda) => statusQuimbanda || 'Probatorio';
 
     const renderFilhos = (rows) => {
       filhosTable.innerHTML = rows.length
         ? rows.map(filho => {
             const saiu = filho.status === 'saiu';
             const entOrixas = [filho.entidade_frente, filho.orixa_pai, filho.orixa_mae].filter(Boolean).join(' · ') || '—';
+            const quimbandaStatus = statusLabel(filho.status_quimbanda);
             return `
             <tr class="border-t border-slate-100 hover:bg-red-50 cursor-pointer transition-colors ${saiu ? 'opacity-50' : ''}" data-id="${filho.id}">
               <td class="py-3 font-medium">
@@ -255,7 +272,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 ${saiu ? '<span class="ml-2 text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">saiu</span>' : ''}
               </td>
               <td class="py-3">
-                <span class="px-2 py-0.5 rounded-full text-xs font-bold ${gradeColor(filho.grade)}">${filho.grade}</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold ${statusColor(quimbandaStatus)}">${quimbandaStatus}</span>
               </td>
               <td class="py-3 text-slate-500 text-xs">${entOrixas}</td>
               <td class="py-3">${saiu ? '—' : (parseInt(filho.isento_mensalidade) ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatBRL(String(filho.mensalidade_value || 0)))}</td>
@@ -320,9 +337,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       filhoName.value            = filho.name || '';
       filhoEmail.value           = filho.email || '';
       filhoPhone.value           = filho.phone || '';
-      filhoGrade.value           = filho.grade || 'Iniciação';
+      filhoStatusQuimbanda.value = filho.status_quimbanda || 'Probatorio';
       filhoStatus.value          = filho.status || 'ativo';
       filhoSaiuAt.value          = filho.saiu_at || '';
+      filhoProbatorio.value      = filho.probatorio || '';
+      filhoNomeIniciador.value   = filho.nome_iniciador || '';
+      filhoEntidadeReconheceu.value = filho.entidade_reconheceu || '';
       filhoMensalidade.value     = formatBRL(String(filho.mensalidade_value || ''));
       filhoDueDay.value          = filho.due_day || 5;
       filhoIsento.checked        = parseInt(filho.isento_mensalidade) === 1;
@@ -375,9 +395,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
              </div>`
           : '';
 
+        const quimbandaStatus = statusLabel(currentFilho.status_quimbanda);
         document.getElementById('detalheBody').innerHTML = `
-          ${row2('Grau', `<span class="px-2 py-0.5 rounded-full text-xs font-bold ${gradeColor(currentFilho.grade)}">${currentFilho.grade}</span>`)}
-          ${row2('Data do Grau', fmtDate(currentFilho.grade_date))}
+          ${row2('Status', `<span class="px-2 py-0.5 rounded-full text-xs font-bold ${statusColor(quimbandaStatus)}">${quimbandaStatus}</span>`) }
+          ${row2('Data do Probatório', fmtDate(currentFilho.probatorio))}
+          ${currentFilho.nome_iniciador ? row2('Iniciador', currentFilho.nome_iniciador) : ''}
+          ${currentFilho.entidade_reconheceu ? row2('Entidade que Reconheceu', currentFilho.entidade_reconheceu) : ''}
           ${currentFilho.entidade_frente ? row2('Entidade de Frente', currentFilho.entidade_frente) : ''}
           ${currentFilho.orixa_pai ? row2('Orixá Pai', currentFilho.orixa_pai) : ''}
           ${currentFilho.orixa_mae ? row2('Orixá Mãe', currentFilho.orixa_mae) : ''}
@@ -413,7 +436,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         name:             filhoName.value,
         email:            filhoEmail.value,
         phone:            filhoPhone.value,
-        grade:            filhoGrade.value,
+        status_quimbanda: filhoStatusQuimbanda.value,
+        probatorio:       filhoProbatorio.value,
+        nome_iniciador:   filhoNomeIniciador.value,
+        entidade_reconheceu: filhoEntidadeReconheceu.value,
         status:           filhoStatus.value,
         saiu_at:          filhoSaiuAt.value,
         mensalidade_value: parseBRL(filhoMensalidade.value),

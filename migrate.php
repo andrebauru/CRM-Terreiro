@@ -210,13 +210,13 @@ try {
         "CREATE TABLE IF NOT EXISTS quimbandeiro (
             id             INT AUTO_INCREMENT PRIMARY KEY,
             filho_id       INT NOT NULL UNIQUE,
+            status_quimbanda ENUM('Probatorio','Iniciado','Tata') NOT NULL DEFAULT 'Probatorio',
             probatorio     DATE DEFAULT NULL,
             link_iniciacao VARCHAR(512) DEFAULT NULL,
             mao_buzios     DATE DEFAULT NULL,
             mao_faca       DATE DEFAULT NULL,
-            grau1          DATE DEFAULT NULL,
-            grau2          DATE DEFAULT NULL,
-            grau3          DATE DEFAULT NULL,
+            nome_iniciador VARCHAR(255) DEFAULT NULL,
+            entidade_reconheceu VARCHAR(255) DEFAULT NULL,
             created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (filho_id) REFERENCES filhos(id) ON DELETE CASCADE
@@ -500,17 +500,17 @@ try {
            AND f.id IS NULL"
     );
 
-    $pdo->exec(
-        "INSERT INTO quimbandeiro (filho_id, probatorio)
-         SELECT f.id, COALESCE(f.grade_date, CURDATE())
-         FROM filhos f
-         JOIN users u ON u.email = f.email
-         LEFT JOIN quimbandeiro q ON q.filho_id = f.id
-         WHERE u.role = 'user'
-           AND u.email IS NOT NULL
-           AND u.email <> ''
-           AND q.filho_id IS NULL"
-    );
+        $pdo->exec(
+                "INSERT INTO quimbandeiro (filho_id, status_quimbanda, probatorio)
+                 SELECT f.id, 'Probatorio', COALESCE(f.grade_date, CURDATE())
+                 FROM filhos f
+                 JOIN users u ON u.email = f.email
+                 LEFT JOIN quimbandeiro q ON q.filho_id = f.id
+                 WHERE u.role = 'user'
+                     AND u.email IS NOT NULL
+                     AND u.email <> ''
+                     AND q.filho_id IS NULL"
+        );
 
     echo "OK — migrations concluídas com sucesso.\n";
 } catch (Throwable $e) {

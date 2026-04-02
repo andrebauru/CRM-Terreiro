@@ -20,7 +20,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold">Quimbandeiro</h1>
-          <p class="text-slate-500">Acompanhamento de graus e iniciações dos filhos</p>
+          <p class="text-slate-500">Acompanhamento de status, iniciações e reconhecimento dos membros</p>
         </div>
         <button id="openAddModal" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold hover:bg-red-800">
           <i class="fa-solid fa-plus mr-2"></i>Novo Registro
@@ -38,17 +38,17 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
       <section class="bg-white/90 backdrop-blur border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/40 overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-sm min-w-[800px]">
+          <table class="w-full text-sm min-w-[900px]">
             <thead class="bg-black text-white">
               <tr>
                 <th class="text-left px-4 py-3 font-bold">Filho</th>
+                <th class="text-left px-3 py-3 font-bold">Status</th>
                 <th class="text-center px-3 py-3 font-bold">Probatório</th>
                 <th class="text-center px-3 py-3 font-bold">Iniciação</th>
                 <th class="text-center px-3 py-3 font-bold">Mão de Búzios</th>
                 <th class="text-center px-3 py-3 font-bold">Mão de Faca</th>
-                <th class="text-center px-3 py-3 font-bold">1º Grau</th>
-                <th class="text-center px-3 py-3 font-bold">2º Grau</th>
-                <th class="text-center px-3 py-3 font-bold">3º Grau</th>
+                <th class="text-left px-3 py-3 font-bold">Iniciador</th>
+                <th class="text-left px-3 py-3 font-bold">Entidade</th>
                 <th class="text-right px-4 py-3 font-bold">Ação</th>
               </tr>
             </thead>
@@ -71,7 +71,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         <h2 class="text-lg font-bold text-black">Quimbandeiro — <span id="modalFilhoName" class="text-red-600"></span></h2>
         <button id="closeModal" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
-      <p class="text-slate-400 text-xs mb-5">Preencha as datas de cada etapa concluída. Deixe em branco se ainda não realizado.</p>
+      <p class="text-slate-400 text-xs mb-5">Atualize o status do membro e registre quem iniciou e qual entidade reconheceu.</p>
       <form id="quimbandeiroForm" class="space-y-4">
         <input type="hidden" id="modalFilhoId" />
         <div id="filhoSelectRow" class="hidden">
@@ -83,6 +83,16 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </select>
         </div>
         <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <i class="fa-solid fa-user-shield text-red-600"></i> Status Quimbanda
+            </label>
+            <select id="qStatusQuimbanda" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+              <option value="Probatorio">Probatório</option>
+              <option value="Iniciado">Iniciado</option>
+              <option value="Tata">Tata</option>
+            </select>
+          </div>
           <div>
             <label class="text-sm font-bold text-slate-700 flex items-center gap-2">
               <i class="fa-solid fa-clipboard-check text-red-600"></i> Probatório
@@ -109,21 +119,15 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           </div>
           <div>
             <label class="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <i class="fa-solid fa-star text-red-600"></i> 1º Grau
+              <i class="fa-solid fa-user-pen text-red-600"></i> Nome de quem Iniciou
             </label>
-            <input id="qGrau1" type="date" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+            <input id="qNomeIniciador" type="text" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Nome do iniciador" />
           </div>
           <div>
             <label class="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <i class="fa-solid fa-star text-red-600"></i><i class="fa-solid fa-star text-red-600 -ml-1"></i> 2º Grau
+              <i class="fa-solid fa-sparkles text-red-600"></i> Entidade que reconheceu
             </label>
-            <input id="qGrau2" type="date" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-          </div>
-          <div class="col-span-2">
-            <label class="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <i class="fa-solid fa-crown text-red-600"></i> 3º Grau
-            </label>
-            <input id="qGrau3" type="date" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+            <input id="qEntidadeReconheceu" type="text" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Ex: Exu Tranca-Rua" />
           </div>
         </div>
         <div class="flex justify-end gap-2 pt-2">
@@ -190,18 +194,27 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         quimbanceiroTable.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-400">Nenhum filho cadastrado.</td></tr>';
         return;
       }
+      const statusBadge = (status) => {
+        const map = {
+          Probatorio: 'bg-slate-100 text-slate-700',
+          Iniciado: 'bg-blue-100 text-blue-700',
+          Tata: 'bg-rose-100 text-rose-700',
+        };
+        const label = status || 'Probatorio';
+        return `<span class="px-2 py-0.5 rounded-full text-xs font-bold ${map[label] || map.Probatorio}">${label}</span>`;
+      };
       quimbanceiroTable.innerHTML = quimCache.map(f => `
         <tr class="border-t border-slate-100 hover:bg-red-50 cursor-pointer transition-colors" data-id="${f.id}">
           <td class="py-3 px-4 font-medium">${f.name}</td>
+          <td class="py-3 px-3">${statusBadge(f.status_quimbanda)}</td>
           ${dotCell(f.probatorio)}
           ${dotCell(f.link_iniciacao ? '1' : null)}
           ${dotCell(f.mao_buzios)}
           ${dotCell(f.mao_faca)}
-          ${dotCell(f.grau1)}
-          ${dotCell(f.grau2)}
-          ${dotCell(f.grau3)}
+          <td class="py-3 px-3 text-xs text-slate-600">${f.nome_iniciador || '—'}</td>
+          <td class="py-3 px-3 text-xs text-slate-600">${f.entidade_reconheceu || '—'}</td>
           <td class="py-3 px-4 text-right">
-            <button class="text-red-600 hover:text-red-800 font-bold text-xs px-3 py-1 rounded-lg bg-red-50 hover:bg-red-100" data-edit="${f.id}" onclick="event.stopPropagation()">
+            <button type="button" class="edit-btn text-red-600 hover:text-red-800 font-bold text-xs px-3 py-1 rounded-lg bg-red-50 hover:bg-red-100" data-id="${f.id}" data-edit="${f.id}" onclick="event.stopPropagation()">
               <i class="fa-solid fa-pen mr-1"></i>Editar
             </button>
           </td>
@@ -217,14 +230,15 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('qLinkIniciacao').value = f.link_iniciacao || '';
       document.getElementById('qMaoBuzios').value = f.mao_buzios ? f.mao_buzios.split('T')[0] : '';
       document.getElementById('qMaoFaca').value = f.mao_faca ? f.mao_faca.split('T')[0] : '';
-      document.getElementById('qGrau1').value = f.grau1 ? f.grau1.split('T')[0] : '';
-      document.getElementById('qGrau2').value = f.grau2 ? f.grau2.split('T')[0] : '';
-      document.getElementById('qGrau3').value = f.grau3 ? f.grau3.split('T')[0] : '';
+      document.getElementById('qStatusQuimbanda').value = f.status_quimbanda || 'Probatorio';
+      document.getElementById('qNomeIniciador').value = f.nome_iniciador || '';
+      document.getElementById('qEntidadeReconheceu').value = f.entidade_reconheceu || '';
       toggleModal(modal, true);
     };
 
     quimbanceiroTable.addEventListener('click', (e) => {
-      const editId = e.target.closest('[data-edit]')?.dataset.edit;
+      const editBtn = e.target.closest('.edit-btn,[data-edit]');
+      const editId = editBtn?.dataset.id || editBtn?.dataset.edit;
       const row = e.target.closest('tr[data-id]');
 
       if (editId) {
@@ -245,6 +259,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('detalheNome').textContent = f.name;
         document.getElementById('detalheBody').innerHTML = `
           <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+            <span class="text-slate-500 font-medium">Status</span><span class="font-bold text-red-700">${f.status_quimbanda || 'Probatorio'}</span>
+          </div>
+          <div class="flex justify-between items-center border-b border-slate-100 pb-2">
             <span class="text-slate-500 font-medium">Probatório</span>${defLabel(f.probatorio)}
           </div>
           <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -258,13 +275,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <span class="text-slate-500 font-medium">Mão de Faca</span>${defLabel(f.mao_faca)}
           </div>
           <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <span class="text-slate-500 font-medium">1º Grau</span>${defLabel(f.grau1)}
+            <span class="text-slate-500 font-medium">Nome de quem Iniciou</span><span>${f.nome_iniciador || 'Pendente'}</span>
           </div>
           <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <span class="text-slate-500 font-medium">2º Grau</span>${defLabel(f.grau2)}
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-slate-500 font-medium">3º Grau</span>${defLabel(f.grau3)}
+            <span class="text-slate-500 font-medium">Entidade que reconheceu</span><span>${f.entidade_reconheceu || 'Pendente'}</span>
           </div>
         `;
         toggleModal(detalheModal, true);
@@ -302,9 +316,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('qLinkIniciacao').value = '';
       document.getElementById('qMaoBuzios').value = '';
       document.getElementById('qMaoFaca').value = '';
-      document.getElementById('qGrau1').value = '';
-      document.getElementById('qGrau2').value = '';
-      document.getElementById('qGrau3').value = '';
+      document.getElementById('qStatusQuimbanda').value = 'Probatorio';
+      document.getElementById('qNomeIniciador').value = '';
+      document.getElementById('qEntidadeReconheceu').value = '';
       toggleModal(modal, true);
     };
 
@@ -329,9 +343,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         link_iniciacao: document.getElementById('qLinkIniciacao').value,
         mao_buzios: document.getElementById('qMaoBuzios').value,
         mao_faca: document.getElementById('qMaoFaca').value,
-        grau1: document.getElementById('qGrau1').value,
-        grau2: document.getElementById('qGrau2').value,
-        grau3: document.getElementById('qGrau3').value,
+        status_quimbanda: document.getElementById('qStatusQuimbanda').value,
+        nome_iniciador: document.getElementById('qNomeIniciador').value,
+        entidade_reconheceu: document.getElementById('qEntidadeReconheceu').value,
       });
       fetch('api/quimbandeiro.php', { method: 'POST', body })
         .then(() => { toggleModal(modal, false); loadQuimbandeiro(); });

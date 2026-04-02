@@ -21,6 +21,7 @@ try {
     }
 }
 ?>
+
 <link rel="stylesheet" href="assets/css/chat-style.css">
 <body class="bg-slate-950 font-sans text-slate-100 overflow-hidden">
   <style>

@@ -500,6 +500,10 @@ function runAutoMigrate(PDO $pdo): void
         ensureColumn($pdo, 'financial_transactions', 'receipt_path', 'VARCHAR(512) NULL');
 
         try {
+            ensureColumn($pdo, 'quimbandeiro', 'status_quimbanda', "ENUM('Probatorio','Iniciado','Tata') NOT NULL DEFAULT 'Probatorio'");
+            ensureColumn($pdo, 'quimbandeiro', 'nome_iniciador', 'VARCHAR(255) NULL');
+            ensureColumn($pdo, 'quimbandeiro', 'entidade_reconheceu', 'VARCHAR(255) NULL');
+
             // Backfill: usuários existentes (role=user) viram membros probatórios
             // Regra: se email já existir em filhos, não migra aquele usuário.
             $pdo->exec(
@@ -513,17 +517,17 @@ function runAutoMigrate(PDO $pdo): void
                    AND f.id IS NULL"
             );
 
-            $pdo->exec(
-                "INSERT INTO quimbandeiro (filho_id, probatorio)
-                 SELECT f.id, COALESCE(f.grade_date, CURDATE())
-                 FROM filhos f
-                 JOIN users u ON u.email = f.email
-                 LEFT JOIN quimbandeiro q ON q.filho_id = f.id
-                 WHERE u.role = 'user'
-                   AND u.email IS NOT NULL
-                   AND u.email <> ''
-                   AND q.filho_id IS NULL"
-            );
+                        $pdo->exec(
+                                "INSERT INTO quimbandeiro (filho_id, probatorio, status_quimbanda)
+                                 SELECT f.id, COALESCE(f.grade_date, CURDATE()), 'Probatorio'
+                                 FROM filhos f
+                                 JOIN users u ON u.email = f.email
+                                 LEFT JOIN quimbandeiro q ON q.filho_id = f.id
+                                 WHERE u.role = 'user'
+                                     AND u.email IS NOT NULL
+                                     AND u.email <> ''
+                                     AND q.filho_id IS NULL"
+                        );
         } catch (Throwable $e) {
             // ignora falhas de backfill para não bloquear carregamento de página
         }
