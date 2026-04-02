@@ -134,6 +134,60 @@ function ensureColumn(PDO $pdo, string $table, string $column, string $definitio
     }
 }
 
+function hasTable(PDO $pdo, string $table): bool
+{
+    static $cache = [];
+    if (array_key_exists($table, $cache)) {
+        return $cache[$table];
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM information_schema.TABLES
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?"
+    );
+    $stmt->execute([$table]);
+    $cache[$table] = (int)$stmt->fetchColumn() > 0;
+
+    return $cache[$table];
+}
+
+function hasColumn(PDO $pdo, string $table, string $column): bool
+{
+    static $cache = [];
+    $key = $table . '.' . $column;
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?"
+    );
+    $stmt->execute([$table, $column]);
+    $cache[$key] = (int)$stmt->fetchColumn() > 0;
+
+    return $cache[$key];
+}
+
+function getColumnType(PDO $pdo, string $table, string $column): ?string
+{
+    static $cache = [];
+    $key = $table . '.' . $column;
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?"
+    );
+    $stmt->execute([$table, $column]);
+    $value = $stmt->fetchColumn();
+    $cache[$key] = $value !== false ? (string)$value : null;
+
+    return $cache[$key];
+}
+
 function ensureEnumHasValue(PDO $pdo, string $table, string $column, string $newDefinition, string $markerValue): void
 {
     $stmt = $pdo->prepare(

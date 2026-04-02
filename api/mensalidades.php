@@ -7,6 +7,13 @@ require_once __DIR__ . '/_auth_guard.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
+function mensalidadesStatusExpr(PDO $pdo): string
+{
+    return hasColumn($pdo, 'quimbandeiro', 'status_quimbanda')
+        ? 'COALESCE(q.status_quimbanda, f.grade)'
+        : 'f.grade';
+}
+
 function monthStart(DateTime $date): string
 {
     return $date->format('Y-m-01');
@@ -67,10 +74,11 @@ try {
     if ($action === 'list') {
         // Monthly auto from filhos
         $stmt = $pdo->prepare(
-            "SELECT f.id, f.name, f.grade, f.phone, f.mensalidade_value, f.due_day,
+                        "SELECT f.id, f.name, " . mensalidadesStatusExpr($pdo) . " AS status_quimbanda, f.phone, f.mensalidade_value, f.due_day,
                     f.isento_mensalidade,
                     p.id AS payment_id, p.paid_month, p.paid_at
              FROM filhos f
+                         LEFT JOIN quimbandeiro q ON q.filho_id = f.id
              LEFT JOIN mensalidades_pagas p
                ON p.filho_id = f.id AND p.paid_month = ?
              WHERE COALESCE(f.status, 'ativo') = 'ativo'
@@ -90,7 +98,8 @@ try {
                 'type'              => 'mensal',
                 'id'                => $row['id'],
                 'name'              => $row['name'],
-                'grade'             => $row['grade'],
+                'status_quimbanda'  => $row['status_quimbanda'],
+                'grade'             => $row['status_quimbanda'],
                 'phone'             => $row['phone'],
                 'mensalidade_value' => (int)$row['mensalidade_value'],
                 'due_day'           => (int)$row['due_day'],
@@ -208,7 +217,13 @@ try {
     }
 
     if ($action === 'list_filhos') {
-        $stmt = $pdo->query('SELECT id, name, grade FROM filhos ORDER BY name ASC');
+        $stmt = $pdo->query(
+            'SELECT f.id, f.name, ' . mensalidadesStatusExpr($pdo) . ' AS status_quimbanda,
+                ' . mensalidadesStatusExpr($pdo) . ' AS grade
+             FROM filhos f
+             LEFT JOIN quimbandeiro q ON q.filho_id = f.id
+             ORDER BY f.name ASC'
+        );
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
 

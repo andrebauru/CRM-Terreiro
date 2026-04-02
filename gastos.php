@@ -196,7 +196,7 @@ $isJpyCurrency = strtoupper((string)($_crmCurrCode ?? 'JPY')) === 'JPY';
     const gastosIsJpy = gastosCurrencyCode === 'JPY';
 
     function formatMoneyCents(cents) {
-      return formatBRLOrZero(String(cents || 0));
+      return formatCurrency(String(cents || 0));
     }
 
     function parseCurrency(str) {
@@ -208,6 +208,14 @@ $isJpyCurrency = strtoupper((string)($_crmCurrCode ?? 'JPY')) === 'JPY';
     }
 
     function formatMoneyInput(value) {
+      if (gastosIsJpy) {
+      const digits = String(value || '').replace(/[^\d-]/g, '');
+        if (!digits || digits === '-') return '';
+        const negative = digits.startsWith('-');
+        const numeric = Number.parseInt(digits.replace('-', ''), 10);
+        if (Number.isNaN(numeric)) return '';
+        return `${negative ? '-' : ''}${gastosCurrencySymbol}${numeric.toLocaleString('ja-JP')}`;
+      }
       return formatBRL(value);
     }
 

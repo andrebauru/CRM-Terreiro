@@ -112,7 +112,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const sourceFilter = document.getElementById('sourceFilter');
     const gradeFilter = document.getElementById('gradeFilter');
 
-    const formatBRLAmt = (value) => formatBRLOrZero(String(value || 0));
+    const formatCurrencyValue = (value) => formatCurrency(String(value || 0));
 
     const loadServices = async () => {
       const response = await fetch('api/reports.php?action=bootstrap', { cache: 'no-store' });
@@ -142,11 +142,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <td class="py-3">${row.client_name}</td>
           <td class="py-3">${row.services || '-'}</td>
           <td class="py-3">${row.payment_type === 'cash' ? 'À Vista' : 'Parcelado'}</td>
-          <td class="py-3 text-right">${formatBRLAmt(row.total_amount)}</td>
+          <td class="py-3 text-right">${formatCurrencyValue(row.total_amount)}</td>
         </tr>
       `);
       reportsTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="5">Nenhum registro.</td></tr>';
-      totalSum.textContent = `Total: ${formatBRLAmt(data.total || 0)}`;
+      totalSum.textContent = `Total: ${formatCurrencyValue(data.total || 0)}`;
     };
 
     reportForm.addEventListener('submit', (event) => {

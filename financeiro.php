@@ -439,7 +439,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const financeiroIsJpy = financeiroCurrencyCode === 'JPY';
 
     function formatMoneyCents(cents) {
-      return formatBRLOrZero(String(cents || 0));
+      return formatCurrency(String(cents || 0));
     }
 
     function parseCurrency(str) {
@@ -451,6 +451,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     }
 
     function formatMoneyInput(value) {
+      if (financeiroIsJpy) {
+        const digits = String(value || '').replace(/[^\d-]/g, '');
+        if (!digits || digits === '-') return '';
+        const negative = digits.startsWith('-');
+        const numeric = Number.parseInt(digits.replace('-', ''), 10);
+        if (Number.isNaN(numeric)) return '';
+        return `${negative ? '-' : ''}${financeiroCurrencySymbol}${numeric.toLocaleString('ja-JP')}`;
+      }
       return formatBRL(value);
     }
 
@@ -996,8 +1004,8 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <td class="px-4 py-3 font-medium">${e.descricao}</td>
             <td class="px-4 py-3 capitalize text-slate-500">${e.origem}</td>
             <td class="px-4 py-3">${e.data_entrada}</td>
-            <td class="px-4 py-3 text-right font-semibold text-green-600">${formatBRLCents(e.valor)}</td>
-            <td class="px-4 py-3 text-right text-amber-600">${formatBRLCents(Math.round(e.valor * 0.10))}</td>
+            <td class="px-4 py-3 text-right font-semibold text-green-600">${formatMoneyCents(e.valor)}</td>
+            <td class="px-4 py-3 text-right text-amber-600">${formatMoneyCents(Math.round(e.valor * 0.10))}</td>
             <td class="px-4 py-3 text-right">
               <div class="flex gap-1 justify-end">
                 <button onclick="openEntradaModal(${e.id},'${esc(e.descricao)}','${e.origem}',${e.valor},'${e.data_entrada}')" class="px-2 py-1 rounded text-xs bg-slate-100 text-slate-600 font-bold hover:bg-slate-200">Editar</button>
@@ -1012,7 +1020,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       document.getElementById('modalEntradaTitulo').textContent = id ? 'Editar Entrada' : 'Nova Entrada';
       document.getElementById('entradaDescricao').value = descricao || '';
       document.getElementById('entradaOrigem').value = origem || 'manual';
-      document.getElementById('entradaValor').value = id ? formatBRL(String(valor)) : '';
+      document.getElementById('entradaValor').value = id ? formatMoneyInput(String(valor)) : '';
       document.getElementById('entradaData').value = data || new Date().toISOString().slice(0, 10);
       document.getElementById('modalEntrada').classList.remove('hidden');
     }
@@ -1055,9 +1063,9 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-3">${c.data}</td>
             <td class="px-4 py-3">${c.descricao || c.entrada_descricao || '-'}</td>
-            <td class="px-4 py-3 text-right">${formatBRLCents(c.valor_original)}</td>
+            <td class="px-4 py-3 text-right">${formatMoneyCents(c.valor_original)}</td>
             <td class="px-4 py-3 text-right">${parseFloat(c.percentual).toFixed(0)}%</td>
-            <td class="px-4 py-3 text-right font-semibold text-amber-600">${formatBRLCents(c.valor_credito)}</td>
+            <td class="px-4 py-3 text-right font-semibold text-amber-600">${formatMoneyCents(c.valor_credito)}</td>
           </tr>`).join('');
     }
 
@@ -1069,11 +1077,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       }
 
       const totals = d.totals || {};
-      document.getElementById('adminTotalRealizado').textContent = formatBRLCents(totals.valor_total_realizado || 0);
-      document.getElementById('adminTotalImposto').textContent = formatBRLCents(totals.imposto_total || 0);
-      document.getElementById('adminTotalLiquido').textContent = formatBRLCents(totals.valor_liquido_total || 0);
-      document.getElementById('adminTotalPago').textContent = formatBRLCents(totals.valor_pago_total || 0);
-      document.getElementById('adminTotalPendente').textContent = formatBRLCents(totals.valor_pendente_total || 0);
+      document.getElementById('adminTotalRealizado').textContent = formatMoneyCents(totals.valor_total_realizado || 0);
+      document.getElementById('adminTotalImposto').textContent = formatMoneyCents(totals.imposto_total || 0);
+      document.getElementById('adminTotalLiquido').textContent = formatMoneyCents(totals.valor_liquido_total || 0);
+      document.getElementById('adminTotalPago').textContent = formatMoneyCents(totals.valor_pago_total || 0);
+      document.getElementById('adminTotalPendente').textContent = formatMoneyCents(totals.valor_pendente_total || 0);
 
       const body = document.getElementById('adminPayablesBody');
       body.innerHTML = (d.data || []).length === 0
@@ -1085,11 +1093,11 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <div class="text-xs text-slate-500">${m.medium_phone || '-'}</div>
             </td>
             <td class="px-4 py-3 text-center text-slate-600">${m.total_transacoes || 0}</td>
-            <td class="px-4 py-3 text-right font-semibold">${formatBRLCents(m.valor_total_realizado || 0)}</td>
-            <td class="px-4 py-3 text-right text-rose-600">${formatBRLCents(m.imposto_total || 0)}</td>
-            <td class="px-4 py-3 text-right font-semibold text-blue-700">${formatBRLCents(m.valor_liquido_medium || 0)}</td>
-            <td class="px-4 py-3 text-right text-green-600">${formatBRLCents(m.valor_pago || 0)}</td>
-            <td class="px-4 py-3 text-right font-bold ${(m.valor_pendente || 0) > 0 ? 'text-amber-600' : 'text-slate-400'}">${formatBRLCents(m.valor_pendente || 0)}</td>
+            <td class="px-4 py-3 text-right font-semibold">${formatMoneyCents(m.valor_total_realizado || 0)}</td>
+            <td class="px-4 py-3 text-right text-rose-600">${formatMoneyCents(m.imposto_total || 0)}</td>
+            <td class="px-4 py-3 text-right font-semibold text-blue-700">${formatMoneyCents(m.valor_liquido_medium || 0)}</td>
+            <td class="px-4 py-3 text-right text-green-600">${formatMoneyCents(m.valor_pago || 0)}</td>
+            <td class="px-4 py-3 text-right font-bold ${(m.valor_pendente || 0) > 0 ? 'text-amber-600' : 'text-slate-400'}">${formatMoneyCents(m.valor_pendente || 0)}</td>
             <td class="px-4 py-3 text-xs text-slate-500">${m.ultima_transacao || '-'}</td>
           </tr>`).join('');
     }

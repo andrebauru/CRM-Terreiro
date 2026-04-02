@@ -5,6 +5,38 @@ require_once __DIR__ . '/_auth_guard.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
+function quimbandaSelectField(PDO $pdo, string $column, string $fallback = 'NULL'): string
+{
+    return hasColumn($pdo, 'quimbandeiro', $column) ? 'q.' . $column : $fallback . ' AS ' . $column;
+}
+
+function salvarQuimbandeiroCompat(PDO $pdo, int $filhoId, ?string $probatorio, ?string $linkIniciacao, ?string $maoBuzios, ?string $maoFaca, string $statusQuimbanda, ?string $nomeIniciador, ?string $entidadeReconheceu): void
+{
+    $columns = ['filho_id', 'probatorio', 'link_iniciacao', 'mao_buzios', 'mao_faca'];
+    $values = [$filhoId, $probatorio, $linkIniciacao, $maoBuzios, $maoFaca];
+    $updates = ['probatorio = VALUES(probatorio)', 'link_iniciacao = VALUES(link_iniciacao)', 'mao_buzios = VALUES(mao_buzios)', 'mao_faca = VALUES(mao_faca)'];
+
+    if (hasColumn($pdo, 'quimbandeiro', 'status_quimbanda')) {
+        $columns[] = 'status_quimbanda';
+        $values[] = $statusQuimbanda;
+        $updates[] = 'status_quimbanda = VALUES(status_quimbanda)';
+    }
+    if (hasColumn($pdo, 'quimbandeiro', 'nome_iniciador')) {
+        $columns[] = 'nome_iniciador';
+        $values[] = $nomeIniciador;
+        $updates[] = 'nome_iniciador = VALUES(nome_iniciador)';
+    }
+    if (hasColumn($pdo, 'quimbandeiro', 'entidade_reconheceu')) {
+        $columns[] = 'entidade_reconheceu';
+        $values[] = $entidadeReconheceu;
+        $updates[] = 'entidade_reconheceu = VALUES(entidade_reconheceu)';
+    }
+
+    $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+    $sql = 'INSERT INTO quimbandeiro (' . implode(', ', $columns) . ') VALUES (' . $placeholders . ') ON DUPLICATE KEY UPDATE ' . implode(', ', $updates);
+    $pdo->prepare($sql)->execute($values);
+}
+
 try {
     $pdo = db();
 
@@ -12,7 +44,9 @@ try {
         $stmt = $pdo->query(
             "SELECT f.id, f.name,
                     q.probatorio, q.link_iniciacao, q.mao_buzios, q.mao_faca,
-                    q.grau1, q.grau2, q.grau3
+                    " . quimbandaSelectField($pdo, 'status_quimbanda', "'Probatorio'") . ",
+                    " . quimbandaSelectField($pdo, 'nome_iniciador') . ",
+                    " . quimbandaSelectField($pdo, 'entidade_reconheceu') . "
              FROM filhos f
              LEFT JOIN quimbandeiro q ON q.filho_id = f.id
              WHERE (f.status IS NULL OR f.status = 'ativo')
@@ -41,23 +75,15 @@ try {
         $linkIniciacao = trim((string)($_POST['link_iniciacao'] ?? '')) ?: null;
         $maoBuzios     = trim((string)($_POST['mao_buzios'] ?? '')) ?: null;
         $maoFaca       = trim((string)($_POST['mao_faca'] ?? '')) ?: null;
-        $grau1         = trim((string)($_POST['grau1'] ?? '')) ?: null;
-        $grau2         = trim((string)($_POST['grau2'] ?? '')) ?: null;
-        $grau3         = trim((string)($_POST['grau3'] ?? '')) ?: null;
+        $statusQuimbanda = trim((string)($_POST['status_quimbanda'] ?? 'Probatorio')) ?: 'Probatorio';
+        $nomeIniciador = trim((string)($_POST['nome_iniciador'] ?? '')) ?: null;
+        $entidadeReconheceu = trim((string)($_POST['entidade_reconheceu'] ?? '')) ?: null;
 
-        $stmt = $pdo->prepare(
-            "INSERT INTO quimbandeiro (filho_id, probatorio, link_iniciacao, mao_buzios, mao_faca, grau1, grau2, grau3)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE
-                probatorio = VALUES(probatorio),
-                link_iniciacao = VALUES(link_iniciacao),
-                mao_buzios = VALUES(mao_buzios),
-                mao_faca = VALUES(mao_faca),
-                grau1 = VALUES(grau1),
-                grau2 = VALUES(grau2),
-                grau3 = VALUES(grau3)"
-        );
-        $stmt->execute([$filhoId, $probatorio, $linkIniciacao, $maoBuzios, $maoFaca, $grau1, $grau2, $grau3]);
+        if (!in_array($statusQuimbanda, ['Probatorio', 'Iniciado', 'Tata'], true)) {
+            $statusQuimbanda = 'Probatorio';
+        }
+
+        salvarQuimbandeiroCompat($pdo, $filhoId, $probatorio, $linkIniciacao, $maoBuzios, $maoFaca, $statusQuimbanda, $nomeIniciador, $entidadeReconheceu);
         jsonResponse(['ok' => true]);
     }
 

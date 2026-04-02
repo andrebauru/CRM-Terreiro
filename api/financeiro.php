@@ -28,6 +28,51 @@ function calcularCreditoCasa(int $valorCentavos): int
     return (int)round($valorCentavos * 0.10);
 }
 
+function financeiroSelectField(PDO $pdo, string $table, string $column, ?string $alias = null, string $fallback = 'NULL'): string
+{
+    $alias = $alias ?? $column;
+    return hasColumn($pdo, $table, $column) ? $column . ($alias !== $column ? ' AS ' . $alias : '') : $fallback . ' AS ' . $alias;
+}
+
+function financeiroContasStatusExpr(): string
+{
+    return "CASE WHEN status = 'Pendente' AND data_vencimento < CURDATE() THEN 'Vencido' ELSE status END";
+}
+
+function criarContaPagarCompat(PDO $pdo, array $payload): int
+{
+    $columns = ['descricao', 'valor', 'categoria', 'data_vencimento'];
+    $values = [$payload['descricao'], $payload['valor'], $payload['categoria'], $payload['data_vencimento']];
+
+    foreach (['fornecedor', 'recorrencia', 'parcela_num', 'parcela_total', 'parcela_grupo_id', 'mes_referencia'] as $column) {
+        if (hasColumn($pdo, 'contas_pagar', $column) && array_key_exists($column, $payload)) {
+            $columns[] = $column;
+            $values[] = $payload[$column];
+        }
+    }
+
+    $sql = 'INSERT INTO contas_pagar (' . implode(', ', $columns) . ') VALUES (' . implode(', ', array_fill(0, count($columns), '?')) . ')';
+    $pdo->prepare($sql)->execute($values);
+
+    return (int)$pdo->lastInsertId();
+}
+
+function atualizarContaPagarCompat(PDO $pdo, int $id, array $payload): void
+{
+    $sets = ['descricao = ?', 'valor = ?', 'categoria = ?', 'data_vencimento = ?'];
+    $values = [$payload['descricao'], $payload['valor'], $payload['categoria'], $payload['data_vencimento']];
+
+    foreach (['fornecedor', 'recorrencia', 'parcela_num', 'parcela_total'] as $column) {
+        if (hasColumn($pdo, 'contas_pagar', $column)) {
+            $sets[] = $column . ' = ?';
+            $values[] = $payload[$column] ?? null;
+        }
+    }
+
+    $values[] = $id;
+    $pdo->prepare('UPDATE contas_pagar SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($values);
+}
+
 function obterMediumConfig(PDO $pdo, int $userId): array
 {
     $stmt = $pdo->prepare(
@@ -538,19 +583,14 @@ try {
     }
 
     // ── CONTAS A PAGAR ─────────────────────────────────────────────────────
-    // Carry over: marca contas vencidas e não-pagas como 'Vencido'
-    $pdo->exec(
-        "UPDATE contas_pagar SET status = 'Vencido'
-         WHERE status = 'Pendente' AND data_vencimento < CURDATE()"
-    );
 
     if ($action === 'list_contas') {
         $stmt = $pdo->query(
-            "SELECT id, descricao, categoria, valor, data_vencimento, status,
-                    data_pagamento, fornecedor, recorrencia,
-                    parcela_num, parcela_total, parcela_grupo_id, valor_pago, mes_referencia
+            "SELECT id, descricao, categoria, valor, data_vencimento, " . financeiroContasStatusExpr() . " AS status,
+                    " . financeiroSelectField($pdo, 'contas_pagar', 'data_pagamento') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'fornecedor') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'recorrencia') . ",
+                    " . financeiroSelectField($pdo, 'contas_pagar', 'parcela_num') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'parcela_total') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'parcela_grupo_id') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'valor_pago', null, '0') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'mes_referencia') . "
              FROM contas_pagar
-             ORDER BY FIELD(status,'Pendente','Vencido','Pago'), data_vencimento ASC, id DESC"
+             ORDER BY FIELD(" . financeiroContasStatusExpr() . ",'Pendente','Vencido','Pago'), data_vencimento ASC, id DESC"
         );
         jsonResponse(['ok' => true, 'data' => $stmt->fetchAll()]);
     }
@@ -572,20 +612,33 @@ try {
             for ($i = 1; $i <= $parcelaTotal; $i++) {
                 $dt = (new DateTime($dataVenc))->modify('+' . ($i - 1) . ' months')->format('Y-m-d');
                 $mesRef = substr($dt, 0, 7);
-                $pdo->prepare(
-                    'INSERT INTO contas_pagar (descricao, valor, categoria, data_vencimento, fornecedor, recorrencia, parcela_num, parcela_total, parcela_grupo_id, mes_referencia)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-                )->execute([$descricao, $valorParcela, $categoria, $dt, $fornecedor, $recorrencia, $i, $parcelaTotal, $grupoId, $mesRef]);
+                criarContaPagarCompat($pdo, [
+                    'descricao' => $descricao,
+                    'valor' => $valorParcela,
+                    'categoria' => $categoria,
+                    'data_vencimento' => $dt,
+                    'fornecedor' => $fornecedor,
+                    'recorrencia' => $recorrencia,
+                    'parcela_num' => $i,
+                    'parcela_total' => $parcelaTotal,
+                    'parcela_grupo_id' => $grupoId,
+                    'mes_referencia' => $mesRef,
+                ]);
             }
             jsonResponse(['ok' => true, 'parcelas' => $parcelaTotal]);
         } else {
             $mesRef = substr($dataVenc, 0, 7);
-            $pdo->prepare(
-                'INSERT INTO contas_pagar (descricao, valor, categoria, data_vencimento, fornecedor, recorrencia, parcela_num, parcela_total, mes_referencia)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            )->execute([$descricao, $valor, $categoria, $dataVenc, $fornecedor, $recorrencia, $parcelaNum ?: null, $parcelaTotal ?: null, $mesRef]);
-
-            $contaId = (int)$pdo->lastInsertId();
+            $contaId = criarContaPagarCompat($pdo, [
+                'descricao' => $descricao,
+                'valor' => $valor,
+                'categoria' => $categoria,
+                'data_vencimento' => $dataVenc,
+                'fornecedor' => $fornecedor,
+                'recorrencia' => $recorrencia,
+                'parcela_num' => $parcelaNum ?: null,
+                'parcela_total' => $parcelaTotal ?: null,
+                'mes_referencia' => $mesRef,
+            ]);
 
             // Gerar recorrência futura (até 12 meses) se não for parcela
             if ($recorrencia !== 'nenhuma' && $parcelaTotal <= 1) {
@@ -595,10 +648,15 @@ try {
                     for ($m = $step; $m <= 12; $m += $step) {
                         $dt = (new DateTime($dataVenc))->modify("+{$m} months")->format('Y-m-d');
                         $mesRef2 = substr($dt, 0, 7);
-                        $pdo->prepare(
-                            'INSERT INTO contas_pagar (descricao, valor, categoria, data_vencimento, fornecedor, recorrencia, mes_referencia)
-                             VALUES (?, ?, ?, ?, ?, ?, ?)'
-                        )->execute([$descricao, $valor, $categoria, $dt, $fornecedor, $recorrencia, $mesRef2]);
+                        criarContaPagarCompat($pdo, [
+                            'descricao' => $descricao,
+                            'valor' => $valor,
+                            'categoria' => $categoria,
+                            'data_vencimento' => $dt,
+                            'fornecedor' => $fornecedor,
+                            'recorrencia' => $recorrencia,
+                            'mes_referencia' => $mesRef2,
+                        ]);
                     }
                 }
             }
@@ -618,9 +676,16 @@ try {
         $recorrencia = trim($_POST['recorrencia'] ?? 'nenhuma');
         $parcelaNum  = (int)($_POST['parcela_num'] ?? 0) ?: null;
         $parcelaTotal= (int)($_POST['parcela_total'] ?? 0) ?: null;
-        $pdo->prepare(
-            'UPDATE contas_pagar SET descricao=?, valor=?, categoria=?, data_vencimento=?, fornecedor=?, recorrencia=?, parcela_num=?, parcela_total=? WHERE id=?'
-        )->execute([$descricao, $valor, $categoria, $dataVenc, $fornecedor, $recorrencia, $parcelaNum, $parcelaTotal, $id]);
+        atualizarContaPagarCompat($pdo, $id, [
+            'descricao' => $descricao,
+            'valor' => $valor,
+            'categoria' => $categoria,
+            'data_vencimento' => $dataVenc,
+            'fornecedor' => $fornecedor,
+            'recorrencia' => $recorrencia,
+            'parcela_num' => $parcelaNum,
+            'parcela_total' => $parcelaTotal,
+        ]);
         jsonResponse(['ok' => true]);
     }
 
@@ -645,17 +710,24 @@ try {
             ? normalizarValorMonetario($_POST['valor_pago'], $currencyCode)
             : (int)$conta['valor'];
         $valorTotal = (int)$conta['valor'];
-        $jaAcumulado = (int)($conta['valor_pago'] ?? 0);
+        $jaAcumulado = hasColumn($pdo, 'contas_pagar', 'valor_pago') ? (int)($conta['valor_pago'] ?? 0) : 0;
         $novoAcumulado = $jaAcumulado + $valorPago;
 
         if ($novoAcumulado >= $valorTotal) {
             // Pago totalmente
-            $pdo->prepare('UPDATE contas_pagar SET status="Pago", data_pagamento=?, valor_pago=? WHERE id=?')
-                ->execute([$today, $valorTotal, $id]);
+            if (hasColumn($pdo, 'contas_pagar', 'valor_pago')) {
+                $pdo->prepare('UPDATE contas_pagar SET status="Pago", data_pagamento=?, valor_pago=? WHERE id=?')
+                    ->execute([$today, $valorTotal, $id]);
+            } else {
+                $pdo->prepare('UPDATE contas_pagar SET status="Pago", data_pagamento=? WHERE id=?')
+                    ->execute([$today, $id]);
+            }
         } else {
             // Pagamento parcial — registra o acumulado
-            $pdo->prepare('UPDATE contas_pagar SET valor_pago=? WHERE id=?')
-                ->execute([$novoAcumulado, $id]);
+            if (hasColumn($pdo, 'contas_pagar', 'valor_pago')) {
+                $pdo->prepare('UPDATE contas_pagar SET valor_pago=? WHERE id=?')
+                    ->execute([$novoAcumulado, $id]);
+            }
         }
 
         // Registra no caixa
@@ -672,9 +744,9 @@ try {
     // Carry-over: contas vencidas não-pagas movem para o próximo mês
     if ($action === 'carry_over') {
         $stmt = $pdo->query(
-            "SELECT id, descricao, valor, categoria, fornecedor, recorrencia, parcela_num, parcela_total, parcela_grupo_id, valor_pago
+            "SELECT id, descricao, valor, categoria, " . financeiroSelectField($pdo, 'contas_pagar', 'fornecedor') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'recorrencia') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'parcela_num') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'parcela_total') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'parcela_grupo_id') . ", " . financeiroSelectField($pdo, 'contas_pagar', 'valor_pago', null, '0') . "
              FROM contas_pagar
-             WHERE status = 'Vencido'"
+             WHERE status = 'Pendente' AND data_vencimento < CURDATE()"
         );
         $vencidas = $stmt->fetchAll();
         $carried = 0;
@@ -683,13 +755,17 @@ try {
             if ($saldo <= 0) continue;
             $novaData = (new DateTime())->modify('first day of next month')->format('Y-m-d');
             $mesRef = substr($novaData, 0, 7);
-            $pdo->prepare(
-                'INSERT INTO contas_pagar (descricao, valor, categoria, fornecedor, recorrencia, parcela_num, parcela_total, parcela_grupo_id, mes_referencia, data_vencimento)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            )->execute([
-                $c['descricao'] . ' (carry-over)',
-                $saldo, $c['categoria'], $c['fornecedor'], $c['recorrencia'],
-                $c['parcela_num'], $c['parcela_total'], $c['parcela_grupo_id'], $mesRef, $novaData
+            criarContaPagarCompat($pdo, [
+                'descricao' => $c['descricao'] . ' (carry-over)',
+                'valor' => $saldo,
+                'categoria' => $c['categoria'],
+                'fornecedor' => $c['fornecedor'],
+                'recorrencia' => $c['recorrencia'],
+                'parcela_num' => $c['parcela_num'],
+                'parcela_total' => $c['parcela_total'],
+                'parcela_grupo_id' => $c['parcela_grupo_id'],
+                'mes_referencia' => $mesRef,
+                'data_vencimento' => $novaData,
             ]);
             // marca a original como pago/transferido
             $pdo->prepare("UPDATE contas_pagar SET status='Pago', data_pagamento=CURDATE() WHERE id=?")->execute([$c['id']]);

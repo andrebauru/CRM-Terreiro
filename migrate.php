@@ -373,6 +373,15 @@ try {
     // mensalidades_pagas
     ensureColumn($pdo, 'mensalidades_pagas', 'receipt_path', 'VARCHAR(512) DEFAULT NULL');
 
+    ensureColumn($pdo, 'quimbandeiro', 'status_quimbanda', "ENUM('Probatorio','Iniciado','Tata') NOT NULL DEFAULT 'Probatorio'");
+    ensureColumn($pdo, 'quimbandeiro', 'nome_iniciador', 'VARCHAR(255) NULL');
+    ensureColumn($pdo, 'quimbandeiro', 'entidade_reconheceu', 'VARCHAR(255) NULL');
+    if (hasTable($pdo, 'quimbandeiros')) {
+        ensureColumn($pdo, 'quimbandeiros', 'status_quimbanda', "ENUM('Probatorio','Iniciado','Tata') NOT NULL DEFAULT 'Probatorio'");
+        ensureColumn($pdo, 'quimbandeiros', 'nome_iniciador', 'VARCHAR(255) NULL');
+        ensureColumn($pdo, 'quimbandeiros', 'entidade_reconheceu', 'VARCHAR(255) NULL');
+    }
+
     // contas_pagar
     ensureColumn($pdo, 'contas_pagar', 'categoria',      'VARCHAR(100) NULL');
     ensureColumn($pdo, 'contas_pagar', 'data_pagamento', 'DATE NULL');

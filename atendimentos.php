@@ -214,7 +214,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     let currentPage = 1;
     const PAGE_SIZE = 15;
 
-    const formatBRLAmount = (value) => formatBRLOrZero(String(value || 0));
+    const formatBRLAmount = (value) => formatCurrency(String(value || 0));
 
     const loadBootstrap = async () => {
       const response = await fetch('api/attendances.php?action=bootstrap', { cache: 'no-store' });

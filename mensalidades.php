@@ -35,7 +35,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               <thead class="text-slate-500 border-b border-slate-100">
                 <tr>
                   <th class="text-left pb-3">Filho</th>
-                  <th class="text-left pb-3">Grau</th>
+                  <th class="text-left pb-3">Status</th>
                   <th class="text-left pb-3">Vencimento</th>
                   <th class="text-left pb-3">Valor</th>
                   <th class="text-right pb-3">Ação</th>
@@ -253,7 +253,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const mensalidadeCurrencyCode = <?= json_encode(strtoupper((string)($_crmCurrCode ?? 'JPY')), JSON_UNESCAPED_UNICODE) ?>;
     const mensalidadeIsJpy = mensalidadeCurrencyCode === 'JPY';
 
-    const formatMoneyDisplay = (value) => formatBRLOrZero(String(value || 0));
+    const formatMoneyDisplay = (value) => formatCurrency(String(value || 0));
 
     const formatMoneyInput = (value) => formatBRL(value);
 
@@ -297,7 +297,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                   <div class="font-medium">${item.name}</div>
                   ${item.phone ? `<a href="${formatWhatsapp(item.phone)}" class="text-xs text-red-600" target="_blank" onclick="event.stopPropagation()">${item.phone}</a>` : ''}
                 </td>
-                <td class="py-3">${item.grade}</td>
+                <td class="py-3">${item.status_quimbanda || item.grade || 'Probatorio'}</td>
                 <td class="py-3"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>Dia ${item.due_day}</span></td>
                 <td class="py-3 font-medium">${item.isento_mensalidade ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatMoneyDisplay(item.mensalidade_value)}</td>
                 <td class="py-3 text-right">
@@ -453,7 +453,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const data = await res.json();
       const sel = document.getElementById('lFilhoId');
       sel.innerHTML = '<option value="">Selecione...</option>' +
-        (data.data || []).map(f => `<option value="${f.id}">${f.name}${f.grade ? ' — ' + f.grade : ''}</option>`).join('');
+        (data.data || []).map(f => `<option value="${f.id}">${f.name}${(f.status_quimbanda || f.grade) ? ' — ' + (f.status_quimbanda || f.grade) : ''}</option>`).join('');
     };
 
     const openLancamentoModal = () => {

@@ -35,12 +35,21 @@ function migrateUserToMemberIfNeeded(PDO $pdo, string $name, string $email, stri
     $stmt->execute([$name, $email, $phone !== '' ? $phone : null, $registrationDate]);
     $filhoId = (int)$pdo->lastInsertId();
 
-    $stmt = $pdo->prepare(
-        "INSERT INTO quimbandeiro (filho_id, probatorio)
-         VALUES (?, ?)
-         ON DUPLICATE KEY UPDATE probatorio = VALUES(probatorio)"
-    );
-    $stmt->execute([$filhoId, $registrationDate]);
+    if (hasColumn($pdo, 'quimbandeiro', 'status_quimbanda')) {
+        $stmt = $pdo->prepare(
+               "INSERT INTO quimbandeiro (filho_id, probatorio, status_quimbanda)
+                VALUES (?, ?, 'Probatorio')
+                ON DUPLICATE KEY UPDATE probatorio = VALUES(probatorio), status_quimbanda = COALESCE(status_quimbanda, VALUES(status_quimbanda))"
+        );
+        $stmt->execute([$filhoId, $registrationDate]);
+    } else {
+        $stmt = $pdo->prepare(
+               "INSERT INTO quimbandeiro (filho_id, probatorio)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE probatorio = VALUES(probatorio)"
+        );
+        $stmt->execute([$filhoId, $registrationDate]);
+    }
 
     return $filhoId;
 }

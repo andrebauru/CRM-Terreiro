@@ -160,7 +160,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <thead class="text-slate-500">
               <tr>
                 <th class="text-left pb-3">Filho</th>
-                <th class="text-left pb-3">Grau</th>
+                <th class="text-left pb-3">Status</th>
                 <th class="text-left pb-3">Venc.</th>
                 <th class="text-right pb-3">Status</th>
               </tr>
@@ -289,7 +289,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     const deleteEditModal = document.getElementById('deleteEditModal');
     let currentEditAttendanceId = null;
 
-    const formatBRLAmt = (v) => formatBRLOrZero(String(v || 0));
+    const formatCurrencyValue = (v) => formatCurrency(String(v || 0));
 
     const loadDashboard = async () => {
       const response = await fetch(`api/dashboard.php?t=${Date.now()}`, { cache: 'no-store' });
@@ -298,14 +298,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       countClients.textContent = data.counts.clients ?? 0;
       countJobs.textContent = data.counts.attendances ?? 0;
       countServices.textContent = data.counts.services ?? 0;
-      countReceivables.textContent = formatBRLAmt(data.counts.receivable_month ?? 0);
-      countPayables.textContent = formatBRLAmt(data.counts.payable_month ?? 0);
-      countCash.textContent = formatBRLAmt(data.counts.cash_month ?? 0);
+      countReceivables.textContent = formatCurrencyValue(data.counts.receivable_month ?? 0);
+      countPayables.textContent = formatCurrencyValue(data.counts.payable_month ?? 0);
+      countCash.textContent = formatCurrencyValue(data.counts.cash_month ?? 0);
 
       const mediumSummary = data.medium_summary || {};
-      mediumTotalRealizado.textContent = formatBRLAmt(mediumSummary.total_realizado ?? 0);
-      mediumImpostoRetido.textContent = formatBRLAmt(mediumSummary.imposto_retido_acumulado ?? 0);
-      mediumValorReceber.textContent = formatBRLAmt(mediumSummary.valor_a_receber ?? 0);
+      mediumTotalRealizado.textContent = formatCurrencyValue(mediumSummary.total_realizado ?? 0);
+      mediumImpostoRetido.textContent = formatCurrencyValue(mediumSummary.imposto_retido_acumulado ?? 0);
+      mediumValorReceber.textContent = formatCurrencyValue(mediumSummary.valor_a_receber ?? 0);
       mediumPendenciasTotal.textContent = String(mediumSummary.pendencias_total ?? 0);
       mediumPendenciasDetalhe.textContent = `${mediumSummary.mensalidades_pendentes ?? 0} mensalidades + ${mediumSummary.trabalhos_pendentes ?? 0} trabalhos`;
 
@@ -329,7 +329,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
               ${attendance.payment_type === 'cash' ? 'À Vista' : 'Parcelado'}
               ${attendance.is_reversed == 1 ? '<span class="ml-2 text-xs text-amber-600">Revertido</span>' : ''}
             </td>
-            <td class="py-3 text-right">${formatBRLAmt(attendance.total_amount || 0)}</td>
+            <td class="py-3 text-right">${formatCurrencyValue(attendance.total_amount || 0)}</td>
           </tr>`;
       });
 
@@ -446,7 +446,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         return `
           <tr class="border-t border-slate-100 ${rowBg}">
             <td class="py-3">${item.name}</td>
-            <td class="py-3">${item.grade}</td>
+            <td class="py-3">${item.status_quimbanda || item.grade || 'Probatorio'}</td>
             <td class="py-3">Dia ${item.due_day}</td>
             <td class="py-3 text-right"><span class="${statusClass} font-semibold">${statusLabel}</span></td>
           </tr>`;

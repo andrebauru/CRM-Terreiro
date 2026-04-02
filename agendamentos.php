@@ -110,7 +110,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     let boot = { services: [], jobs: [] };
     let agCalendar = null;
 
-    const fmtMoney = (v) => formatBRLOrZero(String(v || 0));
+    const fmtMoney = (v) => formatCurrency(String(v || 0));
 
     function optionsFromType(tipo) {
       const items = tipo === 'trabalho' ? boot.jobs : boot.services;

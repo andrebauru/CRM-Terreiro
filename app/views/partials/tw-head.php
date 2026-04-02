@@ -122,6 +122,31 @@ $_crmCurrentUserLabel = (string)(
       currency_symbol: <?= json_encode($_crmCurrSymbol, JSON_UNESCAPED_UNICODE) ?>,
       language: <?= json_encode($_crmLang, JSON_UNESCAPED_UNICODE) ?>,
     };
+
+    window.formatCurrency = window.formatCurrency || function(value) {
+      const settings = window.__crmSettings || {};
+      const currencyCode = String(settings.currency_code || 'JPY').toUpperCase();
+      const currencySymbol = String(settings.currency_symbol || (currencyCode === 'BRL' ? 'R$' : '¥'));
+      const raw = String(value ?? '');
+      const integerValue = /^-?\d+(?:\.\d+)?$/.test(raw)
+        ? Math.round(Number(raw || 0))
+        : parseInt(raw.replace(/[^\d-]/g, '') || '0', 10);
+
+      if (currencyCode === 'BRL') {
+        const absolute = Math.abs(integerValue);
+        const whole = Math.floor(absolute / 100);
+        const cents = String(absolute % 100).padStart(2, '0');
+        const wholeFormatted = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return `${integerValue < 0 ? '-' : ''}${currencySymbol}\u00a0${wholeFormatted},${cents}`;
+      }
+
+      const wholeFormatted = String(Math.abs(integerValue)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return `${integerValue < 0 ? '-' : ''}${currencySymbol}${wholeFormatted}`;
+    };
+
+    if (typeof formatCurrency === 'undefined') {
+      var formatCurrency = window.formatCurrency;
+    }
   </script>
   <script src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/assets/js/app.js?v=<?= $_jsVer ?>&h=<?= $_jsHash ?>" defer></script>
   <?php endif; ?>

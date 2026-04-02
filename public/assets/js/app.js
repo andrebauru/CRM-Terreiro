@@ -61,6 +61,13 @@ if (typeof window.formatBRLOrZero === 'undefined') {
 }
 if (typeof formatBRLOrZero === 'undefined') var formatBRLOrZero = window.formatBRLOrZero;
 
+if (typeof window.formatCurrency === 'undefined') {
+  window.formatCurrency = function(v) {
+    return window.formatBRLOrZero(v);
+  };
+}
+if (typeof formatCurrency === 'undefined') var formatCurrency = window.formatCurrency;
+
 if (typeof parseBRL === 'undefined') var parseBRL = function(v) { return _currInt(v); };
 
 if (typeof parseCurrencyInput === 'undefined') {
