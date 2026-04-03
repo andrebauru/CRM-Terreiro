@@ -464,7 +464,7 @@
 .message-text {
   white-space: pre-wrap;
   word-break: break-word;
-  color: #ffffff;
+  color: #1f2937 !important;
 }
 
 /* === DATE SEPARATOR === */
