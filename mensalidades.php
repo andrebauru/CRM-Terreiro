@@ -255,14 +255,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     const formatMoneyDisplay = (value) => formatCurrency(String(value || 0));
 
-    const formatMoneyInput = (value) => formatBRL(value);
+    const formatMoneyInput = (value) => formatCurrency(value);
 
     const parseMoneyInput = (value) => {
       if (!value) return 0;
       if (mensalidadeIsJpy) {
         return parseInt(String(value).replace(/[^\d-]/g, '') || '0', 10);
       }
-      return parseBRL(value);
+      return parseCurrencyInput(value);
     };
 
     document.getElementById('lValor').addEventListener('input', function () {
@@ -344,7 +344,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <tr class="border-t border-slate-100">
             <td class="py-3 font-medium">${item.descricao}</td>
             <td class="py-3">${fmtDate(item.data_vencimento)}</td>
-            <td class="py-3">${formatBRLDisplay(item.valor)}</td>
+            <td class="py-3">${formatMoneyDisplay(item.valor)}</td>
             <td class="py-3 text-right">${status}</td>
           </tr>
         `;
@@ -361,10 +361,10 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const res = await fetch(`api/financeiro.php?action=list_caixa&month=${monthParam}&t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       const summary = data.summary || {};
-      caixaSaldoInicial.textContent = formatBRLDisplay(summary.saldo_inicial || 0);
-      caixaEntradas.textContent = formatBRLDisplay(summary.entradas || 0);
-      caixaSaidas.textContent = formatBRLDisplay(summary.saidas || 0);
-      caixaSaldoFinal.textContent = formatBRLDisplay(summary.saldo_final || 0);
+      caixaSaldoInicial.textContent = formatMoneyDisplay(summary.saldo_inicial || 0);
+      caixaEntradas.textContent = formatMoneyDisplay(summary.entradas || 0);
+      caixaSaidas.textContent = formatMoneyDisplay(summary.saidas || 0);
+      caixaSaldoFinal.textContent = formatMoneyDisplay(summary.saldo_final || 0);
 
       const rows = (data.data || []).map((item) => {
         const tipo = item.tipo === 'entrada' ? 'Entrada' : 'Saída';
@@ -380,7 +380,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
             <td class="py-3">${origemMap[item.origem] || item.origem}</td>
             <td class="py-3 text-slate-500">${item.descricao || '-'}</td>
             <td class="py-3">${status}</td>
-            <td class="py-3 text-right font-medium">${formatBRLDisplay(item.valor)}</td>
+            <td class="py-3 text-right font-medium">${formatMoneyDisplay(item.valor)}</td>
           </tr>
         `;
       });
@@ -401,7 +401,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('detalheBody').innerHTML = `
           <div class="flex justify-between"><span class="text-slate-500">Tipo:</span><span class="font-medium">Mensalidade Mensal</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Vencimento:</span><span class="font-medium flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>Dia ${row.dataset.day}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">${formatBRLDisplay(val)}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">${formatMoneyDisplay(val)}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Status:</span>
             ${row.dataset.paid === 'true'
               ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'
@@ -432,7 +432,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           <div class="flex justify-between"><span class="text-slate-500">Tipo:</span><span class="font-medium">Lançamento Extra</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Descrição:</span><span class="font-medium">${row.dataset.desc || '-'}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Vencimento:</span><span class="font-medium flex items-center gap-1"><i class="fa-regular fa-calendar text-red-500"></i>${fmtDate(row.dataset.venc)}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">${formatBRLDisplay(val)}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Valor:</span><span class="font-medium">${formatMoneyDisplay(val)}</span></div>
           <div class="flex justify-between"><span class="text-slate-500">Status:</span>
             ${row.dataset.paid === 'true'
               ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Pago</span>'

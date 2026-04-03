@@ -7,18 +7,79 @@ $currentUserId = (int)($_SESSION['user_id'] ?? 0);
 $currentUserName = (string)($_SESSION['user_name'] ?? ($_SESSION['user_email'] ?? ('Usuário #' . $currentUserId)));
 
 $chatUsers = [];
+$chatGroups = [];
+$requestedGroupId = trim((string)($_GET['group'] ?? ''));
 try {
-  $stmt = db()->prepare('SELECT id, name, email, foto_perfil FROM users WHERE id <> ? AND is_active = 1 ORDER BY name');
-    $stmt->execute([$currentUserId]);
-    $chatUsers = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-} catch (Throwable $e) {
-    try {
-    $stmt = db()->prepare('SELECT id, name, email, foto_perfil FROM users WHERE id <> ? ORDER BY name');
-        $stmt->execute([$currentUserId]);
-        $chatUsers = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    } catch (Throwable $e2) {
-        $chatUsers = [];
+  $pdo = db();
+
+  if (hasTable($pdo, 'usuarios')) {
+    $stmt = $pdo->prepare(
+      "SELECT
+        id,
+        COALESCE(nome, '') AS name,
+        COALESCE(email, '') AS email,
+        COALESCE(foto_perfil, '') AS foto_perfil
+       FROM usuarios
+       WHERE id <> ?
+       ORDER BY name"
+    );
+  } else {
+    $stmt = $pdo->prepare(
+      "SELECT
+        id,
+        COALESCE(name, '') AS name,
+        COALESCE(email, '') AS email,
+        COALESCE(foto_perfil, '') AS foto_perfil
+       FROM users
+       WHERE id <> ?
+       ORDER BY name"
+    );
+  }
+
+  $stmt->execute([$currentUserId]);
+  $chatUsers = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+  if (hasTable($pdo, 'chat_groups') && hasTable($pdo, 'chat_group_members')) {
+    $groupStmt = $pdo->prepare(
+      "SELECT
+        g.group_key AS id,
+        g.name,
+        GROUP_CONCAT(gm_all.user_id ORDER BY gm_all.user_id SEPARATOR ',') AS members_ids,
+        g.created_by,
+        g.created_at
+       FROM chat_groups g
+       INNER JOIN chat_group_members gm_self
+         ON gm_self.group_id = g.id AND gm_self.user_id = ?
+       LEFT JOIN chat_group_members gm_all
+         ON gm_all.group_id = g.id
+       GROUP BY g.id, g.group_key, g.name, g.created_by, g.created_at
+       ORDER BY g.created_at DESC, g.id DESC"
+    );
+    $groupStmt->execute([$currentUserId]);
+    $rawGroups = $groupStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    $chatGroups = array_map(static function (array $row): array {
+      $members = array_values(array_filter(array_map('intval', explode(',', (string)($row['members_ids'] ?? '')))));
+      return [
+        'id' => (string)($row['id'] ?? ''),
+        'name' => (string)($row['name'] ?? 'Grupo privado'),
+        'members_ids' => $members,
+        'created_by' => (int)($row['created_by'] ?? 0),
+        'conversation_id' => (string)($row['id'] ?? ''),
+      ];
+    }, $rawGroups);
+
+    if ($requestedGroupId !== '') {
+      $allowedGroupIds = array_map(static fn(array $g): string => (string)($g['id'] ?? ''), $chatGroups);
+      if (!in_array($requestedGroupId, $allowedGroupIds, true)) {
+        header('Location: chat.php');
+        exit;
+      }
     }
+  }
+} catch (Throwable $e) {
+  $chatUsers = [];
+  $chatGroups = [];
 }
 ?>
 
@@ -60,11 +121,11 @@ try {
       animation: typing 1.4s infinite;
     }
 
-    /* Garantir cor branca nos balões */
+    /* Garantir legibilidade nos balões */
     .chat-bubble,
     .chat-bubble-text,
     .message-bubble-text {
-      color: #ffffff !important;
+      color: #1f2937 !important;
       word-break: break-word;
       min-height: 20px;
     }
@@ -120,11 +181,11 @@ try {
     <!-- Chat Area (Direita - 75%, Coluna com Header/Messages/Input) -->
     <main class="chat-main flex">
       <!-- Top Header (CRM Title) -->
-      <header class="h-auto flex-shrink-0 px-4 py-3 bg-slate-900/85 backdrop-blur-xl border-b border-red-900/40 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
+      <header class="h-auto flex-shrink-0 px-4 py-3 bg-[#075e54] border-b border-[#06463e] flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,.25)]">
         <div class="flex items-center gap-2">
-          <h1 class="text-lg font-black text-red-300">Chat Interno</h1>
-          <span class="text-xs text-red-100/50">•</span>
-          <span class="text-xs text-red-100"><?= htmlspecialchars($currentUserName) ?></span>
+          <h1 class="text-lg font-black text-white">Chat Interno</h1>
+          <span class="text-xs text-white/60">•</span>
+          <span class="text-xs text-white/90"><?= htmlspecialchars($currentUserName) ?></span>
         </div>
       </header>
 
@@ -154,7 +215,7 @@ try {
                 </div>
               </div>
             </div>
-            <div class="hidden md:flex items-center gap-2 rounded-full border border-red-900/40 bg-red-950/20 px-3 py-1 text-xs text-red-100/70">
+            <div class="hidden md:flex items-center gap-2 rounded-full border border-white/30 bg-[#0a6b5f] px-3 py-1 text-xs text-white/90">
               <i class="fa-solid fa-lock"></i>
               Chat seguro
             </div>
@@ -253,6 +314,8 @@ try {
       ];
     }, $chatUsers), JSON_UNESCAPED_UNICODE) ?>;
 
+    const INITIAL_GROUPS = <?= json_encode($chatGroups, JSON_UNESCAPED_UNICODE) ?>;
+
     const usersListEl = document.getElementById('chatUsersList');
     const chatUsersPanelEl = document.querySelector('.chat-sidebar');  // Sidebar container
     const chatConversationAreaEl = document.getElementById('chatConversationArea');
@@ -303,6 +366,13 @@ try {
     let presenceHeartbeatTimer = null;
     const userPresenceMap = new Map();
     let currentFcmToken = null;
+    const chatGroups = [];
+    let currentChatGroup = null;
+    let groupBootstrapHandled = false;
+    const requestedGroupId = new URLSearchParams(window.location.search).get('group');
+    let uiManager = null;
+    let messageHandler = null;
+    let mobileHandler = null;
 
     function log(...args) {
       if (DEBUG) console.log('[CHAT]', ...args);
@@ -334,6 +404,69 @@ try {
     function conversationId(a, b) {
       const p = [Number(a), Number(b)].sort((x, y) => x - y);
       return `${p[0]}_${p[1]}`;
+    }
+
+    function normalizeMemberIds(values) {
+      if (!Array.isArray(values)) return [];
+      return values
+        .map((value) => Number(value))
+        .filter((value, index, arr) => Number.isInteger(value) && value > 0 && arr.indexOf(value) === index);
+    }
+
+    function normalizeGroupRecord(record, fallbackId = '') {
+      const membersIds = normalizeMemberIds(record.members_ids || record.members || []);
+      return {
+        id: String(record.id || fallbackId || ''),
+        name: String(record.name || 'Grupo privado'),
+        members_ids: membersIds,
+        created_by: Number(record.created_by || record.createdBy || 0),
+        conversation_id: String(record.conversation_id || record.conversationId || record.id || fallbackId || ''),
+        is_private: record.is_private !== false,
+      };
+    }
+
+    function setGroupsData(records) {
+      chatGroups.splice(0, chatGroups.length, ...(records || [])
+        .map((group) => normalizeGroupRecord(group, group.id || ''))
+        .filter((group) => group.id && userCanAccessGroup(group)));
+    }
+
+    async function loadChatGroups() {
+      const response = await fetch(`api/chat_groups.php?action=list&t=${Date.now()}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => ({ ok: false, data: [] }));
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.message || 'Falha ao carregar grupos');
+      }
+      setGroupsData(Array.isArray(payload.data) ? payload.data : []);
+      return chatGroups;
+    }
+
+    function resolveGroupConversationId(group) {
+      return String(group?.conversation_id || group?.conversationId || group?.id || '');
+    }
+
+    function userCanAccessGroup(group) {
+      return normalizeMemberIds(group?.members_ids || []).includes(CURRENT_USER.id);
+    }
+
+    function clearGroupQueryParam() {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has('group')) return;
+      url.searchParams.delete('group');
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+
+    function fallbackToGeneralChat(reason = '') {
+      if (reason) {
+        console.warn('[CHAT] Redirecionando para o geral:', reason);
+      }
+      currentChatMode = 'general';
+      currentChatUser = null;
+      currentChatGroup = null;
+      selectedUserId = GENERAL_CHAT_ID;
+      clearGroupQueryParam();
+      openGeneralChat();
+      renderUsersList(searchEl.value);
     }
 
     function formatTime(ts) {
@@ -559,12 +692,42 @@ try {
         </button>
       `;
 
+      const groupRows = chatGroups.filter((group) => {
+        const text = `${group.name} privado grupo`.toLowerCase();
+        return text.includes(term);
+      });
+
+      if (groupRows.length) {
+        html += '<div class="px-2 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Grupos privados</div>';
+        html += groupRows.map((group) => {
+          const active = currentChatMode === 'group' && currentChatGroup && currentChatGroup.id === group.id;
+          const membersCount = normalizeMemberIds(group.members_ids).length;
+          return `
+            <button data-group-id="${esc(group.id)}" class="chat-user-btn w-full rounded-2xl border px-3 py-3 text-left transition ${active ? 'chat-user-btn-active' : 'chat-user-btn-idle'}">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="relative h-12 w-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-lg shadow-black/30">
+                  <i class="fa-solid fa-user-group text-sm"></i>
+                  <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 bg-red-400"></span>
+                </div>
+                <div class="user-details min-w-0 flex-1">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="font-semibold text-white truncate text-sm">${esc(group.name)}</div>
+                    <div class="text-[11px] text-red-200">Privado</div>
+                  </div>
+                  <div class="text-xs text-slate-300 truncate">${membersCount} membro${membersCount === 1 ? '' : 's'}</div>
+                </div>
+              </div>
+            </button>
+          `;
+        }).join('');
+      }
+
       const rows = USERS.filter((u) => {
         const text = `${u.name} ${u.email}`.toLowerCase();
         return text.includes(term);
       });
 
-      if (rows.length === 0 && !term) {
+      if (rows.length === 0 && groupRows.length === 0 && !term) {
         usersListEl.innerHTML = html + '<div class="rounded-2xl border border-dashed border-slate-600 p-4 text-sm text-slate-300">Nenhum outro usuário disponível.</div>';
         attachUserListeners();
         return;
@@ -606,11 +769,28 @@ try {
           log('General chat clicked');
           currentChatMode = 'general';
           currentChatUser = null;
+          currentChatGroup = null;
           selectedUserId = GENERAL_CHAT_ID;
+          clearGroupQueryParam();
           openGeneralChat();
           setMobileView(true);
         });
       }
+
+      document.querySelectorAll('[data-group-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const groupId = String(btn.getAttribute('data-group-id') || '');
+          const group = chatGroups.find((item) => item.id === groupId);
+          if (group && userCanAccessGroup(group)) {
+            currentChatMode = 'group';
+            currentChatUser = null;
+            currentChatGroup = group;
+            selectedUserId = group.id;
+            openGroupChat(group);
+            setMobileView(true);
+          }
+        });
+      });
 
       // User buttons
       document.querySelectorAll('[data-user-id]').forEach((btn) => {
@@ -621,7 +801,9 @@ try {
             log('User clicked:', user.name);
             currentChatMode = 'private';
             currentChatUser = user;
+            currentChatGroup = null;
             selectedUserId = String(user.id);
+            clearGroupQueryParam();
             openPrivateChat(user);
             setMobileView(true);
           }
@@ -910,9 +1092,11 @@ try {
     async function openGeneralChat() {
       log('Opening general chat');
       showConversationArea();
-      uiManager.showConversation();
-      uiManager.state.selectedUserId = GENERAL_CHAT_ID;
-      uiManager.focusMessageInput();
+      if (uiManager) {
+        uiManager.showConversation();
+        uiManager.state.selectedUserId = GENERAL_CHAT_ID;
+        uiManager.focusMessageInput();
+      }
       chatWithNameEl.textContent = 'Chat Geral';
       chatAvatarWrapEl.innerHTML = '<div class="h-11 w-11 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-comments text-xs"></i></div>';
       typingIndicatorEl.classList.add('hidden');
@@ -977,6 +1161,11 @@ try {
           const messageRef = f.doc(window.db, 'conversations', GENERAL_CHAT_ID, 'messages', messageId);
           await f.deleteDoc(messageRef);
           log('Message deleted from general chat:', messageId);
+        } else if (currentChatMode === 'group' && currentChatGroup) {
+          const groupConversationId = resolveGroupConversationId(currentChatGroup);
+          const messageRef = f.doc(window.db, 'conversations', groupConversationId, 'messages', messageId);
+          await f.deleteDoc(messageRef);
+          log('Message deleted from group chat:', messageId, groupConversationId);
         } else if (currentChatMode === 'private' && currentChatUser) {
           // Deletar da conversa privada
           const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
@@ -993,10 +1182,14 @@ try {
     async function openPrivateChat(user) {
       log('Opening private chat with:', user.id, user.name);
       showConversationArea();
-      uiManager.showConversation();
-      uiManager.state.selectedUserId = user.id;
-      uiManager.focusMessageInput();
-      mobileHandler.selectUser(user.id);
+      if (uiManager) {
+        uiManager.showConversation();
+        uiManager.state.selectedUserId = user.id;
+        uiManager.focusMessageInput();
+      }
+      if (mobileHandler) {
+        mobileHandler.selectUser(user.id);
+      }
       chatWithNameEl.textContent = user.name || `Usuário #${user.id}`;
       chatAvatarWrapEl.innerHTML = avatarHtml(user, 'h-11 w-11 rounded-full object-cover');
       typingIndicatorEl.classList.add('hidden');
@@ -1094,6 +1287,79 @@ try {
       }
     }
 
+    async function openGroupChat(group) {
+      if (!group || !userCanAccessGroup(group)) {
+        fallbackToGeneralChat('Grupo não encontrado ou sem acesso.');
+        return;
+      }
+
+      const groupConversationId = resolveGroupConversationId(group);
+      if (!groupConversationId) {
+        fallbackToGeneralChat('Grupo sem conversation_id válido.');
+        return;
+      }
+
+      currentChatMode = 'group';
+      currentChatUser = null;
+      currentChatGroup = group;
+      selectedUserId = group.id;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('group', group.id);
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+
+      showConversationArea();
+      if (uiManager) {
+        uiManager.showConversation();
+        uiManager.state.selectedUserId = group.id;
+        uiManager.focusMessageInput();
+      }
+      if (mobileHandler) {
+        mobileHandler.selectUser(group.id);
+      }
+      chatWithNameEl.textContent = group.name || 'Grupo privado';
+      chatAvatarWrapEl.innerHTML = '<div class="h-11 w-11 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-xs font-bold text-white"><i class="fa-solid fa-user-group text-xs"></i></div>';
+      typingIndicatorEl.classList.add('hidden');
+      updateHeaderPresence(true, 'Grupo privado');
+
+      if (unsubscribeMessages) {
+        unsubscribeMessages();
+        unsubscribeMessages = null;
+      }
+      if (unsubscribeTyping) {
+        unsubscribeTyping();
+        unsubscribeTyping = null;
+      }
+
+      try {
+        await ensureFirebaseReady();
+        const f = window.firebaseFns;
+        const messagesRef = f.collection(window.db, 'conversations', groupConversationId, 'messages');
+        const q = f.query(
+          messagesRef,
+          f.where('conversationId', '==', groupConversationId),
+          f.orderBy('timestamp', 'asc'),
+          f.limitToLast(200)
+        );
+        const typingDocRef = f.doc(window.db, 'conversations', groupConversationId, 'typing', String(CURRENT_USER.id));
+
+        unsubscribeMessages = f.onSnapshot(q, (snapshot) => {
+          renderMessages(snapshot.docs);
+          updateHeaderPresence(true, `Grupo privado • ${normalizeMemberIds(group.members_ids).length} membros`);
+        }, () => {
+          updateHeaderPresence(false, 'Erro ao carregar grupo');
+        });
+
+        unsubscribeTyping = f.onSnapshot(typingDocRef, () => {
+          typingIndicatorEl.classList.add('hidden');
+          typingIndicatorEl.classList.remove('inline-flex');
+        });
+      } catch (error) {
+        console.error('Error opening group chat:', error);
+        fallbackToGeneralChat('Falha ao abrir grupo privado.');
+      }
+    }
+
     async function setupGeneralTypingListener() {
       if (unsubscribeTyping) {
         unsubscribeTyping();
@@ -1162,6 +1428,20 @@ try {
             return;
           }
           await f.deleteDoc(typingDocRef);
+        } else if (currentChatMode === 'group' && currentChatGroup) {
+          const convo = resolveGroupConversationId(currentChatGroup);
+          const typingDocRef = f.doc(window.db, 'conversations', convo, 'typing', String(CURRENT_USER.id));
+          if (isTyping) {
+            await f.setDoc(typingDocRef, {
+              isTyping: true,
+              userId: CURRENT_USER.id,
+              userName: CURRENT_USER.name,
+              at: f.serverTimestamp(),
+              atMs: Date.now(),
+            }, { merge: true });
+            return;
+          }
+          await f.deleteDoc(typingDocRef);
         }
       } catch (_) {}
     }
@@ -1210,30 +1490,33 @@ try {
       }
 
       try {
-        await ensureFirebaseReady();
-        const f = window.firebaseFns;
-        
-        // Criar ID do grupo: "group_" + hash dos membros + timestamp
-        const sortedMemberIds = [CURRENT_USER.id, ...memberIds].sort((a, b) => a - b);
-        const groupId = `group_${sortedMemberIds.join('_')}_${Date.now()}`;
-        
-        // Criar documento do grupo
-        const groupsRef = f.collection(window.db, 'groups');
-        await f.addDoc(groupsRef, {
-          id: groupId,
+        const sortedMemberIds = [CURRENT_USER.id, ...memberIds]
+          .filter((value, index, arr) => arr.indexOf(value) === index)
+          .sort((a, b) => a - b);
+
+        const body = new URLSearchParams({
+          action: 'create',
           name: groupName,
-          members: sortedMemberIds,
-          createdBy: CURRENT_USER.id,
-          createdAt: f.serverTimestamp(),
-          createdAtMs: Date.now(),
+          members_ids: JSON.stringify(sortedMemberIds),
         });
-        
-        log('✅ Grupo criado:', groupId, groupName);
+
+        const response = await fetch('api/chat_groups.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+          body,
+        });
+        const payload = await response.json().catch(() => ({ ok: false }));
+        if (!response.ok || !payload.ok || !payload.data) {
+          throw new Error(payload.message || 'Falha ao criar grupo');
+        }
+
+        log('✅ Grupo criado:', payload.data.id, groupName);
         alert(`✅ Grupo "${groupName}" criado com sucesso!`);
         hideCreateGroupModal();
-        
-        // Recarregar lista de usuários/grupos
-        renderUsersList('');
+        await loadChatGroups();
+        currentChatGroup = normalizeGroupRecord(payload.data, payload.data.id || '');
+        renderUsersList(searchEl.value);
+        openGroupChat(currentChatGroup);
       } catch (err) {
         console.error('Error creating group:', err);
         alert('Erro ao criar grupo: ' + err.message);
@@ -1243,6 +1526,9 @@ try {
     function getCurrentConversationId() {
       if (currentChatMode === 'general') {
         return GENERAL_CHAT_ID;
+      }
+      if (currentChatMode === 'group' && currentChatGroup) {
+        return resolveGroupConversationId(currentChatGroup);
       }
       if (currentChatMode === 'private' && currentChatUser) {
         return conversationId(CURRENT_USER.id, currentChatUser.id);
@@ -1331,6 +1617,24 @@ try {
           const doc = await f.addDoc(messagesRef, { ...base, ...payload });
           console.log('Mensagem gravada no Firestore!');
           log('✅ Mensagem geral enviada com ID:', doc.id);
+        } else if (currentChatMode === 'group' && currentChatGroup) {
+          log('📤 Modo GRUPO - enviando para grupo:', currentChatGroup.name);
+          const convo = resolveGroupConversationId(currentChatGroup);
+          const messagesRef = f.collection(window.db, 'conversations', convo, 'messages');
+          const base = {
+            text: '',
+            senderId: CURRENT_USER.id,
+            senderName: CURRENT_USER.name,
+            receiverId: null,
+            conversationId: convo,
+            groupId: currentChatGroup.id,
+            groupName: currentChatGroup.name,
+            timestamp: f.serverTimestamp(),
+            createdAt: f.serverTimestamp(),
+            createdAtMs: Date.now(),
+          };
+          const doc = await f.addDoc(messagesRef, { ...base, ...payload });
+          log('✅ Mensagem de grupo enviada com ID:', doc.id);
         } else if (currentChatMode === 'private' && currentChatUser) {
           log('📤 Modo PRIVADO - enviando para usuário:', currentChatUser.name);
           const convo = conversationId(CURRENT_USER.id, currentChatUser.id);
@@ -1680,11 +1984,50 @@ try {
       });
     }
 
+    async function setupGroupAccess() {
+      try {
+        setGroupsData(INITIAL_GROUPS);
+        try {
+          await loadChatGroups();
+        } catch (apiErr) {
+          console.warn('Group API unavailable, usando cache inicial:', apiErr);
+        }
+
+        if (currentChatMode === 'group' && currentChatGroup) {
+          const freshGroup = chatGroups.find((group) => group.id === currentChatGroup.id);
+          if (!freshGroup) {
+            fallbackToGeneralChat('Seu acesso a este grupo foi removido.');
+            return;
+          }
+          currentChatGroup = freshGroup;
+        }
+
+        renderUsersList(searchEl.value);
+
+        if (!groupBootstrapHandled && requestedGroupId) {
+          groupBootstrapHandled = true;
+          const requestedGroup = chatGroups.find((group) => group.id === requestedGroupId);
+          if (requestedGroup) {
+            openGroupChat(requestedGroup);
+            return;
+          }
+          fallbackToGeneralChat('Grupo privado indisponível para este usuário.');
+        }
+      } catch (error) {
+        console.warn('Group access unavailable:', error);
+        if (!groupBootstrapHandled && requestedGroupId) {
+          groupBootstrapHandled = true;
+          fallbackToGeneralChat('Grupos privados indisponíveis no momento.');
+        }
+      }
+    }
+
     // Initialize
     log('Initializing chat');
     setMobileView(false);
     setupPresenceTracking();
     setupPushNotifications();
+    setupGroupAccess();
     renderUsersList('');
     if (USERS.length === 0) {
       log('No other users available, initializing general chat');
@@ -1695,16 +2038,16 @@ try {
     }
 
     // Initialize new UI managers
-    const uiManager = new ChatUIManager({
+    uiManager = new ChatUIManager({
       mobileBreakpoint: 768
     });
     
-    const messageHandler = new ChatMessageHandler({
+    messageHandler = new ChatMessageHandler({
       retryAttempts: 3,
       retryDelay: 500
     });
     
-    const mobileHandler = new ChatMobileHandler({
+    mobileHandler = new ChatMobileHandler({
       mobileBreakpoint: 768
     });
     
@@ -1721,6 +2064,7 @@ try {
         selectedUserId = null;
         currentChatUser = null;
         currentChatMode = null;
+        currentChatGroup = null;
         uiManager.state.selectedUserId = null;
         if (unsubscribeMessages) {
           unsubscribeMessages();

@@ -23,6 +23,33 @@ try {
     );
 
     $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS chat_groups (
+            id         INT AUTO_INCREMENT PRIMARY KEY,
+            group_key  VARCHAR(191) NOT NULL UNIQUE,
+            name       VARCHAR(255) NOT NULL,
+            created_by INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+            KEY idx_chat_groups_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS chat_group_members (
+            id         INT AUTO_INCREMENT PRIMARY KEY,
+            group_id   INT NOT NULL,
+            user_id    INT NOT NULL,
+            added_by   INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_chat_group_user (group_id, user_id),
+            KEY idx_chat_group_members_user (user_id),
+            FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
+    $pdo->exec(
         "CREATE TABLE IF NOT EXISTS settings (
             id              INT AUTO_INCREMENT PRIMARY KEY,
             client_name     VARCHAR(255),
@@ -463,6 +490,28 @@ try {
         )->fetchColumn();
         if ($type && $type !== 'int') {
             $pdo->exec("ALTER TABLE `$tbl` MODIFY `$col` $def");
+        }
+    }
+
+    $pdo->exec("UPDATE settings SET currency_code = 'JPY' WHERE currency_code IS NULL OR currency_code = '' OR UPPER(currency_code) <> 'JPY'");
+    $pdo->exec("UPDATE settings SET currency_symbol = '¥' WHERE currency_symbol IS NULL OR currency_symbol = '' OR currency_symbol <> '¥'");
+
+    foreach (['quimbandeiro', 'quimbandeiros'] as $quimbandaTable) {
+        if (!hasTable($pdo, $quimbandaTable)) {
+            continue;
+        }
+
+        if (hasColumn($pdo, $quimbandaTable, 'grau3')) {
+            $pdo->exec("UPDATE `$quimbandaTable` SET status_quimbanda = 'Tata' WHERE (status_quimbanda IS NULL OR status_quimbanda = '' OR status_quimbanda = 'Probatorio') AND grau3 IS NOT NULL");
+        }
+        if (hasColumn($pdo, $quimbandaTable, 'grau2')) {
+            $pdo->exec("UPDATE `$quimbandaTable` SET status_quimbanda = 'Iniciado' WHERE (status_quimbanda IS NULL OR status_quimbanda = '' OR status_quimbanda = 'Probatorio') AND grau2 IS NOT NULL");
+        }
+        if (hasColumn($pdo, $quimbandaTable, 'iniciado_por')) {
+            $pdo->exec("UPDATE `$quimbandaTable` SET nome_iniciador = iniciado_por WHERE (nome_iniciador IS NULL OR nome_iniciador = '') AND iniciado_por IS NOT NULL AND iniciado_por <> ''");
+        }
+        if (hasColumn($pdo, $quimbandaTable, 'entidade_confirmou')) {
+            $pdo->exec("UPDATE `$quimbandaTable` SET entidade_reconheceu = entidade_confirmou WHERE (entidade_reconheceu IS NULL OR entidade_reconheceu = '') AND entidade_confirmou IS NOT NULL AND entidade_confirmou <> ''");
         }
     }
 

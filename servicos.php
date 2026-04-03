@@ -65,7 +65,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Preço (<?= $_crmCurrSymbol ?>)</label>
-          <input id="servicePrice" inputmode="numeric" placeholder="<?= $_crmCurrSymbol ?>0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
+          <input id="servicePrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="<?= $_crmCurrSymbol ?>0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Descrição</label>
@@ -108,6 +108,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
     const openFn = (show) => toggleModal(modal, show);
 
+    const formatCurrencyInputValue = (value) => {
+      const digits = String(value || '').replace(/[^\d-]/g, '');
+      if (!digits || digits === '-') return '';
+      return formatCurrency(digits);
+    };
+
     const resetForm = () => {
       serviceId.value = '';
       serviceName.value = '';
@@ -128,15 +134,37 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const html = rows.map((service) => `
         <tr class="border-t border-slate-100">
           <td class="py-3">${service.name}</td>
-          <td class="py-3">${formatBRL(String(Math.round(parseFloat(service.price) || 0)))}</td>
+          <td class="py-3">${formatCurrency(String(Math.round(parseFloat(service.price) || 0)))}</td>
           <td class="py-3">${service.is_active == 1 ? 'Ativo' : 'Inativo'}</td>
           <td class="py-3 text-right">
-            <button class="text-accent" data-edit="${service.id}">Editar</button>
-            <button class="text-red-500 ml-3" data-delete="${service.id}">Excluir</button>
+            <button class="text-accent edit-btn" data-edit="${service.id}">Editar</button>
+            <button class="text-red-500 ml-3 delete-btn" data-delete="${service.id}">Excluir</button>
           </td>
         </tr>
       `).join('');
       servicesTable.innerHTML = html || '<tr><td class="py-3" colspan="4">Nenhum serviço encontrado.</td></tr>';
+    };
+
+    const handleEdit = (editId) => {
+      if (!editId) return;
+      const service = servicesCache.find((item) => String(item.id) === String(editId));
+      if (!service) return;
+      serviceId.value = service.id;
+      serviceName.value = service.name || '';
+      servicePrice.value = service.price ? formatCurrencyInputValue(String(Math.round(parseFloat(service.price)))) : '';
+      serviceDescription.value = service.description || '';
+      serviceActive.value = String(service.is_active ?? 1);
+      modalTitle.textContent = 'Editar Serviço';
+      openFn(true);
+    };
+
+    const handleDelete = (deleteId) => {
+      if (!deleteId) return;
+      if (!confirm('Deseja excluir este serviço?')) return;
+      fetch('api/services.php', {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'delete', id: deleteId }),
+      }).then(() => loadServices());
     };
 
     openModal.addEventListener('click', () => {
@@ -150,12 +178,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     servicePrice.addEventListener('input', () => {
       const n = servicePrice.value.replace(/[^\d]/g, '');
       if (!n) { servicePrice.value = ''; return; }
-      servicePrice.value = formatBRL(n) || '';
+      servicePrice.value = formatCurrencyInputValue(n);
     });
     servicePrice.addEventListener('paste', () => {
       setTimeout(() => {
         const n = servicePrice.value.replace(/[^\d]/g, '');
-        servicePrice.value = n ? formatBRL(n) : '';
+        servicePrice.value = n ? formatCurrencyInputValue(n) : '';
       }, 0);
     });
 
@@ -163,30 +191,25 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       if (event.key === 'Escape') openFn(false);
     });
 
-    servicesTable.addEventListener('click', (event) => {
-      const editId = event.target.getAttribute('data-edit');
-      const deleteId = event.target.getAttribute('data-delete');
-
-      if (editId) {
-        const service = servicesCache.find((item) => String(item.id) === editId);
-        if (!service) return;
-        serviceId.value = service.id;
-        serviceName.value = service.name || '';
-        servicePrice.value = service.price ? formatBRL(String(Math.round(parseFloat(service.price)))) : '';
-        serviceDescription.value = service.description || '';
-        serviceActive.value = String(service.is_active ?? 1);
-        modalTitle.textContent = 'Editar Serviço';
-        openFn(true);
-      }
-
-      if (deleteId) {
-        if (!confirm('Deseja excluir este serviço?')) return;
-        fetch('api/services.php', {
-          method: 'POST',
-          body: new URLSearchParams({ action: 'delete', id: deleteId }),
-        }).then(() => loadServices());
-      }
-    });
+    if (window.jQuery) {
+      window.jQuery(document).ready(function() {
+        window.jQuery('#servicesTable').off('click', '.edit-btn').on('click', '.edit-btn', function() {
+          handleEdit(this.getAttribute('data-edit'));
+        });
+        window.jQuery('#servicesTable').off('click', '.delete-btn').on('click', '.delete-btn', function() {
+          handleDelete(this.getAttribute('data-delete'));
+        });
+      });
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        servicesTable.addEventListener('click', (event) => {
+          const editBtn = event.target.closest('.edit-btn');
+          const deleteBtn = event.target.closest('.delete-btn');
+          if (editBtn) handleEdit(editBtn.getAttribute('data-edit'));
+          if (deleteBtn) handleDelete(deleteBtn.getAttribute('data-delete'));
+        });
+      });
+    }
 
     serviceForm.addEventListener('submit', (event) => {
       event.preventDefault();
@@ -195,7 +218,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         id: serviceId.value,
         name: serviceName.value,
         description: serviceDescription.value,
-        price: parseBRL(servicePrice.value),
+        price: parseCurrencyInput(servicePrice.value),
         is_active: serviceActive.value,
       });
       fetch('api/services.php', { method: 'POST', body: payload })

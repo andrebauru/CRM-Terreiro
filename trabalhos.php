@@ -386,7 +386,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       el.innerHTML = catalogoCache.map(c => `
         <tr class="border-t border-slate-100">
           <td class="py-2 font-medium">${c.name}</td>
-          <td class="py-2 text-slate-500">${formatBRL(String(Math.round(parseFloat(c.price) || 0)))}</td>
+          <td class="py-2 text-slate-500">${formatCurrency(String(Math.round(parseFloat(c.price) || 0)))}</td>
           <td class="py-2 text-right">
             <button class="text-red-600 text-xs mr-2" data-cat-edit="${c.id}"><i class="fa-solid fa-pen"></i></button>
             <button class="text-slate-400 hover:text-red-600 text-xs" data-cat-delete="${c.id}"><i class="fa-solid fa-trash"></i></button>
@@ -408,12 +408,12 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       let html = '<option value="">Selecione...</option>';
       if (trabalhos.length) {
         html += '<optgroup label="Trabalhos">';
-        html += trabalhos.map(c => `<option value="${c.id}" ${cur == c.id ? 'selected' : ''}>${c.name} — ${formatBRL(String(Math.round(parseFloat(c.price) || 0)))}</option>`).join('');
+        html += trabalhos.map(c => `<option value="${c.id}" ${cur == c.id ? 'selected' : ''}>${c.name} — ${formatCurrency(String(Math.round(parseFloat(c.price) || 0)))}</option>`).join('');
         html += '</optgroup>';
       }
       if (servicos.length) {
         html += '<optgroup label="Serviços">';
-        html += servicos.map(c => `<option value="${c.id}" data-tipo="servico" ${cur == c.id ? 'selected' : ''}>${c.name} — ${formatBRL(String(Math.round(parseFloat(c.price) || 0)))}</option>`).join('');
+        html += servicos.map(c => `<option value="${c.id}" data-tipo="servico" ${cur == c.id ? 'selected' : ''}>${c.name} — ${formatCurrency(String(Math.round(parseFloat(c.price) || 0)))}</option>`).join('');
         html += '</optgroup>';
       }
       sel.innerHTML = html;
@@ -467,14 +467,14 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const n = catPriceInput.value.replace(/[^\d]/g, '');
       if (!n) { catPriceInput.value = ''; return; }
       // Use the dynamic currency formatter (not hardcoded BRL)
-      const formatted = formatBRL(n);
+      const formatted = formatCurrency(n);
       catPriceInput.value = formatted || '';
     });
     // Also handle paste: strip formatting and re-apply
     catPriceInput.addEventListener('paste', (e) => {
       setTimeout(() => {
         const n = catPriceInput.value.replace(/[^\d]/g, '');
-        catPriceInput.value = n ? formatBRL(n) : '';
+        catPriceInput.value = n ? formatCurrency(n) : '';
       }, 0);
     });
 
@@ -482,7 +482,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       const id = document.getElementById('catId').value;
       const name = document.getElementById('catName').value.trim();
       if (!name) { alert('Nome obrigatório'); return; }
-      const price = parseBRL(document.getElementById('catPrice').value);
+      const price = parseCurrencyInput(document.getElementById('catPrice').value);
       const description = document.getElementById('catDesc').value.trim();
       const action = id ? 'update_catalogo' : 'create_catalogo';
       const body = new URLSearchParams({ action, id, name, description, price, is_active: 1 });
@@ -503,7 +503,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         document.getElementById('catId').value = c.id;
         document.getElementById('catName').value = c.name;
         document.getElementById('catDesc').value = c.description || '';
-        document.getElementById('catPrice').value = c.price ? formatBRL(String(Math.round(parseFloat(c.price)))) : '';
+        document.getElementById('catPrice').value = c.price ? formatCurrency(String(Math.round(parseFloat(c.price)))) : '';
         document.getElementById('addCatalogoForm').classList.remove('hidden');
       }
       if (deleteId) {

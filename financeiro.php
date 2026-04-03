@@ -459,7 +459,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         if (Number.isNaN(numeric)) return '';
         return `${negative ? '-' : ''}${financeiroCurrencySymbol}${numeric.toLocaleString('ja-JP')}`;
       }
-      return formatBRL(value);
+      return formatCurrency(value);
     }
 
     // Real-time currency mask for value inputs

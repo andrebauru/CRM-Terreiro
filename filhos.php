@@ -275,7 +275,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
                 <span class="px-2 py-0.5 rounded-full text-xs font-bold ${statusColor(quimbandaStatus)}">${quimbandaStatus}</span>
               </td>
               <td class="py-3 text-slate-500 text-xs">${entOrixas}</td>
-              <td class="py-3">${saiu ? '—' : (parseInt(filho.isento_mensalidade) ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatBRL(String(filho.mensalidade_value || 0)))}</td>
+              <td class="py-3">${saiu ? '—' : (parseInt(filho.isento_mensalidade) ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatCurrency(String(filho.mensalidade_value || 0)))}</td>
               <td class="py-3">${filho.phone ? `<a href="${formatWhatsapp(filho.phone)}" class="text-red-600" target="_blank" onclick="event.stopPropagation()">${filho.phone}</a>` : '—'}</td>
               <td class="py-3 text-right">
                 <button class="text-red-600 hover:text-red-800 mr-3 btn-edit" data-edit="${filho.id}"><i class="fa-solid fa-pen"></i></button>
@@ -329,7 +329,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
     document.getElementById('closeDetalheModal').addEventListener('click', () => toggleModal(detalheModal, false));
 
     filhoMensalidade.addEventListener('input', () => {
-      filhoMensalidade.value = formatBRL(filhoMensalidade.value);
+      filhoMensalidade.value = formatCurrency(filhoMensalidade.value);
     });
 
     const openEdit = (filho) => {
@@ -343,7 +343,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
       filhoProbatorio.value      = filho.probatorio || '';
       filhoNomeIniciador.value   = filho.nome_iniciador || '';
       filhoEntidadeReconheceu.value = filho.entidade_reconheceu || '';
-      filhoMensalidade.value     = formatBRL(String(filho.mensalidade_value || ''));
+      filhoMensalidade.value     = formatCurrency(String(filho.mensalidade_value || ''));
       filhoDueDay.value          = filho.due_day || 5;
       filhoIsento.checked        = parseInt(filho.isento_mensalidade) === 1;
       filhoNotes.value           = filho.notes_evolucao || '';
@@ -404,7 +404,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
           ${currentFilho.entidade_frente ? row2('Entidade de Frente', currentFilho.entidade_frente) : ''}
           ${currentFilho.orixa_pai ? row2('Orixá Pai', currentFilho.orixa_pai) : ''}
           ${currentFilho.orixa_mae ? row2('Orixá Mãe', currentFilho.orixa_mae) : ''}
-          ${row2('Mensalidade', saiu ? '— (inativo)' : (parseInt(currentFilho.isento_mensalidade) ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatBRL(String(currentFilho.mensalidade_value || 0))))}
+          ${row2('Mensalidade', saiu ? '— (inativo)' : (parseInt(currentFilho.isento_mensalidade) ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Isento</span>' : formatCurrency(String(currentFilho.mensalidade_value || 0))))}
           ${!saiu ? row2('Vencimento', `Dia ${currentFilho.due_day || 5}`) : ''}
           ${saiu && currentFilho.saiu_at ? row2('Saiu em', fmtDate(currentFilho.saiu_at)) : ''}
           ${currentFilho.email ? row2('Email', currentFilho.email) : ''}
@@ -442,7 +442,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         entidade_reconheceu: filhoEntidadeReconheceu.value,
         status:           filhoStatus.value,
         saiu_at:          filhoSaiuAt.value,
-        mensalidade_value: parseBRL(filhoMensalidade.value),
+        mensalidade_value: parseCurrencyInput(filhoMensalidade.value),
         due_day:          filhoDueDay.value || 5,
         isento_mensalidade: filhoIsento.checked ? 1 : 0,
         notes_evolucao:   filhoNotes.value,

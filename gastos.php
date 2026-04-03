@@ -216,7 +216,7 @@ $isJpyCurrency = strtoupper((string)($_crmCurrCode ?? 'JPY')) === 'JPY';
         if (Number.isNaN(numeric)) return '';
         return `${negative ? '-' : ''}${gastosCurrencySymbol}${numeric.toLocaleString('ja-JP')}`;
       }
-      return formatBRL(value);
+      return formatCurrency(value);
     }
 
     // Real-time currency mask respeitando JPY/BRL configurado no banco

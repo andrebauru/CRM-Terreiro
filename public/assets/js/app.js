@@ -11,9 +11,9 @@ if (typeof crmCurrency === 'undefined') {
   var crmLanguage = 'pt';
   if (window.__crmSettings && typeof window.__crmSettings === 'object') {
     if (window.__crmSettings.currency_code) {
-      crmCurrency.code   = window.__crmSettings.currency_code;
-      crmCurrency.symbol = window.__crmSettings.currency_symbol || (window.__crmSettings.currency_code === 'BRL' ? 'R$' : '\u00a5');
-      crmCurrency.locale = window.__crmSettings.currency_code === 'BRL' ? 'pt-BR' : 'ja-JP';
+      crmCurrency.code = String(window.__crmSettings.currency_code || 'JPY').toUpperCase();
+      crmCurrency.symbol = window.__crmSettings.currency_symbol || (crmCurrency.code === 'BRL' ? 'R$' : '\u00a5');
+      crmCurrency.locale = crmCurrency.code === 'BRL' ? 'pt-BR' : 'ja-JP';
     }
     if (window.__crmSettings.language) crmLanguage = window.__crmSettings.language;
   }
@@ -25,68 +25,48 @@ if (typeof isCurrencyDecimal === 'undefined') var isCurrencyDecimal = function()
 if (typeof _currInt === 'undefined') {
   var _currInt = function(v) {
     var raw = String(v || '');
-    if (/^\d+(\.\d+)?$/.test(raw)) return Math.round(parseFloat(raw));
-    return parseInt(raw.replace(/\D+/g, '') || '0', 10);
+    if (/^-?\d+(\.\d+)?$/.test(raw)) return Math.round(parseFloat(raw));
+    return parseInt(raw.replace(/[^\d-]+/g, '') || '0', 10);
   };
 }
 
 if (typeof _groupNum === 'undefined') {
-  var _groupNum = function(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, isCurrencyDecimal() ? '.' : ','); };
+  var _groupNum = function(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
 }
-
-if (typeof window.formatBRL === 'undefined') {
-  window.formatBRL = function(v) {
-    var n = _currInt(v);
-    if (!n) return '';
-    if (isCurrencyDecimal()) {
-      var abs = Math.abs(n), whole = Math.floor(abs / 100), dec = String(abs % 100);
-      if (dec.length < 2) dec = '0' + dec;
-      return (n < 0 ? '-' : '') + crmCurrency.symbol + '\u00a0' + _groupNum(String(whole)) + ',' + dec;
-    }
-    return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
-  };
-}
-if (typeof formatBRL === 'undefined') var formatBRL = window.formatBRL;
-
-if (typeof window.formatBRLOrZero === 'undefined') {
-  window.formatBRLOrZero = function(v) {
-    var n = _currInt(v);
-    if (isCurrencyDecimal()) {
-      var abs = Math.abs(n), whole = Math.floor(abs / 100), dec = String(abs % 100);
-      if (dec.length < 2) dec = '0' + dec;
-      return (n < 0 ? '-' : '') + crmCurrency.symbol + '\u00a0' + _groupNum(String(whole)) + ',' + dec;
-    }
-    return (n < 0 ? '-' : '') + crmCurrency.symbol + _groupNum(String(Math.abs(n)));
-  };
-}
-if (typeof formatBRLOrZero === 'undefined') var formatBRLOrZero = window.formatBRLOrZero;
 
 if (typeof window.formatCurrency === 'undefined') {
   window.formatCurrency = function(v) {
-    return window.formatBRLOrZero(v);
+    var n = _currInt(v);
+    if (isCurrencyDecimal()) {
+      var abs = Math.abs(n);
+      var whole = Math.floor(abs / 100);
+      var dec = String(abs % 100).padStart(2, '0');
+      return (n < 0 ? '-' : '') + crmSymbol() + '\u00a0' + _groupNum(String(whole)) + ',' + dec;
+    }
+    return (n < 0 ? '-' : '') + crmSymbol() + _groupNum(String(Math.abs(n)));
   };
 }
 if (typeof formatCurrency === 'undefined') var formatCurrency = window.formatCurrency;
 
-if (typeof parseBRL === 'undefined') var parseBRL = function(v) { return _currInt(v); };
-
 if (typeof parseCurrencyInput === 'undefined') {
   var parseCurrencyInput = function(str) {
     if (!str) return 0;
-    var clean = String(str).replace(/[^\d,\.]/g, '');
     if (isCurrencyDecimal()) {
-      if (clean.indexOf(',') >= 0) return Math.round(parseFloat(clean.replace(/\./g, '').replace(',', '.')) * 100);
+      var clean = String(str).replace(/[^\d,\.\-]/g, '');
+      if (clean === '' || clean === '-' || clean === ',' || clean === '.') return 0;
+      if (clean.indexOf(',') >= 0) {
+        return Math.round(parseFloat(clean.replace(/\./g, '').replace(',', '.')) * 100);
+      }
       return Math.round(parseFloat(clean || '0') * 100);
     }
-    return parseInt(clean.replace(/[,\.]/g, '') || '0', 10);
+    return _currInt(str);
   };
 }
 
 if (typeof formatCurrencyInput === 'undefined') {
   var formatCurrencyInput = function(value) {
     var n = _currInt(value);
-    if (isCurrencyDecimal()) return (n / 100).toFixed(2).replace('.', ',');
-    return String(n);
+    return window.formatCurrency(n);
   };
 }
 
