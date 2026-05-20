@@ -7,6 +7,7 @@ require_once __DIR__ . '/_auth_guard.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 $currentUserId = (int)($_SESSION['user_id'] ?? 0);
+$currentUserRole = (string)($_SESSION['user_role'] ?? 'staff');
 
 try {
     $pdo = db();
@@ -50,6 +51,11 @@ try {
     }
 
     if ($action === 'create') {
+        // Apenas admin pode criar grupos de chat
+        if ($currentUserRole !== 'admin') {
+            jsonResponse(['ok' => false, 'message' => 'Apenas administradores podem criar grupos'], 403);
+        }
+
         $name = requireField('name', 'Nome do grupo é obrigatório');
         $membersRaw = (string)($_POST['members_ids'] ?? '[]');
 
