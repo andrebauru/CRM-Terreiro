@@ -7,6 +7,31 @@ $extraHead = <<<'HTML'
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.global.min.js"></script>
 HTML;
 require_once __DIR__ . '/app/views/partials/tw-head.php';
+
+// ═══════════════════════════════════════════════════════════════
+// ALERTA DE PENDÊNCIAS DE PERFIL (ADMIN ONLY)
+// ═══════════════════════════════════════════════════════════════
+session_start();
+$currentUserRole = $_SESSION['user_role'] ?? 'staff';
+$isAdmin = $currentUserRole === 'admin';
+$pendencyCount = 0;
+
+if ($isAdmin) {
+    try {
+        $pdo = require_once __DIR__ . '/app/database.php';
+        $dbConnection = getPDOConnection();
+        
+        // Contar pendências de perfil
+        $stmt = $dbConnection->prepare(
+            "SELECT COUNT(*) as count FROM profile_pending_changes 
+             WHERE status = 'pending'"
+        );
+        $stmt->execute();
+        $pendencyCount = (int)($stmt->fetch()['count'] ?? 0);
+    } catch (Throwable $e) {
+        $pendencyCount = 0;
+    }
+}
 ?>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
   <div class="min-h-screen flex overflow-x-hidden">
@@ -20,6 +45,33 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <button id="openQuickAction" class="px-4 py-2 rounded-xl bg-red-700 text-white font-bold shadow-lg hover:bg-red-800">Nova ação</button>
       </header>
+
+      <!-- BANNER DE ALERTA: Pendências de Perfil -->
+      <?php if ($isAdmin && $pendencyCount > 0): ?>
+      <div class="mb-8 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6 shadow-lg">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-start gap-4 flex-1">
+            <div class="flex-shrink-0">
+              <i class="fa-solid fa-exclamation-triangle text-amber-600 text-2xl mt-0.5"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-amber-900">
+                <?= $pendencyCount ?> Alteração<?= $pendencyCount !== 1 ? 's' : '' ?> de Perfil Aguardando Aprovação
+              </h3>
+              <p class="text-sm text-amber-700 mt-1">
+                Usuários enviaram solicitações de alteração de perfil que estão pendentes de sua revisão.
+              </p>
+              <a href="usuarios.php" class="inline-block mt-3 text-sm text-amber-600 font-medium hover:text-amber-700 underline">
+                Revisar alterações →
+              </a>
+            </div>
+          </div>
+          <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 text-amber-400 hover:text-amber-600">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+      </div>
+      <?php endif; ?>
 
       <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-5 mb-8">
         <div class="bg-white/80 backdrop-blur border border-slate-200 rounded-3xl p-6 shadow-xl shadow-slate-200/40">

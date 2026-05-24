@@ -5,9 +5,38 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
 
 session_start();
 $currentUserRole = $_SESSION['user_role'] ?? 'staff';
+$currentUserName = $_SESSION['nome'] ?? $_SESSION['name'] ?? 'Usuário';
 $isAdmin = $currentUserRole === 'admin';
 ?>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
+    <!-- MARCA D'ÁGUA DE SEGURANÇA -->
+    <style>
+        body::before {
+            content: '<?= htmlspecialchars($currentUserName) ?>';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0.08;
+            font-size: 4rem;
+            font-weight: 300;
+            color: rgb(100, 116, 139);
+            transform: rotate(-45deg);
+            white-space: nowrap;
+            overflow: hidden;
+            line-height: 1.5;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+
     <!-- Overlay de segurança para print/captura -->
     <div id="printBlockOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:9999;color:#fff;font-size:1.3rem;align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(2px);">
       <div>
@@ -97,8 +126,12 @@ $isAdmin = $currentUserRole === 'admin';
           </div>
           <div class="md:col-span-4 flex justify-end gap-2">
             <button type="button" id="resetFilters" class="px-4 py-2 rounded-xl border border-slate-200">Limpar</button>
+            <?php if ($isAdmin): ?>
             <button type="button" id="exportReport" class="px-4 py-2 rounded-xl border border-slate-200">Exportar CSV</button>
             <button type="submit" class="px-4 py-2 rounded-xl bg-accent text-white">Filtrar</button>
+            <?php else: ?>
+            <p class="text-xs text-slate-500">Relatórios de trabalhos são gerados apenas pelo administrador.</p>
+            <?php endif; ?>
           </div>
         </form>
       </section>
@@ -206,6 +239,8 @@ $isAdmin = $currentUserRole === 'admin';
 
         // ===== VARIÁVEIS GLOBAIS =====
         const isAdmin = <?= json_encode($isAdmin); ?>;
+        const isCommonUser = <?= json_encode($currentUserRole === 'user'); ?>;
+        const currentUserName = <?= json_encode($currentUserName); ?>;
 
         // ===== FUNÇÕES GLOBAIS =====
 
@@ -427,8 +462,34 @@ $isAdmin = $currentUserRole === 'admin';
               <td class="py-3 text-right">${formatCurrencyValue(row.total_amount)}</td>
             </tr>
           `);
-          reportsTable.innerHTML = rows.length ? rows.join('') : '<tr><td class="py-3" colspan="5">Nenhum registro.</td></tr>';
-          totalSum.textContent = `Total: ${formatCurrencyValue(data.total || 0)}`;
+          
+          if (rows.length === 0) {
+            // Interface "Lista Vazia"
+            const parentSection = reportsTable.closest('section');
+            const container = parentSection.querySelector('.overflow-x-auto');
+            container.innerHTML = `
+              <div class="text-center py-16">
+                <div class="flex justify-center mb-4">
+                  <svg class="h-16 w-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m0 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-lg font-medium text-slate-900 mb-1">Nenhum relatório disponível</h3>
+                <p class="text-slate-500 text-sm mb-4">
+                  ${isCommonUser 
+                    ? 'Nenhum relatório de trabalhos foi gerado para o período solicitado. Relatórios são gerados pelo administrador.'
+                    : 'Nenhum relatório de trabalhos foi gerado para o período solicitado. Crie filtros diferentes e tente novamente.'}
+                </p>
+                ${!isCommonUser 
+                  ? '<p class="text-xs text-slate-400">Use os filtros acima para buscar relatórios existentes.</p>'
+                  : ''}
+              </div>
+            `;
+            totalSum.textContent = `Total: ${formatCurrencyValue(0)}`;
+          } else {
+            reportsTable.innerHTML = rows.join('');
+            totalSum.textContent = `Total: ${formatCurrencyValue(data.total || 0)}`;
+          }
         };
 
         reportForm.addEventListener('submit', (event) => {
