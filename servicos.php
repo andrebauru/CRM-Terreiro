@@ -65,7 +65,7 @@ require_once __DIR__ . '/app/views/partials/tw-head.php';
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Preço (<?= $_crmCurrSymbol ?>)</label>
-          <input id="servicePrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="<?= $_crmCurrSymbol ?>0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
+          <input id="servicePrice" type="text" inputmode="numeric" autocomplete="off" placeholder="<?= $_crmCurrSymbol ?>0" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2" />
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700">Descrição</label>
